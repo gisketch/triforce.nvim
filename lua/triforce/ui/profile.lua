@@ -135,6 +135,19 @@ function Profile.get_activity_hl(lines)
   return 'TriforceHeat0' -- Brightest
 end
 
+local BASE_DAYS_IN_MONTHS = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
+
+local function is_leap_year(y)
+  return (y % 4 == 0 and y % 100 ~= 0) or (y % 400 == 0)
+end
+
+local function days_in_month(month, y)
+  if month ~= 2 then
+    return BASE_DAYS_IN_MONTHS[month]
+  end
+  return is_leap_year(y) and 29 or 28
+end
+
 ---Build activity heatmap (copied from typr structure)
 ---@param stats Stats
 ---@return table lines
@@ -147,19 +160,7 @@ function Profile.build_activity_heatmap(stats)
   local current_month = tonumber(os.date('%m'))
 
   local months = { 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' }
-  local days_in_months = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
   local days = { 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' }
-
-  local function is_leap_year(y)
-    return (y % 4 == 0 and y % 100 ~= 0) or (y % 400 == 0)
-  end
-
-  local function days_in_month(month, y)
-    if month ~= 2 then
-      return days_in_months[month]
-    end
-    return is_leap_year(y) and 29 or 28
-  end
 
   local months_to_show = 7
   local squares_len = months_to_show * 4
