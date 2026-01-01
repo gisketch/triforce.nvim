@@ -150,19 +150,32 @@ function Profile.build_activity_heatmap(stats)
   local days_in_months = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
   local days = { 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' }
 
-  -- Leap year check
-  local year_num = tonumber(year)
-  if (year_num % 4 == 0 and year_num % 100 ~= 0) or year_num % 400 == 0 then
-    days_in_months[2] = 29
+  local function is_leap_year(y)
+    return (y % 4 == 0 and y % 100 ~= 0) or (y % 400 == 0)
   end
 
-  local months_i = current_month - 6
-  if months_i < 1 then
-    months_i = months_i + 12
+  local function days_in_month(month, y)
+    if month ~= 2 then
+      return days_in_months[month]
+    end
+    return is_leap_year(y) and 29 or 28
   end
-  local months_end = current_month
+
   local months_to_show = 7
   local squares_len = months_to_show * 4
+
+  -- Build an explicit wrapped sequence of the last 7 months ending at current month
+  local current_year_num = tonumber(year)
+  local month_seq = {}
+  for offset = months_to_show - 1, 0, -1 do
+    local m = current_month - offset
+    local y = current_year_num
+    while m < 1 do
+      m = m + 12
+      y = y - 1
+    end
+    table.insert(month_seq, { month = m, year = y })
+  end
 
   -- Build lines structure (typr style)
   local lines = {
@@ -171,10 +184,10 @@ function Profile.build_activity_heatmap(stats)
   }
 
   -- Month headers
-  for i = months_i, months_end do
-    local month_idx = i > 12 and (i - 12) or i
+  for idx, my in ipairs(month_seq) do
+    local month_idx = my.month
     table.insert(lines[1], { '  ' .. months[month_idx] .. '  ', 'TriforceRed' })
-    table.insert(lines[1], { i == months_end and '' or '  ' })
+    table.insert(lines[1], { idx == #month_seq and '' or '  ' })
   end
 
   -- Separator line
@@ -188,27 +201,22 @@ function Profile.build_activity_heatmap(stats)
   end
 
   -- Fill in activity data
-  for i = months_i, months_end do
-    local month_idx = i > 12 and (i - 12) or i
-    local month_year = year
+  for idx, my in ipairs(month_seq) do
+    local month_idx = my.month
+    local month_year = tostring(my.year)
 
-    -- Handle year boundary
-    if months_i > months_end and i < months_end then
-      month_year = tostring(tonumber(year) + (i < months_end and 1 or (i > current_month and -1 or 0)))
-    end
-
-    local start_day = util.getday_i(1, month_idx, year)
+    local start_day = util.getday_i(1, month_idx, my.year)
 
     -- Empty cells before month starts (only for first month)
-    if i == months_i and start_day ~= 1 then
+    if idx == 1 and start_day ~= 1 then
       for n = 1, start_day - 1 do
         table.insert(lines[n + 2], { '  ' })
       end
     end
 
     -- Activity squares for each day
-    for day_num = 1, days_in_months[month_idx] do
-      local day_of_week = util.getday_i(day_num, month_idx, year)
+    for day_num = 1, days_in_month(month_idx, my.year) do
+      local day_of_week = util.getday_i(day_num, month_idx, my.year)
       local date_key = ('%s-%s-%s'):format(month_year, util.double_digits(month_idx), util.double_digits(day_num))
 
       local activity = stats.daily_activity[date_key] or 0
