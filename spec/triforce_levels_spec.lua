@@ -1,3 +1,5 @@
+local assert = require('luassert') ---@type Luassert
+
 describe('triforce', function()
   local triforce ---@type Triforce
   local levels ---@type Triforce.Levels
@@ -23,6 +25,19 @@ describe('triforce', function()
       for _, lvl in ipairs(lvls) do
         assert.is_same((lvl.icon or '') .. ' ' .. lvl.title, levels.get_level_title(lvl.level))
       end
+    end)
+
+    it('should fail on missing custom level field', function()
+      ---@diagnostic disable:missing-fields
+      local lvls = { ---@type LevelParams[]
+        { title = 'Test 1' },
+        { level = 600 },
+        { title = 'Test 3' },
+      }
+      ---@diagnostic enable:missing-fields
+
+      local ok = pcall(triforce.setup, { levels = lvls })
+      assert.is_false(ok)
     end)
   end)
 end)
