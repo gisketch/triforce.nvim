@@ -13,7 +13,7 @@ local util = require('triforce.util')
 
 ---@return LevelTitles titles
 local function get_default_titles()
-  local titles = { ---@type LevelTitle[]
+  local titles = { ---@type LevelTitles
     [10] = { title = 'Deku Scrub', icon = '🌱' },
     [20] = { title = 'Kokiri', icon = '🌳' },
     [30] = { title = 'Hylian Soldier', icon = '🗡️' },
