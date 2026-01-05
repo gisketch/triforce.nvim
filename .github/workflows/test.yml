@@ -1,4 +1,4 @@
-name: Test with Busted
+name: Testing
 on:
   push:
     branches:
@@ -22,8 +22,22 @@ on:
       - opened
       - ready_for_review
 jobs:
-  sile:
+  deps:
     runs-on: ubuntu-latest
+    name: Install Lua and LuaRocks Dependencies
+    steps:
+      - name: Install Lua
+        uses: leafo/gh-actions-lua@v12
+      - name: Install LuaRocks
+        uses: leafo/gh-actions-luarocks@v6
+      - name: Install Dependencies
+        run: |
+          luarocks install luassert
+          luarocks install nlua
+  busted:
+    name: Run Tests using Busted
+    runs-on: ubuntu-latest
+    needs: deps
     steps:
       - name: Checkout
         uses: actions/checkout@v6
