@@ -15,11 +15,17 @@ local Util = {}
 ---@param T table<string, vim.validate.Spec|ValidateSpec>
 function Util.validate(T)
   if vim.fn.has('nvim-0.11') ~= 1 then
+    vim.validate({ T = { T, { 'table' } } })
+  else
+    vim.validate('T', T, { 'table' }, false)
+  end
+
+  if vim.fn.has('nvim-0.11') ~= 1 then
     ---Filter table to fit legacy standard
     ---@cast T table<string, vim.validate.Spec>
     for name, spec in pairs(T) do
       while #spec > 3 do
-        spec[#spec] = nil
+        table.remove(spec, #spec)
       end
 
       T[name] = spec
@@ -33,7 +39,7 @@ function Util.validate(T)
   ---@cast T table<string, ValidateSpec>
   for name, spec in pairs(T) do
     while #spec > 4 do
-      spec[#spec] = nil
+      table.remove(spec, #spec)
     end
 
     T[name] = spec
