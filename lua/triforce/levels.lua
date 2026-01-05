@@ -65,6 +65,12 @@ function Levels.add_levels(levels)
   end
 
   ---@cast levels LevelParams
+  util.validate({
+    levels_level = { levels.level, { 'number' } },
+    levels_title = { levels.title, { 'string' } },
+    levels_icon = { levels.icon, { 'string', 'nil' }, true },
+  })
+
   Levels.levels[levels.level] = { title = levels.title, icon = levels.icon or '' }
 end
 
