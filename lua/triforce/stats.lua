@@ -58,6 +58,33 @@ function Stats.get_stats_path()
   return Stats.db_path or Stats.default_stats().db_path
 end
 
+---@param path string
+function Stats.create_event(path)
+  util.validate({ path = { path, { 'string' } } })
+  if Stats.event and vim.g.triforce_stats_event_initialized == 1 then
+    return
+  end
+
+  Stats.event = uv.new_fs_event()
+  if not Stats.event then
+    return
+  end
+
+  Stats.event:start(path, {}, function(_, _, events)
+    if events.change then
+      vim.schedule(function()
+        Stats.save(require('triforce.tracker').get_stats())
+      end)
+    end
+  end)
+
+  vim.g.triforce_stats_event_initialized = 1
+end
+
+function Stats.setup()
+  Stats.create_event(Stats.get_stats_path())
+end
+
 ---Load stats from disk
 ---@param debug boolean
 ---@return Stats merged
@@ -67,27 +94,28 @@ function Stats.load(debug)
   debug = debug ~= nil and debug or false
 
   local path = Stats.get_stats_path()
-
-  -- Check if file exists
-  if vim.fn.filereadable(path) == 0 then
+  local fd, stat = util.open_file(path, 'r')
+  if not stat then -- Check if file exists
+    uv.fs_close(fd)
     return Stats.default_stats()
   end
 
-  ---Read file using vim.fn for cross-platform compatibility
-  local lines = vim.fn.readfile(path) ---@type string[]
-  if not lines or vim.tbl_isempty(lines) then
+  local content = uv.fs_read(fd, stat.size)
+  uv.fs_close(fd)
+
+  if not content or content == '' then
     return Stats.default_stats()
   end
 
-  local content = table.concat(lines, '\n')
-
-  ---Parse JSON
   ---@type boolean, Stats
   local ok, stats = pcall(vim.json.decode, content)
   if not (ok and util.is_type('table', stats)) then
     -- Backup corrupted file
     local backup = ('%s.backup.%s'):format(path, os.time())
-    vim.fn.writefile(lines, backup)
+    fd = util.open_file(backup, 'w')
+
+    uv.fs_write(fd, content)
+    uv.fs_close(fd)
 
     if debug then
       vim.notify('Corrupted stats backed up to: ' .. backup, WARN)

@@ -8,6 +8,7 @@
 ---@alias Months 1|2|3|4|5|6|7|8|9|10|11|12
 
 local ERROR = vim.log.levels.ERROR
+local uv = vim.uv or vim.loop
 
 ---Various utilities to be used for Triforce
 ---@class Triforce.Util
@@ -330,6 +331,29 @@ function Util.is_file(path)
   Util.validate({ path = { path, { 'string' } } })
 
   return vim.fn.filereadable(path) == 1
+end
+
+---@param fname string
+---@param flags string
+---@param mode integer
+---@return integer fd
+---@return uv.fs_stat.result|nil stat
+---@overload fun(fname: string, flags: string): fd: integer, stat: uv.fs_stat.result|nil
+function Util.open_file(fname, flags, mode)
+  Util.validate({
+    fname = { fname, { 'string' } },
+    flags = { flags, { 'string' } },
+    mode = { mode, { 'number', 'nil' }, true },
+  })
+  mode = mode or tonumber('644', 8)
+
+  local stat = uv.fs_stat(fname)
+  local fd = uv.fs_open(fname, flags, mode)
+  if not fd then -- Check if file could be opened
+    error('File descriptor unavailable!', ERROR)
+  end
+
+  return fd, stat
 end
 
 return Util

@@ -37,6 +37,7 @@ function Triforce.setup(opts)
     desc = 'Triforce: Show profile',
   })
 
+  require('triforce.stats').setup()
   require('triforce.levels').setup()
   require('triforce.commands').setup()
 
