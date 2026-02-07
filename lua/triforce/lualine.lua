@@ -246,7 +246,7 @@ function Lualine.level(opts)
 
   -- Percentage
   if config.show.percent then
-    table.insert(parts, ('%d'):format(math.floor(xp_progress / xp_needed) * 100) .. '%%')
+    table.insert(parts, ('%d'):format(math.floor((xp_progress / xp_needed) * 100)) .. '%%')
   end
 
   -- XP numbers
