@@ -24,6 +24,12 @@ Tracker.dirty = false ---@type boolean
 ---Last save timestamp to prevent rapid saves
 Tracker.last_save_time = 0 ---@type integer
 
+---Timestamp of last keystroke (for activity-based time tracking)
+Tracker.last_activity_time = 0 ---@type integer
+
+---Seconds of inactivity before a gap is not counted as coding time
+Tracker.idle_threshold = 300 ---@type integer
+
 Tracker.debug = false ---@type boolean
 
 ---Initialize the tracker
@@ -121,6 +127,17 @@ function Tracker.on_text_changed(bufnr)
   if vim.list_contains({ 'terminal', 'help', 'nowrite', 'nofile' }, buftype) then
     return
   end
+
+  -- Activity-based time tracking: only count time between actual keystrokes
+  local now = os.time()
+  if Tracker.last_activity_time > 0 then
+    local elapsed = now - Tracker.last_activity_time
+    if elapsed <= Tracker.idle_threshold then
+      Tracker.current_stats.time_coding = Tracker.current_stats.time_coding + elapsed
+      Tracker.dirty = true
+    end
+  end
+  Tracker.last_activity_time = now
 
   local current_line_count = vim.api.nvim_buf_line_count(bufnr)
   local previous_line_count = Tracker.buffer_line_counts[bufnr] or current_line_count
@@ -258,6 +275,15 @@ function Tracker.shutdown()
   -- Record today's lines before shutdown
   if Tracker.lines_today > 0 then
     stats_module.record_daily_activity(Tracker.current_stats, Tracker.lines_today)
+  end
+
+  -- Add final active time chunk if user typed recently before closing
+  if Tracker.last_activity_time > 0 then
+    local now = os.time()
+    local elapsed = now - Tracker.last_activity_time
+    if elapsed <= Tracker.idle_threshold then
+      Tracker.current_stats.time_coding = Tracker.current_stats.time_coding + elapsed
+    end
   end
 
   stats_module.end_session(Tracker.current_stats)

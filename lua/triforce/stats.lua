@@ -280,11 +280,8 @@ end
 function Stats.end_session(stats)
   Util.validate({ stats = { stats, { 'table' } } })
 
-  if stats.last_session_start <= 0 then
-    return
-  end
-
-  stats.time_coding = stats.time_coding - stats.last_session_start + os.time()
+  -- Time is accumulated per-keystroke in tracker.lua (activity-based),
+  -- so we only need to reset the session start marker here.
   stats.last_session_start = 0
 end
 
