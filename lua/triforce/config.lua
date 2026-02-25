@@ -6,7 +6,7 @@
 ---XP required per level in this tier
 ---@field xp_per_level integer
 
----@class LevelTier3: LevelTier
+---@class LevelTier8: LevelTier
 ---@field max_level number
 
 ---@class LevelProgression
@@ -14,8 +14,18 @@
 ---@field tier_1 LevelTier
 ---Default: Levels 11-20, 500 XP each
 ---@field tier_2 LevelTier
----Default: Levels 21+, 1000 XP each
----@field tier_3 LevelTier3
+---Default: Levels 21-30, 1000 XP each
+---@field tier_3 LevelTier
+---Default: Levels 31-40, 2000 XP each
+---@field tier_4 LevelTier
+---Default: Levels 41-50, 3000 XP each
+---@field tier_5 LevelTier
+---Default: Levels 51-75, 5000 XP each
+---@field tier_6 LevelTier
+---Default: Levels 76-100, 7500 XP each
+---@field tier_7 LevelTier
+---Default: Levels 101+, 10000 XP each
+---@field tier_8 LevelTier8
 
 ---@class XPRewards
 ---XP gained per character typed (default: `1`)
@@ -129,7 +139,12 @@ local defaults = {
   level_progression = {
     tier_1 = { min_level = 1, max_level = 10, xp_per_level = 300 },
     tier_2 = { min_level = 11, max_level = 20, xp_per_level = 500 },
-    tier_3 = { min_level = 21, max_level = math.huge, xp_per_level = 1000 },
+    tier_3 = { min_level = 21, max_level = 30, xp_per_level = 1000 },
+    tier_4 = { min_level = 31, max_level = 40, xp_per_level = 2000 },
+    tier_5 = { min_level = 41, max_level = 50, xp_per_level = 3000 },
+    tier_6 = { min_level = 51, max_level = 75, xp_per_level = 5000 },
+    tier_7 = { min_level = 76, max_level = 100, xp_per_level = 7500 },
+    tier_8 = { min_level = 101, max_level = math.huge, xp_per_level = 10000 },
   },
   ignore_ft = {},
   xp_rewards = { char = 1, line = 1, save = 50 },
