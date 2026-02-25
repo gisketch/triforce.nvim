@@ -225,10 +225,15 @@ function Util.get_total_xp_for_level(level, level_config)
     tier_1 = { level_config.tier_1, { 'table' } },
     tier_2 = { level_config.tier_2, { 'table' } },
     tier_3 = { level_config.tier_3, { 'table' } },
+    tier_4 = { level_config.tier_4, { 'table' } },
+    tier_5 = { level_config.tier_5, { 'table' } },
+    tier_6 = { level_config.tier_6, { 'table' } },
+    tier_7 = { level_config.tier_7, { 'table' } },
+    tier_8 = { level_config.tier_8, { 'table' } },
   })
 
   for name, tier in pairs(level_config) do
-    ---@cast tier LevelTier|LevelTier3
+    ---@cast tier LevelTier|LevelTier8
     Util.validate({
       [('%s_max_level'):format(name)] = { tier.max_level, { 'number' } },
       [('%s_min_level'):format(name)] = { tier.min_level, { 'number' } },
@@ -250,9 +255,44 @@ function Util.get_total_xp_for_level(level, level_config)
       total_xp = total_xp + (tier_2_levels * level_config.tier_2.xp_per_level)
     end
   end
-
+  
   if level > level_config.tier_3.min_level then
-    total_xp = total_xp + ((level - level_config.tier_3.min_level) * level_config.tier_3.xp_per_level)
+    local tier_3_levels = math.min(level - 1, level_config.tier_3.max_level) - level_config.tier_3.min_level + 1
+    if tier_3_levels > 0 then
+      total_xp = total_xp + (tier_3_levels * level_config.tier_3.xp_per_level)
+    end
+  end
+
+  if level > level_config.tier_4.min_level then
+    local tier_4_levels = math.min(level - 1, level_config.tier_4.max_level) - level_config.tier_4.min_level + 1
+    if tier_4_levels > 0 then
+      total_xp = total_xp + (tier_4_levels * level_config.tier_4.xp_per_level)
+    end
+  end
+  
+  if level > level_config.tier_5.min_level then
+    local tier_5_levels = math.min(level - 1, level_config.tier_5.max_level) - level_config.tier_5.min_level + 1
+    if tier_5_levels > 0 then
+      total_xp = total_xp + (tier_5_levels * level_config.tier_5.xp_per_level)
+    end
+  end
+  
+  if level > level_config.tier_6.min_level then
+    local tier_6_levels = math.min(level - 1, level_config.tier_6.max_level) - level_config.tier_6.min_level + 1
+    if tier_6_levels > 0 then
+      total_xp = total_xp + (tier_6_levels * level_config.tier_6.xp_per_level)
+    end
+  end
+
+  if level > level_config.tier_7.min_level then
+    local tier_7_levels = math.min(level - 1, level_config.tier_7.max_level) - level_config.tier_7.min_level + 1
+    if tier_7_levels > 0 then
+      total_xp = total_xp + (tier_7_levels * level_config.tier_7.xp_per_level)
+    end
+  end
+
+  if level > level_config.tier_8.min_level then
+    total_xp = total_xp + ((level - level_config.tier_8.min_level) * level_config.tier_8.xp_per_level)
   end
 
   return total_xp
