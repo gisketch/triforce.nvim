@@ -28,7 +28,12 @@ local Stats = {}
 Stats.level_config = {
   tier_1 = { min_level = 1, max_level = 10, xp_per_level = 300 }, -- Levels 1-10: 300 XP each
   tier_2 = { min_level = 11, max_level = 20, xp_per_level = 500 }, -- Levels 11-20: 500 XP each
-  tier_3 = { min_level = 21, max_level = math.huge, xp_per_level = 1000 }, -- Levels 21+: 1000 XP each
+  tier_3 = { min_level = 21, max_level = 30, xp_per_level = 1000 }, -- Levels 21-30: 1000 XP each
+  tier_4 = { min_level = 31, max_level = 40, xp_per_level = 2000 }, -- Levels 31-40: 2000 XP each
+  tier_5 = { min_level = 41, max_level = 50, xp_per_level = 3000 }, -- Levels 41-50: 3000 XP each
+  tier_6 = { min_level = 51, max_level = 75, xp_per_level = 5000 }, -- Levels 51-75: 5000 XP each
+  tier_7 = { min_level = 76, max_level = 100, xp_per_level = 7500 }, -- Levels 76-100: 7500 XP each
+  tier_8 = { min_level = 101, max_level = math.huge, xp_per_level = 10000 }, -- Levels 101+: 10000 XP each
 }
 
 ---@return Stats stats
@@ -231,8 +236,53 @@ function Stats.calculate_level(xp)
   accumulated_xp = accumulated_xp + tier_2_total
   level = Stats.level_config.tier_2.max_level
 
-  -- Tier 3: Levels 21+ (1000 XP each)
-  return level + math.floor((xp - accumulated_xp) / Stats.level_config.tier_3.xp_per_level) + 1
+  -- Tier 3: Levels 21-30 (1000 XP each)
+  local tier_3_range = Stats.level_config.tier_3.max_level - Stats.level_config.tier_3.min_level + 1
+  local tier_3_total = tier_3_range * Stats.level_config.tier_3.xp_per_level
+  if xp <= accumulated_xp + tier_3_total then
+    return (level + 1) + math.floor((xp - accumulated_xp) / Stats.level_config.tier_3.xp_per_level)
+  end
+  accumulated_xp = accumulated_xp + tier_3_total
+  level = Stats.level_config.tier_3.max_level
+  
+  -- Tier 4: Levels 31-40 (2000 XP each)
+  local tier_4_range = Stats.level_config.tier_4.max_level - Stats.level_config.tier_4.min_level + 1
+  local tier_4_total = tier_4_range * Stats.level_config.tier_4.xp_per_level
+  if xp <= accumulated_xp + tier_4_total then
+    return (level + 1) + math.floor((xp - accumulated_xp) / Stats.level_config.tier_4.xp_per_level)
+  end
+  accumulated_xp = accumulated_xp + tier_4_total
+  level = Stats.level_config.tier_4.max_level
+
+  -- Tier 5: Levels 41-50 (3000 XP each)
+  local tier_5_range = Stats.level_config.tier_5.max_level - Stats.level_config.tier_5.min_level + 1
+  local tier_5_total = tier_5_range * Stats.level_config.tier_5.xp_per_level
+  if xp <= accumulated_xp + tier_5_total then
+    return (level + 1) + math.floor((xp - accumulated_xp) / Stats.level_config.tier_5.xp_per_level)
+  end
+  accumulated_xp = accumulated_xp + tier_5_total
+  level = Stats.level_config.tier_5.max_level
+
+  -- Tier 6: Levels 51-75 (5000 XP each)
+  local tier_6_range = Stats.level_config.tier_6.max_level - Stats.level_config.tier_6.min_level + 1
+  local tier_6_total = tier_6_range * Stats.level_config.tier_6.xp_per_level
+  if xp <= accumulated_xp + tier_6_total then
+    return (level + 1) + math.floor((xp - accumulated_xp) / Stats.level_config.tier_6.xp_per_level)
+  end
+  accumulated_xp = accumulated_xp + tier_6_total
+  level = Stats.level_config.tier_6.max_level
+
+  -- Tier 7: Levels 76-100 (7500 XP each)
+  local tier_7_range = Stats.level_config.tier_7.max_level - Stats.level_config.tier_7.min_level + 1
+  local tier_7_total = tier_7_range * Stats.level_config.tier_7.xp_per_level
+  if xp <= accumulated_xp + tier_7_total then
+    return (level + 1) + math.floor((xp - accumulated_xp) / Stats.level_config.tier_7.xp_per_level)
+  end
+  accumulated_xp = accumulated_xp + tier_7_total
+  level = Stats.level_config.tier_7.max_level
+
+  -- Tier 8: Levels 101+ (10000 XP each)
+  return level + math.floor((xp - accumulated_xp) / Stats.level_config.tier_8.xp_per_level) + 1
 end
 
 ---Calculate XP needed for next level
