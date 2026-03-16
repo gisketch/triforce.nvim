@@ -626,32 +626,7 @@ Add Triforce components to your lualine configuration:
 require('lualine').setup({
   sections = {
     lualine_x = {
-      -- Add one or more components
-      require('triforce.lualine').level,
-      require('triforce.lualine').achievements,
-      'encoding',
-      'fileformat',
-      'filetype',
-    },
-  }
-})
-```
-
-### Quick Setup
-
-Use the `components()` helper to get all components at once:
-
-```lua
-local triforce = require('triforce.lualine').components()
-
-require('lualine').setup({
-  sections = {
-    lualine_x = {
-      triforce.level,
-      triforce.achievements,
-      triforce.streak,
-      triforce.session_time,
-      'encoding', 'fileformat', 'filetype'
+      'triforce',
     },
   }
 })
@@ -665,6 +640,7 @@ Each component can be customized independently.
 
 Options:
 
+- `enabled` (boolean): Activates this component (default: `true`)
 - `prefix` (string): Text prefix before level number (default: `'Lv.'`)
 - `show` (table): Toggles for showing different components:
   - `level` (boolean): Show level number (default: `true`)
@@ -676,125 +652,87 @@ Options:
   - `chars` (table): `{ filled = '█', empty = '░' }` (default)
 
 ```lua
--- Default: prefix + level + bar
-function()
-  return require('triforce.lualine').level()
-end
--- Result: Lv.27 ████░░
-
--- Show percentage instead of bar
-function()
-  return require('triforce.lualine').level({
-    show = { bar = false, percent = true },
-  })
-end
--- Result: Lv.27 90%
-
--- Show everything (XP numbers + percentage)
-function()
-  return require('triforce.lualine').level({
-    show = { bar = true, percent = true, xp = true },
-    bar = { length = 8 },
-  })
-end
--- Result: Lv.27 ████████ 90% 450/500
-
--- Customize bar style
-function()
-  return require('triforce.lualine').level({
-    bar = {
-      chars = { filled = '●', empty = '○' },
-      length = 10,
+require('lualine').setup({
+  sections = {
+    lualine_x = {
+      {
+        'triforce',
+        level = {
+          enabled = true,
+          prefix = 'Lv.',
+          show = { level = true, bar = true, percent = false, xp = false },
+          bar = { length = 6, chars = { filled = '█', empty = '░' } },
+        },
+      },
     },
-  })
-end
--- Result: Lv.27 ●●●●●●●●●○
-
--- Custom prefix or no prefix
-function()
-  return require('triforce.lualine').level({
-    prefix = 'Level ',  -- or set to '' for no prefix
-  })
-end
--- Result: Level 27 ████░░
+  }
+})
 ```
 
 #### Achievements Component
 
 Options:
 
+- `enabled` (boolean): Activates this component (default: `false`)
 - `icon` (string): Icon to display (default: `''` - trophy)
 - `show_count` (boolean): Show unlocked/total count (default: `true`)
 
 ```lua
--- Default
-function()
-  return require('triforce.lualine').achievements()
-end
--- Result:  12/18
-
--- Custom icon or no icon
-function()
-  return require('triforce.lualine').achievements({
-    icon = '',  -- or '' for no icon
-  })
-end
--- Result:  12/18
+require('lualine').setup({
+  sections = {
+    lualine_x = {
+      {
+        'triforce',
+        achievements = { enabled = false, icon = '', show_count = true },
+      },
+    },
+  }
+})
 ```
 
 #### Streak Component
 
 Options:
 
+- `enabled` (boolean): Activates this component (default: `false`)
 - `icon` (string): Icon to display (default: `''` - flame)
 - `show_days` (boolean): Show day count (default: `true`)
 
 The streak component returns an empty string when streak is 0, so it won't clutter your statusline.
 
 ```lua
--- Default
-function()
-  return require('triforce.lualine').streak()
-end
--- Result:  5
-
--- Different icon
-function()
-  return require('triforce.lualine').streak({ icon = '' })
-end
--- Result:  5
+require('lualine').setup({
+  sections = {
+    lualine_x = {
+      {
+        'triforce',
+        streak = { enabled = false, icon = '', show_days = true },
+      },
+    },
+  }
+})
 ```
 
 #### Session Time Component
 
 Options:
 
+- `enabled` (boolean): Activates this component (default: `false`)
 - `icon` (string): Icon to display (default: `''` - clock)
 - `show_duration` (boolean): Show time duration (default: `true`)
 - `format` (string): `'short'` (2h 34m) or `'long'` (2:34:12) (default: `'short'`)
 
 ```lua
--- Default (short format)
-function()
-  return require('triforce.lualine').session_time()
-end
--- Result:  2h 34m
-
--- Long format (2:34:12 instead of 2h 34m)
-function()
-  return require('triforce.lualine').session_time({
-    format = 'long',
-  })
-end
--- Result:  2:34:12
-
--- Different icon
-function()
-  return require('triforce.lualine').session_time({
-    icon = '',  -- watch icon
-  })
-end
--- Result:  2h 34m
+require('lualine').setup({
+  sections = {
+    lualine_x = {
+      {
+        'triforce',
+        session_time = { enabled = false, icon = '', show_duration = true, format = 'short' },
+      },
+    },
+  }
+})
 ```
 
 ### Global Component Configuration
@@ -802,80 +740,45 @@ end
 Set defaults for all components:
 
 ```lua
--- Configure defaults
-require('triforce.lualine').setup({
-  level = {
-    prefix = 'Level ',
-    bar = { length = 8 },
-    show = { percent = true },
-  },
-  achievements = { icon = '' },
-  streak = { icon = '' },
-  session_time = { icon = '', format = 'long' },
-})
-
--- Then use components normally
-local triforce = require('triforce.lualine').components()
-```
-
-### Example Configurations
-
-#### Minimalist Setup
-
-```lua
 require('lualine').setup({
   sections = {
     lualine_x = {
-      function()
-        return require('triforce.lualine').level()
-      end,
+      {
+        'triforce',
+        level = {
+          enabled = true,
+          prefix = 'Lv.',
+          show = {
+            level = true,
+            bar = true,
+            percent = false,
+            xp = false,
+          },
+          bar = {
+            length = 6,
+            chars = { filled = '█', empty = '░' },
+          },
+        },
+        achievements = {
+          enabled = false,
+          icon = '',
+          show_count = true,
+        },
+        streak = {
+          enabled = false,
+          icon = '',
+          show_days = true,
+        },
+        session_time = {
+          enabled = false,
+          icon = '',
+          show_duration = true,
+          format = 'short',
+        },
+      },
     },
   }
 })
--- Result: Lv.27 ████░░
-```
-
-#### Full Stats Dashboard
-
-```lua
-local triforce = require('triforce.lualine').components()
-
-require('lualine').setup({
-  sections = {
-    lualine_c = { 'filename' },
-    lualine_x = {
-      triforce.session_time,
-      triforce.streak,
-      triforce.achievements,
-      triforce.level,
-      'encoding',
-      'filetype',
-    },
-  }
-})
--- Result:  2h 34m  5  12/18 Lv.27 ████░░ ...
-```
-
-#### Custom Style
-
-```lua
-require('triforce.lualine').setup({
-  level = {
-    prefix = '',  -- No prefix, just number
-    bar = { chars = { filled = '●', empty = '○' }, length = 10 },
-    show = { percent = true },
-  },
-  achievements = {
-    icon = '',  -- medal icon
-  },
-  streak = {
-    icon = '',  -- bolt icon
-  },
-})
-
-local triforce = require('triforce.lualine').components()
--- Now all components use your custom config
--- Result:  2h 34m  5  12/18 27 ●●●●●●●●●○ 90%
 ```
 
 ---

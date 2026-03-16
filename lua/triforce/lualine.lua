@@ -39,6 +39,7 @@
 ---Level component config
 --- ---
 ---@class Triforce.LualineConfig.Level
+---@field enabled? boolean
 ---Text prefix before level number
 --- ---
 ---@field prefix? string
@@ -52,6 +53,7 @@
 ---Achievements component config
 --- ---
 ---@class Triforce.LualineConfig.Achievements
+---@field enabled? boolean
 ---Nerd Font trophy icon
 --- ---
 ---@field icon? string
@@ -62,6 +64,7 @@
 ---Streak component config
 --- ---
 ---@class Triforce.LualineConfig.Streak
+---@field enabled? boolean
 ---Nerd Font flame icon
 --- ---
 ---@field icon? string
@@ -72,6 +75,7 @@
 ---Session time component config
 --- ---
 ---@class Triforce.LualineConfig.SessionTime
+---@field enabled? boolean
 ---Nerd Font clock icon
 --- ---
 ---@field icon? string
@@ -134,14 +138,28 @@ local Lualine = {}
 ---@return Triforce.LualineConfigDefaults defaults
 function Lualine.get_defaults()
   return { ---@type Triforce.LualineConfigDefaults
+    achievements = {
+      enabled = false,
+      icon = '',
+      show_count = true,
+    },
     level = {
+      bar = { length = 8, chars = { filled = '█', empty = '░' } },
+      enabled = true,
       prefix = 'Lv.',
       show = { level = true, bar = true, percent = false, xp = false },
-      bar = { length = 8, chars = { filled = '█', empty = '░' } },
     },
-    achievements = { icon = '', show_count = true },
-    streak = { icon = '', show_days = true },
-    session_time = { icon = '', show_duration = true, format = 'short' },
+    session_time = {
+      enabled = false,
+      icon = '',
+      show_duration = true,
+      format = 'short',
+    },
+    streak = {
+      enabled = false,
+      icon = '',
+      show_days = true,
+    },
   }
 end
 
