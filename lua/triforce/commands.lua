@@ -131,7 +131,7 @@ Usage: :Triforce config
     desc = 'Triforce gamification commands',
     complete = function(_, line)
       local args = vim.split(line, '%s+', { trimempty = false })
-      if args[1]:sub(-1) == '!' and #args == 1 then
+      if args[1]:sub(-1) == '!' then
         return {}
       end
 
@@ -145,6 +145,7 @@ Usage: :Triforce config
             table.insert(res, comp)
           end
         end
+        return res
       end
       if #args == 3 then
         if args[2] == 'debug' then
@@ -157,6 +158,7 @@ Usage: :Triforce config
               table.insert(res, comp)
             end
           end
+          return res
         end
         if args[2] == 'stats' then
           if args[3] == '' then
@@ -168,6 +170,7 @@ Usage: :Triforce config
               table.insert(res, comp)
             end
           end
+          return res
         end
         if args[2] == 'profile' then
           if args[3] == '' then
@@ -179,6 +182,7 @@ Usage: :Triforce config
               table.insert(res, comp)
             end
           end
+          return res
         end
       end
       if #args >= 4 and args[2] == 'stats' and args[3] == 'export' then
@@ -192,6 +196,7 @@ Usage: :Triforce config
               table.insert(res, comp)
             end
           end
+          return res
         end
         if #args == 5 and vim.list_contains({ 'json', 'markdown' }, args[4]) then
           return vim.fn.getcompletion(args[5], 'file', true)
