@@ -1,14 +1,15 @@
 ---@module 'triforce.types'
 
 local ERROR = vim.log.levels.ERROR
-local util = require('triforce.util')
+local Util = require('triforce.util')
 
 ---@class Triforce.Achievements
+---@field achievements Achievement[]
+---@field unique_languages integer
 local Achievement = {}
 
-Achievement.unique_languages = 0 ---@type integer
-
-Achievement.achievements = { ---@type Achievement[]
+Achievement.unique_languages = 0
+Achievement.achievements = {
   {
     id = 'first_100',
     name = 'First Steps',
@@ -177,28 +178,29 @@ Achievement.achievements = { ---@type Achievement[]
 ---@param stats Stats
 ---@return Achievement[] achievements
 function Achievement.get_all_achievements(stats)
-  util.validate({ stats = { stats, { 'table' } } })
+  Util.validate({ stats = { stats, { 'table' } } })
 
   -- Count unique languages
   Achievement.unique_languages = 0
   for _ in pairs(stats.chars_by_language or {}) do
     Achievement.unique_languages = Achievement.unique_languages + 1
   end
-
   return Achievement.achievements
 end
 
 ---@param achievement Achievement[]|Achievement
 ---@param stats Stats
 function Achievement.new_achievements(achievement, stats)
-  util.validate({ achievement = { achievement, { 'table' } } })
-
+  Util.validate({
+    achievement = { achievement, { 'table' } },
+    stats = { stats, { 'table' } },
+  })
   if vim.tbl_isempty(achievement) then
     return
   end
 
-  ---@cast achievement Achievement[]
-  if not util.is_dict(achievement) then
+  if not Util.is_dict(achievement) then
+    ---@cast achievement Achievement[]
     for _, achv in ipairs(achievement) do
       Achievement.new_achievements(achv, stats)
     end
@@ -206,12 +208,12 @@ function Achievement.new_achievements(achievement, stats)
   end
 
   ---@cast achievement Achievement
-  util.validate({
-    achievement_id = { achievement.id, { 'string' } },
-    achievement_check = { achievement.check, { 'function' } },
-    achievement_name = { achievement.name, { 'string' } },
-    achievement_desc = { achievement.desc, { 'string', 'nil' }, true },
-    achievement_icon = { achievement.icon, { 'string', 'nil' }, true },
+  Util.validate({
+    ['achievement.id'] = { achievement.id, { 'string' } },
+    ['achievement.check'] = { achievement.check, { 'function' } },
+    ['achievement.name'] = { achievement.name, { 'string' } },
+    ['achievement.desc'] = { achievement.desc, { 'string', 'nil' }, true },
+    ['achievement.icon'] = { achievement.icon, { 'string', 'nil' }, true },
   })
 
   if vim.list_contains({ achievement.id, achievement.name }, '') then
@@ -222,7 +224,7 @@ function Achievement.new_achievements(achievement, stats)
   achievement.desc = achievement.desc or 'No Description'
   achievement.icon = achievement.icon or ''
 
-  local new = true
+  local new = true ---@type boolean
   for i, achv in ipairs(Achievement.achievements) do
     if achv.id == achievement.id then
       Achievement.achievements[i] = achievement
@@ -230,7 +232,6 @@ function Achievement.new_achievements(achievement, stats)
       break
     end
   end
-
   if new then
     table.insert(Achievement.achievements, achievement)
   end
@@ -240,9 +241,9 @@ end
 
 ---Check and unlock achievements
 ---@param stats Stats
----@return Achievement[] newly_unlocked List of achievement objects
+---@return Achievement[] newly_unlocked List of achievement objects.
 function Achievement.check_achievements(stats)
-  util.validate({ stats = { stats, { 'table' } } })
+  Util.validate({ stats = { stats, { 'table' } } })
 
   local newly_unlocked = {} ---@type Achievement[]
   for _, achievement in ipairs(Achievement.get_all_achievements(stats)) do
@@ -257,7 +258,6 @@ function Achievement.check_achievements(stats)
       })
     end
   end
-
   return newly_unlocked
 end
 

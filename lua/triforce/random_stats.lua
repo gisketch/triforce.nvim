@@ -1,4 +1,4 @@
-local util = require('triforce.util')
+local Util = require('triforce.util')
 
 ---Random stat generator for displaying varied coding facts
 ---@class Triforce.RandomStats
@@ -8,7 +8,7 @@ local RandStats = {}
 ---@param stats Stats
 ---@return string fact
 function RandStats.get_random_fact(stats)
-  util.validate({ stats = { stats, { 'table' } } })
+  Util.validate({ stats = { stats, { 'table' } } })
 
   local facts = {} ---@type string[]
 
@@ -170,7 +170,7 @@ end
 ---@param num number
 ---@return string str
 function RandStats.format_number(num)
-  util.validate({ num = { num, { 'number' } } })
+  Util.validate({ num = { num, { 'number' } } })
 
   local formatted = tostring(num)
   local k
@@ -188,7 +188,7 @@ end
 ---Format language name for display
 ---@param filetype string
 function RandStats.format_language_name(filetype)
-  util.validate({ filetype = { filetype, { 'string' } } })
+  Util.validate({ filetype = { filetype, { 'string' } } })
 
   local language_names = {} ---@type table<string, string>
   for ft, spec in pairs(require('triforce.languages').langs) do

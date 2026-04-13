@@ -4,13 +4,16 @@ local Util = require('triforce.util')
 
 ---Language configuration and icons
 ---@class Triforce.Languages
+---List of ignored languages (called from `triforce.setup()`).
+--- ---
+---@field ignored_langs string[]
+---Mappings for popular programming languages, in `{ name, icon }` tuples.
+--- ---
+---@field langs table<string, TriforceLanguage>
 local Languages = {}
 
----List of ignored languages (called from setup())
-Languages.ignored_langs = {} ---@type string[]
-
----Mappings for popular programming languages, in `{ name, icon }` tuples
-Languages.langs = { ---@type table<string, TriforceLanguage>
+Languages.ignored_langs = {}
+Languages.langs = {
   -- Web
   javascript = { name = 'JavaScript', icon = '' }, -- nf-dev-javascript
   typescript = { name = 'TypeScript', icon = '' }, -- nf-seti-typescript
@@ -105,7 +108,9 @@ Languages.langs = { ---@type table<string, TriforceLanguage>
   cobol = { name = 'cobol', icon = '' }, -- nf-code-array
 }
 
----Get icon for a filetype
+---Get icon for a filetype.
+---
+---Returns `nil` if not a valid one.
 ---@param ft string
 ---@return string|nil icon
 function Languages.get_icon(ft)
@@ -114,7 +119,6 @@ function Languages.get_icon(ft)
   if vim.list_contains(Languages.ignored_langs, ft) then
     return
   end
-
   if not Languages.langs[ft] then
     return ''
   end
@@ -125,6 +129,8 @@ end
 ---@param ft string
 ---@return boolean excluded
 function Languages.is_excluded(ft)
+  Util.validate({ ft = { ft, { 'string' } } })
+
   return vim.list_contains(Languages.ignored_langs, ft)
 end
 
@@ -149,7 +155,9 @@ function Languages.should_track(ft)
   return not Languages.is_excluded(ft) and Languages.langs[ft] and Languages.langs[ft].icon ~= nil
 end
 
----Get display name for language
+---Get display name for language.
+---
+---Returns `nil` if `ft` is not valid.
 ---@param ft string
 ---@return string|nil name
 function Languages.get_display_name(ft)
@@ -158,7 +166,6 @@ function Languages.get_display_name(ft)
   if Languages.is_excluded(ft) then
     return
   end
-
   if not Languages.langs[ft] then
     return ''
   end
@@ -167,6 +174,8 @@ function Languages.get_display_name(ft)
 end
 
 ---Get full display with icon
+---
+---Returns `nil` if `ft` is not valid.
 ---@param ft string
 ---@return string|nil full_display
 function Languages.get_full_display(ft)

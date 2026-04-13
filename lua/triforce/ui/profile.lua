@@ -1,26 +1,26 @@
 ---@class TriforceLangData
----@field lang string
 ---@field count integer
+---@field lang string
 
 ---@class Triforce.UIDimensions
----@field float? { buf: integer, win: integer }|nil
 ---@field dim_float? { buf: integer, win: integer }|nil
----@field width integer
+---@field float? { buf: integer, win: integer }|nil
 ---@field height integer
+---@field width integer
 ---@field xpad integer
 
 ---@alias PaginationKey 'h'|'H'|'<Left>'|'l'|'L'|'<Right>'
 
 local volt = require('volt')
 local voltui = require('volt.ui')
-local voltstate = require('volt.state') ---@type table<integer, { h: integer }>
+local voltstate = require('volt.state') --[[@as table<integer, { h: integer }>]]
 local stats_module = require('triforce.stats')
 local achievement_module = require('triforce.achievement')
 local tracker = require('triforce.tracker')
 local languages = require('triforce.languages')
 local random_stats = require('triforce.random_stats')
 local levels_module = require('triforce.levels')
-local util = require('triforce.util')
+local Util = require('triforce.util')
 
 ---@class Triforce.Ui.Profile.TabsMap
 ---@field stats 1
@@ -31,22 +31,28 @@ local util = require('triforce.util')
 ---@alias Triforce.Ui.Profile.TabsEnum 1|2|3|4
 
 ---@class Triforce.Ui.Profile
+---@field ns integer
+---@field achievements_page integer
+---@field levels_page integer
+---@field achievements_per_page integer
+---@field levels_per_page integer
+---@field max_language_entries integer
+---@field current_tab Triforce.Ui.Profile.TabsEnum
+---@field all_tabs string[]
+---@field dimensions Triforce.UIDimensions
+---@field tabs_map Triforce.Ui.Profile.TabsMap
 local Profile = {}
 
-Profile.ns = vim.api.nvim_create_namespace('TriforceProfile') ---@type integer
-Profile.achievements_page = 1 ---@type integer
-Profile.levels_page = 1 ---@type integer
-Profile.achievements_per_page = 5 ---@type integer
-Profile.levels_per_page = 5 ---@type integer
-Profile.max_language_entries = 13 ---@type integer
-Profile.current_tab = 1 ---@type Triforce.Ui.Profile.TabsEnum
-Profile.all_tabs = { '1   Stats', '2  󰌌 Achievements', '3   Languages', '4  󱡁 Levels' } ---@type string[]
-Profile.tabs_map = { stats = 1, achievements = 2, languages = 3, levels = 4 } ---@type Triforce.Ui.Profile.TabsMap
-Profile.dimensions = { ---@type Triforce.UIDimensions
-  width = math.floor(vim.o.columns * 0.66),
-  height = math.floor(vim.o.lines * 0.85),
-  xpad = 2,
-}
+Profile.ns = vim.api.nvim_create_namespace('TriforceProfile')
+Profile.achievements_page = 1
+Profile.levels_page = 1
+Profile.achievements_per_page = 5
+Profile.levels_per_page = 5
+Profile.max_language_entries = 13
+Profile.current_tab = 1
+Profile.all_tabs = { '1   Stats', '2  󰌌 Achievements', '3   Languages', '4  󱡁 Levels' }
+Profile.tabs_map = { stats = 1, achievements = 2, languages = 3, levels = 4 }
+Profile.dimensions = { width = math.floor(vim.o.columns * 0.66), height = math.floor(vim.o.lines * 0.85), xpad = 2 }
 
 ---Close up profile window
 function Profile.close()
@@ -63,9 +69,9 @@ function Profile.close()
 end
 
 ---Toggle profile window
----@param tab? integer
+---@param tab? integer|nil
 function Profile.toggle(tab)
-  util.validate({ tab = { tab, { 'number', 'nil' }, true } })
+  Util.validate({ tab = { tab, { 'number', 'nil' }, true } })
   tab = tab or nil
 
   if not (Profile.dimensions.float or Profile.dimensions.dim_float) then
@@ -79,7 +85,7 @@ end
 ---@param key PaginationKey
 ---@return function paginator
 function Profile.pagination_fun(key)
-  util.validate({ key = { key, { 'string' } } })
+  Util.validate({ key = { key, { 'string' } } })
 
   return function()
     if not vim.tbl_contains({ 2, 4 }, Profile.current_tab) then
@@ -230,7 +236,7 @@ function Profile.build_activity_heatmap(stats)
   for idx, my in ipairs(month_seq) do
     local month_idx = my.month
     local month_year = tostring(my.year)
-    local start_day = util.getday_i(1, month_idx, my.year)
+    local start_day = Util.getday_i(1, month_idx, my.year)
 
     if idx == 1 and start_day ~= 1 then
       for n = 1, start_day - 1 do
@@ -238,9 +244,9 @@ function Profile.build_activity_heatmap(stats)
       end
     end
 
-    for day_num = 1, util.days_in_month(month_idx, my.year) do
-      local day_of_week = util.getday_i(day_num, month_idx, my.year)
-      local date_key = ('%s-%s-%s'):format(month_year, util.double_digits(month_idx), util.double_digits(day_num))
+    for day_num = 1, Util.days_in_month(month_idx, my.year) do
+      local day_of_week = Util.getday_i(day_num, month_idx, my.year)
+      local date_key = ('%s-%s-%s'):format(month_year, Util.double_digits(month_idx), Util.double_digits(day_num))
 
       local activity = stats.daily_activity[date_key] or 0
       local hl = Profile.get_activity_hl(activity)
@@ -361,7 +367,7 @@ function Profile.build_stats_tab()
       tostring(stats.sessions),
       tostring(stats.chars_typed),
       tostring(stats.lines_typed),
-      util.format_time(stats.time_coding),
+      Util.format_time(stats.time_coding),
       streak > 0 and (tostring(streak) .. ' day' .. (streak > 1 and 's' or '')) or '0',
     },
   }
@@ -730,7 +736,7 @@ function Profile.setup_highlights()
     local hl = ('TriforceHeat%d'):format(level.name)
     local fg = heat_hls[hl] ---@type string|nil
     if fg then
-      local key = (util.is_type('string', fg) and fg:sub(1, 1) ~= '#') and 'link' or 'fg'
+      local key = (Util.is_type('string', fg) and fg:sub(1, 1) ~= '#') and 'link' or 'fg'
       vim.api.nvim_set_hl(Profile.ns, hl, { [key] = fg })
     end
   end
@@ -782,15 +788,15 @@ end
 ---@param back? boolean
 ---@param num? Triforce.Ui.Profile.TabsEnum
 function Profile.cycle_tab(back, num)
-  util.validate({
+  Util.validate({
     back = { back, { 'boolean', 'nil' }, true },
     num = { num, { 'number', 'nil' }, true },
   })
   back = back ~= nil and back or false
-  num = (num and util.is_int(num)) and num or 0
+  num = (num and Util.is_int(num)) and num or 0
 
   local old_tab = Profile.current_tab
-  local positions = vim.tbl_keys(Profile.all_tabs) ---@type integer[]
+  local positions = vim.tbl_keys(Profile.all_tabs) --[[@as integer[]\]]
   local pos = 1 ---@type Triforce.Ui.Profile.TabsEnum
   if not vim.list_contains(positions, num) then
     for i, _ in ipairs(Profile.all_tabs) do
@@ -799,7 +805,7 @@ function Profile.cycle_tab(back, num)
         break
       end
     end
-    pos = util.cycle_range(pos, 1, #Profile.all_tabs, back)
+    pos = Util.cycle_range(pos, 1, #Profile.all_tabs, back)
     Profile.current_tab = pos
   else
     Profile.current_tab = num
@@ -855,7 +861,7 @@ end
 ---Open profile window
 ---@param tab? Triforce.Ui.Profile.TabsEnum
 function Profile.open(tab)
-  util.validate({ tab = { tab, { 'number', 'nil' }, true } })
+  Util.validate({ tab = { tab, { 'number', 'nil' }, true } })
   tab = (tab and vim.tbl_contains(Profile.tabs_map, tab)) and tab or Profile.current_tab
 
   if Profile.dimensions.float and vim.api.nvim_buf_is_valid(Profile.dimensions.float.buf) then

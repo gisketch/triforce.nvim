@@ -28,9 +28,10 @@ local function get_default_titles()
 end
 
 ---@class Triforce.Levels
+---@field levels LevelTitles
 local Levels = {}
 
-Levels.levels = {} ---@type LevelTitles
+Levels.levels = {}
 
 function Levels.setup()
   Levels.levels = vim.tbl_deep_extend('keep', Levels.levels, get_default_titles())
@@ -66,7 +67,7 @@ end
 function Levels.get_all_levels(stats)
   Util.validate({ stats = { stats, { 'table' } } })
 
-  local keys = vim.tbl_keys(Levels.levels) ---@type integer[]
+  local keys = vim.tbl_keys(Levels.levels) --[[@as integer[]\]]
   local res = {} ---@type LevelSpec[]
   for _, lvl in ipairs(keys) do
     table.insert(res, {

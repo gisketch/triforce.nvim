@@ -2,8 +2,7 @@
 
 local Util = require('triforce.util')
 
----@type TriforceConfigDefaults
-local defaults = {
+local defaults = { ---@type TriforceConfigDefaults
   enabled = true,
   gamification_enabled = true,
   debug = false,
@@ -38,10 +37,12 @@ local defaults = {
 }
 
 ---@class Triforce.Config
+---Setup options.
+--- ---
+---@field config TriforceConfig
 ---@field float? { bufnr: integer, win: integer }|nil
 local Config = {}
 
----@type TriforceConfig
 Config.config = {}
 
 ---@param silent? boolean

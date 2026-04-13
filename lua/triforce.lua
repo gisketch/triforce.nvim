@@ -1,23 +1,23 @@
 local ERROR = vim.log.levels.ERROR
 local WARN = vim.log.levels.WARN
 local INFO = vim.log.levels.INFO
-local util = require('triforce.util')
-local config_mod = require('triforce.config')
+local Util = require('triforce.util')
+local Config = require('triforce.config')
 
 ---@class Triforce
 local M = {}
 
+M.close_config = Config.close_window
 M.get_stats = require('triforce.tracker').get_stats
-M.open_config = config_mod.open_window
-M.close_config = config_mod.close_window
-M.toggle_config = config_mod.toggle_window
+M.open_config = Config.open_window
+M.toggle_config = Config.toggle_window
 
 ---@param opts? TriforceConfig
 function M.setup(opts)
-  util.validate({ opts = { opts, { 'table', 'nil' }, true } })
+  Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
   -- Check Neovim version compatibility
-  if not util.vim_has('nvim-0.9') then
+  if not Util.vim_has('nvim-0.9') then
     vim.api.nvim_err_writeln('triforce.nvim requires Neovim >= 0.9.0') ---@diagnostic disable-line:deprecated
     return
   end
@@ -26,8 +26,7 @@ function M.setup(opts)
     vim.g.loaded_triforce = 1
   end
 
-  local config_module = require('triforce.config')
-  config_module.setup(opts or {})
+  Config.setup(opts or {})
 
   -- Create <Plug> mappings for users to map to their own keys
   vim.keymap.set('n', '<Plug>(TriforceProfile)', M.show_profile, {
@@ -39,7 +38,7 @@ function M.setup(opts)
   require('triforce.levels').setup()
   require('triforce.commands').setup()
 
-  local config = config_module.config
+  local config = Config.config
   -- Set up keymap if provided
   if config.keymap and config.keymap.show_profile and config.keymap.show_profile ~= '' then
     vim.keymap.set('n', config.keymap.show_profile, M.show_profile, {
@@ -49,7 +48,7 @@ function M.setup(opts)
     })
   end
 
-  if not config_module.has_gamification(true) then
+  if not Config.has_gamification(true) then
     return
   end
 
@@ -74,7 +73,7 @@ end
 ---Show profile UI
 ---@param tab? string
 function M.show_profile(tab)
-  util.validate({ tab = { tab, { 'string', 'nil' }, true } })
+  Util.validate({ tab = { tab, { 'string', 'nil' }, true } })
   if not require('triforce.config').has_gamification() then
     return
   end
@@ -173,7 +172,7 @@ end
 ---@param file string
 ---@param indent? string
 function M.export_stats_to_json(file, indent)
-  util.validate({
+  Util.validate({
     file = { file, { 'string' } },
     indent = { indent, { 'string', 'nil' }, true },
   })
@@ -187,7 +186,7 @@ end
 ---Export stats to Markdown
 ---@param file string
 function M.export_stats_to_md(file)
-  util.validate({ file = { file, { 'string' } } })
+  Util.validate({ file = { file, { 'string' } } })
   if not require('triforce.config').has_gamification() then
     return
   end
@@ -197,7 +196,7 @@ end
 
 ---@param achievements Achievement[]|Achievement
 function M.new_achievements(achievements)
-  util.validate({ achievements = { achievements, { 'table' } } })
+  Util.validate({ achievements = { achievements, { 'table' } } })
   if not require('triforce.config').has_gamification() then
     return
   end

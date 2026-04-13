@@ -2,12 +2,12 @@
 ---@diagnostic disable:unused-local
 
 ---@class LevelTier
----Starting level for this tier.
---- ---
----@field min_level integer
 ---Ending level for this tier (use `math.huge` for infinite).
 --- ---
 ---@field max_level integer
+---Starting level for this tier.
+--- ---
+---@field min_level integer
 ---XP required per level in this tier.
 --- ---
 ---@field xp_per_level integer
@@ -37,10 +37,10 @@
 ---Default: Levels 76-100, 7500 XP each.
 --- ---
 ---@field tier_7 LevelTier
----Default: Levels 101+, 10000 XP each.
+---Default: Levels 101-150, 10000 XP each.
 --- ---
 ---@field tier_8 LevelTier
----Default: Levels 151+, 12500 XP each.
+---Default: Levels 151-225, 12500 XP each.
 --- ---
 ---@field tier_9 LevelTier
 ---Default: Levels 226+, 15000 XP each.
@@ -68,15 +68,15 @@
 ---Notification configuration.
 --- ---
 ---@class TriforceConfig.Notifications
+---Show achievement unlock notifications.
+--- ---
+---@field achievements? boolean
 ---Show level up and achievement notifications.
 --- ---
 ---@field enabled? boolean
 ---Show level up notifications.
 --- ---
 ---@field level_up? boolean
----Show achievement unlock notifications.
---- ---
----@field achievements? boolean
 
 ---Default highlight groups for the heats.
 --- ---
@@ -90,30 +90,12 @@
 ---Triforce setup configuration.
 --- ---
 ---@class TriforceConfig
----Enable the plugin.
---- ---
----@field enabled? boolean
----Enable gamification features (stats, XP, achievements).
---- ---
----@field gamification_enabled? boolean
----Custom path for data file.
---- ---
----@field db_path? string
----Enable debugging messages.
---- ---
----@field debug? boolean
 ---List of user-defined achievements.
 --- ---
 ---@field achievements? Achievement[]
----Notification configuration.
---- ---
----@field notifications? TriforceConfig.Notifications
 ---Auto-save stats interval in seconds (default: `300`).
 --- ---
 ---@field auto_save_interval? integer
----Keymap configuration.
---- ---
----@field keymap? TriforceConfig.Keymap
 ---Custom language definitions:
 ---
 ---```lua
@@ -122,21 +104,39 @@
 ---```
 --- ---
 ---@field custom_languages? table<string, TriforceLanguage>
+---Custom path for data file.
+--- ---
+---@field db_path? string
+---Enable debugging messages.
+--- ---
+---@field debug? boolean
+---Enable the plugin.
+--- ---
+---@field enabled? boolean
+---Enable gamification features (stats, XP, achievements).
+--- ---
+---@field gamification_enabled? boolean
+---Default highlight groups for the heats.
+--- ---
+---@field heat_highlights? Triforce.Config.Heat
+---List of ignored filetypes.
+--- ---
+---@field ignore_ft? string[]
+---Keymap configuration.
+--- ---
+---@field keymap? TriforceConfig.Keymap
 ---List of custom level titles.
 --- ---
 ---@field levels? LevelParams[]
 ---Custom level progression tiers.
 --- ---
 ---@field level_progression? LevelProgression
----List of ignored filetypes.
+---Notification configuration.
 --- ---
----@field ignore_ft? string[]
+---@field notifications? TriforceConfig.Notifications
 ---Custom XP reward amounts for different actions.
 --- ---
 ---@field xp_rewards? XPRewards
----Default highlight groups for the heats.
---- ---
----@field heat_highlights? Triforce.Config.Heat
 
 ---@class TriforceConfigDefaults: TriforceConfig
 ---@field achievements Achievement[]
@@ -161,8 +161,9 @@
 ---@field name string
 local A = {}
 
+---The condition that decides whether an achievement is unlocked
 ---@param stats? Stats
----@return boolean
+---@return boolean unlocked
 function A.check(stats) end
 
 ---@class TriforceLanguage

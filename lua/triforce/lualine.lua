@@ -163,7 +163,7 @@ function Lualine.get_defaults()
   }
 end
 
-Lualine.config = Lualine.get_defaults() ---@type Triforce.LualineConfig
+Lualine.config = Lualine.get_defaults() --[[@as Triforce.LualineConfig]]
 
 ---Setup lualine integration with custom config
 ---@param opts? Triforce.LualineConfig User configuration
@@ -299,7 +299,6 @@ function Lualine.achievements(opts)
 
   -- Build component
   local parts = {} ---@type string[]
-
   if config.icon ~= '' then
     table.insert(parts, config.icon)
   end

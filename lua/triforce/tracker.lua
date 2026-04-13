@@ -5,8 +5,8 @@ local Util = require('triforce.util')
 local uv = vim.uv or vim.loop
 
 ---@class Triforce.Tracker
----@field current_stats? Stats
 ---@field augroup? integer
+---@field current_stats? Stats
 local Tracker = {}
 
 ---Track line count per buffer to detect new lines
@@ -157,7 +157,7 @@ function Tracker.on_text_changed(bufnr)
   Tracker.dirty = true
 
   -- Track character by language
-  local filetype = Util.optget('filetype', 'buf', bufnr) ---@type string
+  local filetype = Util.optget('filetype', 'buf', bufnr) --[[@as string]]
   if filetype ~= '' and require('triforce.languages').should_track(filetype) then
     -- Initialize if needed
     if not Tracker.current_stats.chars_by_language then

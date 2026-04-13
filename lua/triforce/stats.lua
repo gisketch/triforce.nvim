@@ -1,18 +1,42 @@
 ---Stats tracking and persistence module
 ---@class Stats
----@field xp number Total experience points
----@field level integer Current level
----@field chars_typed integer Total characters typed
----@field lines_typed integer Total lines typed
----@field sessions integer Total sessions
----@field time_coding integer Total time in seconds
----@field last_session_start integer Timestamp of session start
----@field achievements table<string, boolean> Unlocked achievements
----@field chars_by_language table<string, integer> Characters typed per language
----@field daily_activity table<string, integer> Lines typed per day (`YYYY-MM-DD` format)
----@field current_streak integer Current consecutive day streak
----@field longest_streak integer Longest ever streak
+---Unlocked achievements.
+--- ---
+---@field achievements table<string, boolean>
+---Characters typed per language.
+--- ---
+---@field chars_by_language table<string, integer>
+---Total characters typed.
+--- ---
+---@field chars_typed integer
+---Current consecutive day streak.
+--- ---
+---@field current_streak integer
+---Lines typed per day (`YYYY-MM-DD` format).
+--- ---
+---@field daily_activity table<string, integer>
 ---@field db_path string
+---Timestamp of session start.
+--- ---
+---@field last_session_start integer
+---Current level.
+--- ---
+---@field level integer
+---Total lines typed.
+--- ---
+---@field lines_typed integer
+---Longest ever streak.
+--- ---
+---@field longest_streak integer
+---Total sessions.
+--- ---
+---@field sessions integer
+---Total time in seconds.
+--- ---
+---@field time_coding integer
+---Total experience points
+--- ---
+---@field xp number
 
 local ERROR = vim.log.levels.ERROR
 local WARN = vim.log.levels.WARN
@@ -20,10 +44,11 @@ local uv = vim.uv or vim.loop
 local Util = require('triforce.util')
 
 ---@class Triforce.Stats
----Configurable level progression
----@field level_config LevelProgression
----@field db_path? string
 ---@field calibrated? true
+---@field db_path? string
+---Configurable level progression.
+--- ---
+---@field level_config LevelProgression
 local Stats = {}
 
 Stats.level_config = {
@@ -74,7 +99,7 @@ function Stats.validate_stats(stats)
     return false
   end
 
-  local keys = vim.tbl_keys(stats) ---@type string[]
+  local keys = vim.tbl_keys(stats) --[[@as string[]\]]
   for _, key in ipairs(vim.tbl_keys(Stats.default_stats())) do
     if not vim.list_contains(keys, key) then
       return false
@@ -95,7 +120,7 @@ function Stats.load(debug)
     return Stats.default_stats()
   end
 
-  local lines = vim.fn.readfile(path) ---@type string[]
+  local lines = vim.fn.readfile(path)
   if not lines or vim.tbl_isempty(lines) then
     return Stats.default_stats()
   end
@@ -210,7 +235,7 @@ function Stats.calibrate_tiers()
   if Stats.calibrated then
     return
   end
-  local last_level = Stats.level_config.tier_1.max_level ---@type integer
+  local last_level = Stats.level_config.tier_1.max_level
 
   if Stats.level_config.tier_2.min_level >= last_level then
     Stats.level_config.tier_2.min_level = last_level + 1
@@ -405,7 +430,7 @@ function Stats.add_xp(stats, amount)
 
   local ft = Util.optget('filetype', 'buf', vim.api.nvim_get_current_buf())
   local langs_module = require('triforce.languages')
-  local keys = vim.tbl_keys(langs_module.langs) ---@type string[]
+  local keys = vim.tbl_keys(langs_module.langs) --[[@as string[]\]]
   if vim.list_contains(langs_module.ignored_langs, ft) or not vim.list_contains(keys, ft) then
     return false
   end
