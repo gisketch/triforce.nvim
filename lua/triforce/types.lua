@@ -87,6 +87,16 @@
 ---@field TriforceHeat3? string
 ---@field TriforceHeat4? string
 
+---@class TriforceConfig.Backdrop
+---Whether to enable the backdrop (i.e. dimming the background).
+---
+---Defaults to `true`.
+--- ---
+---@field enabled? boolean
+---The amount of transparency for the window (0-100).
+--- ---
+---@field winblend? integer
+
 ---Triforce setup configuration.
 --- ---
 ---@class TriforceConfig
@@ -96,6 +106,11 @@
 ---Auto-save stats interval in seconds (default: `300`).
 --- ---
 ---@field auto_save_interval? integer
+---Backdrop (i.e. dimming the background) options.
+---
+---CREDITS: https://github.com/gisketch/triforce.nvim/issues/50
+--- ---
+---@field backdrop? TriforceConfig.Backdrop
 ---Custom language definitions:
 ---
 ---```lua
@@ -141,6 +156,7 @@
 ---@class TriforceConfigDefaults: TriforceConfig
 ---@field achievements Achievement[]
 ---@field auto_save_interval integer
+---@field backdrop TriforceConfig.Backdrop
 ---@field custom_languages table<string, TriforceLanguage>
 ---@field db_path string
 ---@field debug boolean

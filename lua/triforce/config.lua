@@ -3,14 +3,22 @@
 local Util = require('triforce.util')
 
 local defaults = { ---@type TriforceConfigDefaults
+  achievements = {},
+  auto_save_interval = 300,
+  custom_languages = {},
+  db_path = vim.fs.joinpath(vim.fn.stdpath('data'), 'triforce_stats.json'),
+  debug = false,
   enabled = true,
   gamification_enabled = true,
-  debug = false,
-  achievements = {},
-  notifications = { enabled = true, level_up = true, achievements = true },
-  auto_save_interval = 300,
+  heat_highlights = {
+    TriforceHeat0 = '#f0f0f0',
+    TriforceHeat1 = '#f0f0a0',
+    TriforceHeat2 = '#f0a0a0',
+    TriforceHeat3 = '#a0a0a0',
+    TriforceHeat4 = '#707070',
+  },
+  ignore_ft = {},
   keymap = { show_profile = '' },
-  custom_languages = {},
   levels = {},
   level_progression = {
     tier_1 = { min_level = 1, max_level = 10, xp_per_level = 300 },
@@ -24,32 +32,28 @@ local defaults = { ---@type TriforceConfigDefaults
     tier_9 = { min_level = 151, max_level = 225, xp_per_level = 15000 },
     tier_10 = { min_level = 226, max_level = 300, xp_per_level = 20000 },
   },
-  ignore_ft = {},
+  notifications = { enabled = true, level_up = true, achievements = true },
   xp_rewards = { char = 1, line = 1, save = 50 },
-  db_path = vim.fs.joinpath(vim.fn.stdpath('data'), 'triforce_stats.json'),
-  heat_highlights = {
-    TriforceHeat0 = '#f0f0f0',
-    TriforceHeat1 = '#f0f0a0',
-    TriforceHeat2 = '#f0a0a0',
-    TriforceHeat3 = '#a0a0a0',
-    TriforceHeat4 = '#707070',
+  backdrop = {
+    enabled = true,
+    winblend = 20,
   },
 }
 
 ---@class Triforce.Config
 ---Setup options.
 --- ---
----@field config TriforceConfig
+---@field config? TriforceConfigDefaults
 ---@field float? { bufnr: integer, win: integer }|nil
 local Config = {}
-
-Config.config = {}
 
 ---@param silent? boolean
 ---@return boolean gamified
 function Config.has_gamification(silent)
   Util.validate({ silent = { silent, { 'boolean', 'nil' }, true } })
-  silent = silent ~= nil and silent or false
+  if silent == nil then
+    silent = false
+  end
 
   if Config.config.gamification_enabled ~= nil and Config.config.gamification_enabled then
     return true
@@ -70,12 +74,24 @@ end
 function Config.new_config(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
-  Config.config = setmetatable(vim.tbl_deep_extend('keep', opts or {}, Config.defaults()), { __index = defaults })
+  Config.config = setmetatable(vim.tbl_deep_extend('keep', opts or {}, Config.defaults()), {
+    __index = defaults,
+  })
 
-  local keys = vim.tbl_keys(Config.defaults()) ---@type string[]
+  local keys = vim.tbl_keys(Config.defaults()) --[[@as string[]\]]
   for k, _ in pairs(Config.config) do
+    ---@cast k string
     if not vim.list_contains(keys, k) then
       Config.config[k] = nil
+    end
+  end
+
+  if Config.config.backdrop and Config.config.backdrop.winblend then
+    if Config.config.backdrop.winblend >= 100 then
+      Config.config.backdrop.winblend = 100
+    end
+    if Config.config.backdrop.winblend <= 0 then
+      Config.config.backdrop.winblend = 0
     end
   end
 end
@@ -136,8 +152,21 @@ end
 
 function Config.open_window()
   local bufnr = vim.api.nvim_create_buf(false, true)
-  local data = vim.split(Config.get_config(), '\n', { plain = true, trimempty = true })
-  vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, data)
+  local conf_data = Config.get_config() or ''
+  if conf_data == '' then
+    return
+  end
+
+  vim.api.nvim_buf_set_lines(
+    bufnr,
+    0,
+    -1,
+    true,
+    vim.split(conf_data, '\n', {
+      plain = true,
+      trimempty = true,
+    })
+  )
 
   local height = math.floor(vim.o.lines * 0.85)
   local width = math.floor(vim.o.columns * 0.85)
@@ -167,12 +196,17 @@ function Config.open_window()
   Util.optset('modifiable', false, 'buf', bufnr)
 
   vim.keymap.set('n', 'q', Config.close_window, { buffer = bufnr })
+  vim.keymap.set('n', '<Esc>', Config.close_window, { buffer = bufnr })
 
   Config.float = { bufnr = bufnr, win = win }
 end
 
----@return string config_str
+---@return string|nil config_str
 function Config.get_config()
+  if not Config.config then
+    return
+  end
+
   local opts = {} ---@type TriforceConfig
   for k, v in pairs(Config.config) do
     opts[k] = v
