@@ -173,6 +173,16 @@ require('triforce').setup({
   enabled = true,              -- Enable/disable the entire plugin
   gamification_enabled = true, -- Enable XP, levels, achievements
 
+  -- Backdrop control
+  backdrop = {
+    -- Whether to enable the backdrop (i.e. enable background dimming).
+    --
+    --CREDITS: https://github.com/gisketch/triforce.nvim/issues/50
+    enabled = true,
+
+    winblend = 20, -- See `:h 'winblend'`
+  },
+
   -- Custom levels
   levels = {},
 
@@ -237,23 +247,24 @@ require('triforce').setup({
 
 ### Configuration Options
 
-| Option                       | Type          | Default                           | Description                                |
-|------------------------------|---------------|-----------------------------------|--------------------------------------------|
-| `enabled`                    | `boolean`     | `true`                            | Enable/disable the plugin                  |
-| `gamification_enabled`       | `boolean`     | `true`                            | Enable gamification features               |
-| `notifications.enabled`      | `boolean`     | `true`                            | Master toggle for notifications            |
-| `notifications.level_up`     | `boolean`     | `true`                            | Show level up notifications                |
-| `notifications.achievements` | `boolean`     | `true`                            | Show achievement notifications             |
-| `debug`                      | `boolean`     | `true`                            | Enable some debugging messages             |
-| `auto_save_interval`         | `number`      | `300`                             | Auto-save interval in seconds              |
-| `keymap.show_profile`        | `string\|nil` | `nil`                             | Keymap for opening profile                 |
-| `custom_languages`           | `table\|nil`  | `nil`                             | Custom language definitions                |
-| `ignore_ft`                  | `table\|nil`  | `{}`                              | List of excluded filetypes                 |
-| `levels`                     | `table\|nil`  | [See below](#custom-levels)       | List of custom levels                      |
-| `level_progression`          | `table\|nil`  | [See below](#level-progression)   | Custom XP requirements per level tier      |
-| `xp_rewards`                 | `table\|nil`  | [See below](#xp-rewards)          | Custom XP rewards for actions              |
-| `achievements`               | `table\|nil`  | [See below](#custom-achievements) | Custom achievements                        |
-| `heat_highlights`            | `table\|nil`  | Defaults shown above              | Override heatmap highlights (hex or links) |
+| Option                       | Type          | Default                             | Description                                |
+|------------------------------|---------------|-------------------------------------|--------------------------------------------|
+| `achievements`               | `table\|nil`  | [See below](#custom-achievements)   | Custom achievements                        |
+| `auto_save_interval`         | `number`      | `300`                               | Auto-save interval in seconds              |
+| `backdrop`                   | `table\|nil`  | `{ enabled = true, winblend = 20 }` | List of excluded filetypes                 |
+| `custom_languages`           | `table\|nil`  | `nil`                               | Custom language definitions                |
+| `debug`                      | `boolean`     | `true`                              | Enable some debugging messages             |
+| `enabled`                    | `boolean`     | `true`                              | Enable/disable the plugin                  |
+| `gamification_enabled`       | `boolean`     | `true`                              | Enable gamification features               |
+| `heat_highlights`            | `table\|nil`  | Defaults shown above                | Override heatmap highlights (hex or links) |
+| `ignore_ft`                  | `table\|nil`  | `{}`                                | Backdrop customization.                    |
+| `keymap.show_profile`        | `string\|nil` | `nil`                               | Keymap for opening profile                 |
+| `level_progression`          | `table\|nil`  | [See below](#level-progression)     | Custom XP requirements per level tier      |
+| `levels`                     | `table\|nil`  | [See below](#custom-levels)         | List of custom levels                      |
+| `notifications.achievements` | `boolean`     | `true`                              | Show achievement notifications             |
+| `notifications.enabled`      | `boolean`     | `true`                              | Master toggle for notifications            |
+| `notifications.level_up`     | `boolean`     | `true`                              | Show level up notifications                |
+| `xp_rewards`                 | `table\|nil`  | [See below](#xp-rewards)            | Custom XP rewards for actions              |
 
 ### Custom Levels
 
