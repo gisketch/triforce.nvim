@@ -56,16 +56,21 @@ Profile.dimensions = { width = math.floor(vim.o.columns * 0.66), height = math.f
 
 ---Close up profile window
 function Profile.close()
-  if not (Profile.dimensions.float and Profile.dimensions.dim_float) then
+  local Config = require('triforce.config')
+  if not (Profile.dimensions.float or (Config.config.backdrop.enabled and Profile.dimensions.dim_float)) then
     return
   end
+
+  if Config.config.backdrop and Config.config.backdrop.enabled then
+    pcall(vim.api.nvim_buf_delete, Profile.dimensions.dim_float.buf, { force = true })
+    pcall(vim.api.nvim_win_close, Profile.dimensions.dim_float.win, true)
+    Profile.dimensions.dim_float = nil
+  end
+
   pcall(vim.api.nvim_win_close, Profile.dimensions.float.win, true)
-  pcall(vim.api.nvim_win_close, Profile.dimensions.dim_float.win, true)
   pcall(vim.api.nvim_buf_delete, Profile.dimensions.float.buf, { force = true })
-  pcall(vim.api.nvim_buf_delete, Profile.dimensions.dim_float.buf, { force = true })
 
   Profile.dimensions.float = nil
-  Profile.dimensions.dim_float = nil
 end
 
 ---Toggle profile window
@@ -74,7 +79,8 @@ function Profile.toggle(tab)
   Util.validate({ tab = { tab, { 'number', 'nil' }, true } })
   tab = tab or nil
 
-  if not (Profile.dimensions.float or Profile.dimensions.dim_float) then
+  local Config = require('triforce.config')
+  if not (Profile.dimensions.float and (Config.config.backdrop.enabled and Profile.dimensions.dim_float)) then
     Profile.open(tab)
     return
   end
@@ -863,31 +869,35 @@ end
 function Profile.open(tab)
   Util.validate({ tab = { tab, { 'number', 'nil' }, true } })
   tab = (tab and vim.tbl_contains(Profile.tabs_map, tab)) and tab or Profile.current_tab
-
   if Profile.dimensions.float and vim.api.nvim_buf_is_valid(Profile.dimensions.float.buf) then
     return
   end
 
+  local Config = require('triforce.config')
+
   Profile.current_tab = tab
 
   Profile.dimensions.float = {}
-  Profile.dimensions.dim_float = {}
-
   Profile.dimensions.float.buf = vim.api.nvim_create_buf(false, true)
-  Profile.dimensions.dim_float.buf = vim.api.nvim_create_buf(false, true)
-  Profile.dimensions.dim_float.win = vim.api.nvim_open_win(Profile.dimensions.dim_float.buf, false, {
-    focusable = false,
-    row = 1,
-    col = 0,
-    width = vim.o.columns,
-    height = vim.o.lines - 2,
-    relative = 'editor',
-    style = 'minimal',
-    border = 'none',
-  })
 
   vim.bo[Profile.dimensions.float.buf].filetype = 'triforce-profile'
-  vim.wo[Profile.dimensions.dim_float.win].winblend = 20
+
+  if Config.config.backdrop and Config.config.backdrop.enabled then
+    Profile.dimensions.dim_float = {}
+    Profile.dimensions.dim_float.buf = vim.api.nvim_create_buf(false, true)
+    Profile.dimensions.dim_float.win = vim.api.nvim_open_win(Profile.dimensions.dim_float.buf, false, {
+      focusable = false,
+      row = 1,
+      col = 0,
+      width = vim.o.columns,
+      height = vim.o.lines - 2,
+      relative = 'editor',
+      style = 'minimal',
+      border = 'none',
+    })
+
+    vim.wo[Profile.dimensions.dim_float.win].winblend = Config.config.backdrop.winblend or 20
+  end
 
   volt.gen_data({
     {
@@ -919,7 +929,7 @@ function Profile.open(tab)
     { h = Profile.dimensions.height, w = Profile.dimensions.width - Profile.dimensions.xpad * 2 }
   )
   volt.mappings({
-    bufs = { Profile.dimensions.float.buf, Profile.dimensions.dim_float.buf },
+    bufs = { Profile.dimensions.float.buf, Config.config.backdrop.enabled and Profile.dimensions.dim_float.buf or nil },
     winclosed_event = true,
     after_close = Profile.close,
   })
