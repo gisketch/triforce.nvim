@@ -1,4 +1,5 @@
-*triforce.txt*           For NVIM >=v0.9.0          Last change: 2026 March 16
+*triforce.txt*
+                               For NVIM >=v0.9.0    Last change: 2026 April 19
 
 ==============================================================================
 1. triforce.nvim                                      *triforce-triforce.nvim*
@@ -179,6 +180,16 @@ Defaults ~
       enabled = true,              -- Enable/disable the entire plugin
       gamification_enabled = true, -- Enable XP, levels, achievements
     
+      -- Backdrop control
+      backdrop = {
+        -- Whether to enable the backdrop (i.e. enable background dimming).
+        --
+        --CREDITS: https://github.com/gisketch/triforce.nvim/issues/50
+        enabled = true,
+    
+        winblend = 20, -- See `:h 'winblend'`
+      },
+    
       -- Custom levels
       levels = {},
     
@@ -242,51 +253,55 @@ Defaults ~
 
 CONFIGURATION OPTIONS ~
 
-  -----------------------------------------------------------------------------------------
-  Option                       Type          Default              Description
-  ---------------------------- ------------- -------------------- -------------------------
-  enabled                      boolean       true                 Enable/disable the plugin
+  -------------------------------------------------------------------------------------------------------
+  Option                       Type          Default                             Description
+  ---------------------------- ------------- ----------------------------------- ------------------------
+  achievements                 table\|nil    See below                           Custom achievements
 
-  gamification_enabled         boolean       true                 Enable gamification
-                                                                  features
+  auto_save_interval           number        300                                 Auto-save interval in
+                                                                                 seconds
 
-  notifications.enabled        boolean       true                 Master toggle for
-                                                                  notifications
+  backdrop                     table\|nil    { enabled = true, winblend = 20 }   List of excluded
+                                                                                 filetypes
 
-  notifications.level_up       boolean       true                 Show level up
-                                                                  notifications
+  custom_languages             table\|nil    nil                                 Custom language
+                                                                                 definitions
 
-  notifications.achievements   boolean       true                 Show achievement
-                                                                  notifications
+  debug                        boolean       true                                Enable some debugging
+                                                                                 messages
 
-  debug                        boolean       true                 Enable some debugging
-                                                                  messages
+  enabled                      boolean       true                                Enable/disable the
+                                                                                 plugin
 
-  auto_save_interval           number        300                  Auto-save interval in
-                                                                  seconds
+  gamification_enabled         boolean       true                                Enable gamification
+                                                                                 features
 
-  keymap.show_profile          string\|nil   nil                  Keymap for opening
-                                                                  profile
+  heat_highlights              table\|nil    Defaults shown above                Override heatmap
+                                                                                 highlights (hex or
+                                                                                 links)
 
-  custom_languages             table\|nil    nil                  Custom language
-                                                                  definitions
+  ignore_ft                    table\|nil    {}                                  Backdrop customization.
 
-  ignore_ft                    table\|nil    {}                   List of excluded
-                                                                  filetypes
+  keymap.show_profile          string\|nil   nil                                 Keymap for opening
+                                                                                 profile
 
-  levels                       table\|nil    See below            List of custom levels
+  level_progression            table\|nil    See below                           Custom XP requirements
+                                                                                 per level tier
 
-  level_progression            table\|nil    See below            Custom XP requirements
-                                                                  per level tier
+  levels                       table\|nil    See below                           List of custom levels
 
-  xp_rewards                   table\|nil    See below            Custom XP rewards for
-                                                                  actions
+  notifications.achievements   boolean       true                                Show achievement
+                                                                                 notifications
 
-  achievements                 table\|nil    See below            Custom achievements
+  notifications.enabled        boolean       true                                Master toggle for
+                                                                                 notifications
 
-  heat_highlights              table\|nil    Defaults shown above Override heatmap
-                                                                  highlights (hex or links)
-  -----------------------------------------------------------------------------------------
+  notifications.level_up       boolean       true                                Show level up
+                                                                                 notifications
+
+  xp_rewards                   table\|nil    See below                           Custom XP rewards for
+                                                                                 actions
+  -------------------------------------------------------------------------------------------------------
 
 CUSTOM LEVELS ~
 
