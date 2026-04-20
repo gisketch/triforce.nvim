@@ -5,6 +5,7 @@ local Util = require('triforce.util')
 local defaults = { ---@type TriforceConfigDefaults
   achievements = {},
   auto_save_interval = 300,
+  backdrop = { enabled = true, winblend = 20 },
   custom_languages = {},
   db_path = vim.fs.joinpath(vim.fn.stdpath('data'), 'triforce_stats.json'),
   debug = false,
@@ -34,16 +35,12 @@ local defaults = { ---@type TriforceConfigDefaults
   },
   notifications = { enabled = true, level_up = true, achievements = true },
   xp_rewards = { char = 1, line = 1, save = 50 },
-  backdrop = {
-    enabled = true,
-    winblend = 20,
-  },
 }
 
 ---@class Triforce.Config
 ---Setup options.
 --- ---
----@field config? TriforceConfigDefaults
+---@field config TriforceConfigDefaults
 ---@field float? { bufnr: integer, win: integer }|nil
 local Config = {}
 
