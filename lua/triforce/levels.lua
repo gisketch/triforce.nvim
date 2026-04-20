@@ -79,29 +79,49 @@ function Levels.get_all_levels(stats)
   return res
 end
 
----Get title based on given level
+---Get icon based on given level
 ---@param level integer
----@return string title
-function Levels.get_level_title(level)
+---@return string icon
+function Levels.get_level_icon(level)
   Util.validate({ level = { level, { 'number' } } })
   if not Util.is_int(level, level > 0) then
     error(('Level `%s` is not valid!'):format(vim.inspect(level)), ERROR)
   end
 
-  local res_title = ''
-  local max_lvl
+  local old_level = 1
   for lvl, title in pairs(Levels.levels) do
-    max_lvl = lvl
-    if level == lvl then
-      res_title = ('%s %s'):format(title.icon, title.title)
-      break
+    if level <= lvl and level > old_level then
+      return title.icon
     end
+    old_level = lvl
   end
-  if res_title == '' and level >= max_lvl then
-    res_title = '💫 Eternal Legend' -- Max title for level > 300
+  return '💫' -- level > 300
+end
+
+---Get title based on given level
+---@param level integer
+---@param with_icon? boolean
+---@return string title
+function Levels.get_level_title(level, with_icon)
+  Util.validate({
+    level = { level, { 'number' } },
+    with_icon = { with_icon, { 'boolean', 'nil' }, true },
+  })
+  if not Util.is_int(level, level > 0) then
+    error(('Level `%s` is not valid!'):format(vim.inspect(level)), ERROR)
+  end
+  if with_icon == nil then
+    with_icon = false
   end
 
-  return res_title
+  local old_level = 1
+  for lvl, title in pairs(Levels.levels) do
+    if level >= lvl and level < old_level then
+      return with_icon and ('%s %s'):format(title.icon, title.title) or title.title
+    end
+    old_level = lvl
+  end
+  return (with_icon and '💫 %s' or '%s'):format('Eternal Legend') -- Max title for level > 300
 end
 
 return Levels

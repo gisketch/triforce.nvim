@@ -1,44 +1,57 @@
 ---Level component config
 --- ---
 ---@class LevelShow
----Show level number
---- ---
----@field level? boolean
 ---Show progress bar
 --- ---
 ---@field bar? boolean
+---Show the level's icon.
+--- ---
+---@field icon? boolean
+---Show level number
+--- ---
+---@field level? boolean
 ---Show percentage
 --- ---
 ---@field percent? boolean
+---Show the title of the level.
+--- ---
+---@field title? boolean
 ---Show XP numbers (current/needed)
 --- ---
 ---@field xp? boolean
 
 ---@class LevelShowDefaults: LevelShow
----@field level boolean
 ---@field bar boolean
+---@field icon boolean
+---@field level boolean
 ---@field percent boolean
+---@field title boolean
 ---@field xp boolean
 
 ---@class BarOptions.Chars
----@field filled? string
 ---@field empty? string
+---@field filled? string
 
 ---@class BarOptions.CharsDefaults: BarOptions.Chars
----@field filled string
 ---@field empty string
+---@field filled string
 
 ---@class BarOptions
----@field length? integer
 ---@field chars? BarOptions.Chars
+---@field length? integer
 
 ---@class BarOptionsDefaults: BarOptions
----@field length integer
 ---@field chars BarOptions.CharsDefaults
+---@field length integer
 
 ---Level component config
 --- ---
 ---@class Triforce.LualineConfig.Level
+---Bar options
+--- ---
+---@field bar? BarOptions
+---Enables the level component.
+--- ---
 ---@field enabled? boolean
 ---Text prefix before level number
 --- ---
@@ -46,9 +59,6 @@
 ---Stores which components will be shown
 --- ---
 ---@field show? LevelShow
----Bar options
---- ---
----@field bar? BarOptions
 
 ---Achievements component config
 --- ---
@@ -101,9 +111,9 @@
 ---@field session_time? Triforce.LualineConfig.SessionTime
 
 ---@class Triforce.LualineConfig.LevelDefaults: Triforce.LualineConfig.Level
+---@field bar BarOptionsDefaults
 ---@field prefix string
 ---@field show LevelShowDefaults
----@field bar BarOptionsDefaults
 
 ---@class Triforce.LualineConfig.AchievementsDefaults: Triforce.LualineConfig.Achievements
 ---@field icon string
@@ -114,15 +124,15 @@
 ---@field show_days  boolean
 
 ---@class Triforce.LualineConfig.SessionTimeDefaults: Triforce.LualineConfig.SessionTime
+---@field format 'short'|'long'
 ---@field icon string
 ---@field show_duration boolean
----@field format 'short'|'long'
 
 ---@class Triforce.LualineConfigDefaults: Triforce.LualineConfig
----@field level Triforce.LualineConfig.LevelDefaults
 ---@field achievements Triforce.LualineConfig.AchievementsDefaults
----@field streak Triforce.LualineConfig.StreakDefaults
+---@field level Triforce.LualineConfig.LevelDefaults
 ---@field session_time Triforce.LualineConfig.SessionTimeDefaults
+---@field streak Triforce.LualineConfig.StreakDefaults
 
 local Util = require('triforce.util')
 
@@ -145,9 +155,9 @@ function Lualine.get_defaults()
     },
     level = {
       bar = { length = 8, chars = { filled = '█', empty = '░' } },
-      enabled = true,
       prefix = 'Lv.',
-      show = { level = true, bar = true, percent = false, xp = false },
+      show = { level = true, bar = true, percent = false, xp = false, title = false, icon = false },
+      title = false,
     },
     session_time = {
       enabled = false,
@@ -253,6 +263,13 @@ function Lualine.level(opts)
   local xp_needed = xp_for_next - xp_for_current
   local xp_progress = stats.xp - xp_for_current
   local parts = {} ---@type string[]
+
+  local Levels = require('triforce.levels')
+
+  if config.show.title then
+    table.insert(parts, Levels.get_level_title(stats.level, config.show.icon))
+  end
+
   if config.show.level then
     table.insert(parts, not config.prefix and tostring(stats.level) or (config.prefix .. stats.level))
   end
@@ -264,7 +281,7 @@ function Lualine.level(opts)
 
   -- Percentage
   if config.show.percent then
-    table.insert(parts, ('%d'):format(math.floor((xp_progress / xp_needed) * 100)) .. '%%')
+    table.insert(parts, ('%d%%'):format(math.floor((xp_progress / xp_needed) * 100)))
   end
 
   -- XP numbers
