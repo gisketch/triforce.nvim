@@ -112,6 +112,7 @@
 
 ---@class Triforce.LualineConfig.LevelDefaults: Triforce.LualineConfig.Level
 ---@field bar BarOptionsDefaults
+---@field enabled boolean
 ---@field prefix string
 ---@field show LevelShowDefaults
 
@@ -143,10 +144,11 @@ local Util = require('triforce.util')
 --- - streak
 --- - session time
 ---@class Triforce.Lualine
-local Lualine = {}
+---@field config Triforce.LualineConfig
+local M = {}
 
 ---@return Triforce.LualineConfigDefaults defaults
-function Lualine.get_defaults()
+function M.get_defaults()
   return { ---@type Triforce.LualineConfigDefaults
     achievements = {
       enabled = false,
@@ -154,6 +156,7 @@ function Lualine.get_defaults()
       show_count = true,
     },
     level = {
+      enabled = true,
       bar = { length = 8, chars = { filled = '█', empty = '░' } },
       prefix = 'Lv.',
       show = { level = true, bar = true, percent = false, xp = false, title = false, icon = false },
@@ -173,14 +176,18 @@ function Lualine.get_defaults()
   }
 end
 
-Lualine.config = Lualine.get_defaults() --[[@as Triforce.LualineConfig]]
+M.config = M.get_defaults()
 
 ---Setup lualine integration with custom config
 ---@param opts? Triforce.LualineConfig User configuration
-function Lualine.setup(opts)
+function M.setup(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
-  Lualine.config = vim.tbl_deep_extend('force', Lualine.config, opts or {})
+  M.config = vim.tbl_deep_extend('keep', opts or {}, M.config)
+
+  if not vim.list_contains({ 'short', 'long' }, M.config.session_time.format) then
+    M.config.session_time.format = M.get_defaults().session_time.format
+  end
 end
 
 ---Get current stats safely
@@ -207,9 +214,9 @@ local function create_progress_bar(current, max, length, chars)
     length = { length, { 'number', 'nil' }, true },
     chars = { chars, { 'table', 'nil' }, true },
   })
-  length = (length and length > 0) and length or Lualine.get_defaults().level.bar.length
+  length = (length and length > 0) and length or M.get_defaults().level.bar.length
   length = Util.is_int(length) and length or math.floor(length)
-  chars = chars or Lualine.get_defaults().level.bar.chars
+  chars = chars or M.get_defaults().level.bar.chars
 
   if max == 0 then
     return chars.empty:rep(length)
@@ -228,7 +235,7 @@ local function format_time(seconds, format)
     seconds = { seconds, { 'number' } },
     format = { format, { 'string' } },
   })
-  format = vim.list_contains({ 'short', 'long' }, format) and format or Lualine.get_defaults().session_time.format
+  format = vim.list_contains({ 'short', 'long' }, format) and format or M.get_defaults().session_time.format
 
   local hours = math.floor(seconds / 3600)
   local minutes = math.floor((seconds % 3600) / 60)
@@ -248,7 +255,7 @@ end
 ---Level component - Shows level and XP progress
 ---@param opts? Triforce.LualineConfig.Level Component-specific options
 ---@return string component
-function Lualine.level(opts)
+function M.level(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
   local stats = get_stats()
@@ -256,7 +263,7 @@ function Lualine.level(opts)
     return ''
   end
 
-  local config = vim.tbl_deep_extend('force', Lualine.config.level, opts or {})
+  local config = vim.tbl_deep_extend('force', M.config.level, opts or {})
   local stats_module = require('triforce.stats')
   local xp_for_current = stats_module.xp_for_next_level(stats.level - 1)
   local xp_for_next = stats_module.xp_for_next_level(stats.level)
@@ -295,7 +302,7 @@ end
 ---Achievements component - Shows unlocked achievement count
 ---@param opts? Triforce.LualineConfig.Achievements Component-specific options
 ---@return string component
-function Lualine.achievements(opts)
+function M.achievements(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
   local stats = get_stats()
@@ -303,7 +310,7 @@ function Lualine.achievements(opts)
     return ''
   end
 
-  local config = vim.tbl_deep_extend('force', Lualine.config.achievements, opts or {})
+  local config = vim.tbl_deep_extend('force', M.config.achievements, opts or {})
 
   -- Count achievements
   local all_achievements = require('triforce.achievement').get_all_achievements(stats)
@@ -330,7 +337,7 @@ end
 ---Streak component - Shows current coding streak
 ---@param opts? Triforce.LualineConfig.Streak Component-specific options
 ---@return string component
-function Lualine.streak(opts)
+function M.streak(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
   local stats = get_stats()
@@ -338,7 +345,7 @@ function Lualine.streak(opts)
     return ''
   end
 
-  local config = vim.tbl_deep_extend('force', Lualine.config.streak, opts or {})
+  local config = vim.tbl_deep_extend('force', M.config.streak, opts or {})
 
   -- Build component
   local parts = {} ---@type string[]
@@ -355,7 +362,7 @@ end
 ---Session time component - Shows current session duration
 ---@param opts? Triforce.LualineConfig.SessionTime Component-specific options
 ---@return string component
-function Lualine.session_time(opts)
+function M.session_time(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
   local stats = get_stats()
@@ -363,7 +370,7 @@ function Lualine.session_time(opts)
     return ''
   end
 
-  local config = vim.tbl_deep_extend('force', Lualine.config.session_time, opts or {})
+  local config = vim.tbl_deep_extend('force', M.config.session_time, opts or {})
   local parts, duration = {}, os.time() - stats.last_session_start ---@type string[], integer
   if config.icon ~= '' then
     table.insert(parts, config.icon)
@@ -379,17 +386,17 @@ end
 ---Convenience function to get all components at once
 ---@param opts? Triforce.LualineConfig Configuration for all components
 ---@return Triforce.LualineConfig components Table with level, achievements, streak, session_time functions
-function Lualine.components(opts)
+function M.components(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
-  Lualine.setup(opts)
+  M.setup(opts)
   return {
-    level = Lualine.level,
-    achievements = Lualine.achievements,
-    streak = Lualine.streak,
-    session_time = Lualine.session_time,
+    level = M.level,
+    achievements = M.achievements,
+    streak = M.streak,
+    session_time = M.session_time,
   }
 end
 
-return Lualine
+return M
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:
