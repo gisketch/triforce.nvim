@@ -35,10 +35,10 @@ function M.setup(opts)
     desc = 'Triforce: Show profile',
   })
 
-  require('triforce.levels').setup()
+  local config = Config.config
+  require('triforce.levels').setup(config.override_levels)
   require('triforce.commands').setup()
 
-  local config = Config.config
   -- Set up keymap if provided
   if config.keymap and config.keymap.show_profile and config.keymap.show_profile ~= '' then
     vim.keymap.set('n', config.keymap.show_profile, M.show_profile, {

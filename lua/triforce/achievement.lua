@@ -6,10 +6,10 @@ local Util = require('triforce.util')
 ---@class Triforce.Achievements
 ---@field achievements Achievement[]
 ---@field unique_languages integer
-local Achievement = {}
+local M = {}
 
-Achievement.unique_languages = 0
-Achievement.achievements = {
+M.unique_languages = 0
+M.achievements = {
   {
     id = 'first_100',
     name = 'First Steps',
@@ -142,7 +142,7 @@ Achievement.achievements = {
     desc = 'Code in 3 different languages',
     icon = '🌍',
     check = function()
-      return Achievement.unique_languages >= 3
+      return M.unique_languages >= 3
     end,
   },
   {
@@ -151,7 +151,7 @@ Achievement.achievements = {
     desc = 'Code in 5 different languages',
     icon = '🌎',
     check = function()
-      return Achievement.unique_languages >= 5
+      return M.unique_languages >= 5
     end,
   },
   {
@@ -160,7 +160,7 @@ Achievement.achievements = {
     desc = 'Code in 10 different languages',
     icon = '🌏',
     check = function()
-      return Achievement.unique_languages >= 10
+      return M.unique_languages >= 10
     end,
   },
   {
@@ -169,28 +169,29 @@ Achievement.achievements = {
     desc = 'Code in 15 different languages',
     icon = '🗺️',
     check = function()
-      return Achievement.unique_languages >= 15
+      return M.unique_languages >= 15
     end,
   },
 }
 
----Get all achievements with their unlock status
+---Get all achievements with their unlock status.
+--- ---
 ---@param stats Stats
 ---@return Achievement[] achievements
-function Achievement.get_all_achievements(stats)
+function M.get_all_achievements(stats)
   Util.validate({ stats = { stats, { 'table' } } })
 
   -- Count unique languages
-  Achievement.unique_languages = 0
+  M.unique_languages = 0
   for _ in pairs(stats.chars_by_language or {}) do
-    Achievement.unique_languages = Achievement.unique_languages + 1
+    M.unique_languages = M.unique_languages + 1
   end
-  return Achievement.achievements
+  return M.achievements
 end
 
 ---@param achievement Achievement[]|Achievement
 ---@param stats Stats
-function Achievement.new_achievements(achievement, stats)
+function M.new_achievements(achievement, stats)
   Util.validate({
     achievement = { achievement, { 'table' } },
     stats = { stats, { 'table' } },
@@ -202,7 +203,7 @@ function Achievement.new_achievements(achievement, stats)
   if not Util.is_dict(achievement) then
     ---@cast achievement Achievement[]
     for _, achv in ipairs(achievement) do
-      Achievement.new_achievements(achv, stats)
+      M.new_achievements(achv, stats)
     end
     return
   end
@@ -225,28 +226,28 @@ function Achievement.new_achievements(achievement, stats)
   achievement.icon = achievement.icon or ''
 
   local new = true ---@type boolean
-  for i, achv in ipairs(Achievement.achievements) do
+  for i, achv in ipairs(M.achievements) do
     if achv.id == achievement.id then
-      Achievement.achievements[i] = achievement
+      M.achievements[i] = achievement
       new = false
       break
     end
   end
   if new then
-    table.insert(Achievement.achievements, achievement)
+    table.insert(M.achievements, achievement)
   end
 
-  Achievement.check_achievements(stats)
+  M.check_achievements(stats)
 end
 
 ---Check and unlock achievements
 ---@param stats Stats
 ---@return Achievement[] newly_unlocked List of achievement objects.
-function Achievement.check_achievements(stats)
+function M.check_achievements(stats)
   Util.validate({ stats = { stats, { 'table' } } })
 
   local newly_unlocked = {} ---@type Achievement[]
-  for _, achievement in ipairs(Achievement.get_all_achievements(stats)) do
+  for _, achievement in ipairs(M.get_all_achievements(stats)) do
     if achievement.check(stats) and not stats.achievements[achievement.id] then
       stats.achievements[achievement.id] = true
       table.insert(newly_unlocked, {
@@ -261,5 +262,5 @@ function Achievement.check_achievements(stats)
   return newly_unlocked
 end
 
-return Achievement
+return M
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:

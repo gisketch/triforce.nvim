@@ -176,29 +176,38 @@ require('triforce').setup({
   -- Backdrop control
   backdrop = {
     -- Whether to enable the backdrop (i.e. enable background dimming).
-    --
-    --CREDITS: https://github.com/gisketch/triforce.nvim/issues/50
+    -- CREDITS: https://github.com/gisketch/triforce.nvim/issues/50
     enabled = true,
 
-    winblend = 20, -- See `:h 'winblend'`
+    -- See `:h 'winblend'`
+    winblend = 20,
   },
 
   -- Custom levels
   levels = {},
+
+  -- Don't include the default levels (needs custom levels).
+  override_levels = false,
 
   -- Custom achievements
   achievements = {},
 
   -- Notification settings
   notifications = {
-    enabled = true,       -- Master toggle for all notifications
-    level_up = true,      -- Show level up notifications
-    achievements = true,  -- Show achievement unlock notifications
+    -- Master toggle for all notifications
+    enabled = true,
+
+    -- Show level up notifications
+    level_up = true,
+
+    -- Show achievement unlock notifications
+    achievements = true,
   },
 
   -- Keymap configuration
   keymap = {
-    show_profile = '<leader>tp', -- Set to nil to disable default keymap
+    -- Set to nil to disable default keymap
+    show_profile = '<leader>tp',
   },
 
   -- Auto-save interval (in seconds)
@@ -264,6 +273,7 @@ require('triforce').setup({
 | `notifications.achievements` | `boolean`     | `true`                              | Show achievement notifications             |
 | `notifications.enabled`      | `boolean`     | `true`                              | Master toggle for notifications            |
 | `notifications.level_up`     | `boolean`     | `true`                              | Show level up notifications                |
+| `override_levels`            | `boolean`     | `false`                             | Don't include the built-in levels          |
 | `xp_rewards`                 | `table\|nil`  | [See below](#xp-rewards)            | Custom XP rewards for actions              |
 
 ### Custom Levels
