@@ -1,5 +1,5 @@
 *triforce.txt*
-                               For NVIM >=v0.9.0    Last change: 2026 April 19
+                               For NVIM >=v0.9.0    Last change: 2026 April 21
 
 ==============================================================================
 1. triforce.nvim                                      *triforce-triforce.nvim*
@@ -183,29 +183,38 @@ Defaults ~
       -- Backdrop control
       backdrop = {
         -- Whether to enable the backdrop (i.e. enable background dimming).
-        --
-        --CREDITS: https://github.com/gisketch/triforce.nvim/issues/50
+        -- CREDITS: https://github.com/gisketch/triforce.nvim/issues/50
         enabled = true,
     
-        winblend = 20, -- See `:h 'winblend'`
+        -- See `:h 'winblend'`
+        winblend = 20,
       },
     
       -- Custom levels
       levels = {},
+    
+      -- Don't include the default levels (needs custom levels).
+      override_levels = false,
     
       -- Custom achievements
       achievements = {},
     
       -- Notification settings
       notifications = {
-        enabled = true,       -- Master toggle for all notifications
-        level_up = true,      -- Show level up notifications
-        achievements = true,  -- Show achievement unlock notifications
+        -- Master toggle for all notifications
+        enabled = true,
+    
+        -- Show level up notifications
+        level_up = true,
+    
+        -- Show achievement unlock notifications
+        achievements = true,
       },
     
       -- Keymap configuration
       keymap = {
-        show_profile = '<leader>tp', -- Set to nil to disable default keymap
+        -- Set to nil to disable default keymap
+        show_profile = '<leader>tp',
       },
     
       -- Auto-save interval (in seconds)
@@ -298,6 +307,9 @@ CONFIGURATION OPTIONS ~
 
   notifications.level_up       boolean       true                                Show level up
                                                                                  notifications
+
+  override_levels              boolean       false                               Don’t include the
+                                                                                 built-in levels
 
   xp_rewards                   table\|nil    See below                           Custom XP rewards for
                                                                                  actions
