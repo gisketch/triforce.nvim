@@ -149,6 +149,9 @@
 ---Notification configuration.
 --- ---
 ---@field notifications? TriforceConfig.Notifications
+---Allow users to override default levels.
+--- ---
+---@field override_levels? boolean
 ---Custom XP reward amounts for different actions.
 --- ---
 ---@field xp_rewards? XPRewards
@@ -168,6 +171,7 @@
 ---@field level_progression LevelProgression
 ---@field levels LevelParams[]
 ---@field notifications TriforceConfig.Notifications
+---@field override_levels boolean
 ---@field xp_rewards XPRewards
 
 ---@class Achievement

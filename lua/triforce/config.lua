@@ -34,6 +34,7 @@ local defaults = { ---@type TriforceConfigDefaults
     tier_10 = { min_level = 226, max_level = 300, xp_per_level = 20000 },
   },
   notifications = { enabled = true, level_up = true, achievements = true },
+  override_levels = false,
   xp_rewards = { char = 1, line = 1, save = 50 },
 }
 

@@ -23,7 +23,7 @@ describe('triforce', function()
       assert.is_true(ok)
 
       for _, lvl in ipairs(lvls) do
-        assert.is_same((lvl.icon and (lvl.icon .. ' ') or '') .. lvl.title, levels.get_level_title(lvl.level))
+        assert.is_same(lvl.title, levels.get_level_title(lvl.level, false))
       end
     end)
 

@@ -29,16 +29,24 @@ end
 
 ---@class Triforce.Levels
 ---@field levels LevelTitles
-local Levels = {}
+local M = {}
 
-Levels.levels = {}
+M.levels = {}
 
-function Levels.setup()
-  Levels.levels = vim.tbl_deep_extend('keep', Levels.levels, get_default_titles())
+---@param override? boolean
+function M.setup(override)
+  Util.validate({ override = { override, { 'boolean', 'nil' }, true } })
+  if override == nil then
+    override = false
+  end
+
+  if not override then
+    M.levels = vim.tbl_deep_extend('keep', M.levels, get_default_titles())
+  end
 end
 
 ---@param levels LevelParams[]|LevelParams
-function Levels.add_levels(levels)
+function M.add_levels(levels)
   Util.validate({ levels = { levels, { 'table' } } })
   if vim.tbl_isempty(levels) then
     return
@@ -47,7 +55,7 @@ function Levels.add_levels(levels)
   ---@cast levels LevelParams[]
   if vim.islist(levels) then
     for _, lvl in ipairs(levels) do
-      Levels.add_levels(lvl)
+      M.add_levels(lvl)
     end
     return
   end
@@ -59,22 +67,21 @@ function Levels.add_levels(levels)
     levels_icon = { levels.icon, { 'string', 'nil' }, true },
   })
 
-  Levels.levels[levels.level] = { title = levels.title, icon = levels.icon or '' }
+  M.levels[levels.level] = { title = levels.title, icon = levels.icon or '' }
 end
 
 ---@param stats Stats
 ---@return LevelSpec[] all_levels
-function Levels.get_all_levels(stats)
+function M.get_all_levels(stats)
   Util.validate({ stats = { stats, { 'table' } } })
 
-  local keys = vim.tbl_keys(Levels.levels) --[[@as integer[]\]]
+  local keys = vim.tbl_keys(M.levels) --[[@as integer[]\]]
   local res = {} ---@type LevelSpec[]
   for _, lvl in ipairs(keys) do
-    table.insert(res, {
-      level = lvl,
-      unlocked = lvl <= stats.level,
-      title = Levels.get_level_title(lvl),
-    })
+    local title = M.get_level_title(lvl)
+    if title ~= '' then
+      table.insert(res, { level = lvl, unlocked = lvl <= stats.level, title = title })
+    end
   end
   return res
 end
@@ -82,27 +89,30 @@ end
 ---Get icon based on given level
 ---@param level integer
 ---@return string icon
-function Levels.get_level_icon(level)
+function M.get_level_icon(level)
   Util.validate({ level = { level, { 'number' } } })
   if not Util.is_int(level, level > 0) then
     error(('Level `%s` is not valid!'):format(vim.inspect(level)), ERROR)
   end
 
-  local old_level = 1
-  for lvl, title in pairs(Levels.levels) do
-    if level <= lvl and level > old_level then
-      return title.icon
-    end
-    old_level = lvl
+  if vim.tbl_isempty(M.levels) then
+    return ''
   end
-  return '💫' -- level > 300
+
+  local values = {} ---@type integer[]
+  for k in pairs(M.levels) do
+    if level - k <= 0 then
+      table.insert(values, k)
+    end
+  end
+  return M.levels[math.min(unpack(values))].icon or '💫'
 end
 
 ---Get title based on given level
 ---@param level integer
 ---@param with_icon? boolean
 ---@return string title
-function Levels.get_level_title(level, with_icon)
+function M.get_level_title(level, with_icon)
   Util.validate({
     level = { level, { 'number' } },
     with_icon = { with_icon, { 'boolean', 'nil' }, true },
@@ -111,18 +121,27 @@ function Levels.get_level_title(level, with_icon)
     error(('Level `%s` is not valid!'):format(vim.inspect(level)), ERROR)
   end
   if with_icon == nil then
-    with_icon = false
+    with_icon = true
   end
 
-  local old_level = 1
-  for lvl, title in pairs(Levels.levels) do
-    if level >= lvl and level < old_level then
-      return with_icon and ('%s %s'):format(title.icon, title.title) or title.title
-    end
-    old_level = lvl
+  if vim.tbl_isempty(M.levels) then
+    return ''
   end
-  return (with_icon and '💫 %s' or '%s'):format('Eternal Legend') -- Max title for level > 300
+
+  local values = {} ---@type integer[]
+  for k in pairs(M.levels) do
+    if level - k <= 0 then
+      table.insert(values, k)
+    end
+  end
+
+  local l = math.min(unpack(values))
+  if l then
+    return with_icon and ('%s %s'):format(M.levels[l].icon, M.levels[l].title) or M.levels[l].title
+  end
+
+  return ''
 end
 
-return Levels
+return M
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:
