@@ -32,6 +32,31 @@ Tracker.idle_threshold = 300 ---@type integer
 
 Tracker.debug = false ---@type boolean
 
+---@param path string
+local function start_file_watch(path)
+  if vim.g.triforce_watch_setup == 1 then
+    return
+  end
+
+  Util.validate({ path = { path, { 'string', 'nil' }, true } })
+
+  local event = uv.new_fs_event()
+  if not event then
+    return
+  end
+
+  local stats_module = require('triforce.stats')
+  event:start((path and Util.is_file(path)) and path or stats_module.get_stats_path(), {}, function(err, _, events)
+    if err or not events.change then
+      return
+    end
+
+    Tracker.current_stats = stats_module.load(Tracker.debug)
+  end)
+
+  vim.g.triforce_watch_setup = 1
+end
+
 ---Initialize the tracker
 ---@param debug? boolean
 function Tracker.setup(debug)
