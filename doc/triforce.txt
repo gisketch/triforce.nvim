@@ -1,5 +1,5 @@
 *triforce.txt*
-                               For NVIM >=v0.9.0    Last change: 2026 April 21
+                               For NVIM >=v0.9.0    Last change: 2026 April 29
 
 ==============================================================================
 1. triforce.nvim                                      *triforce-triforce.nvim*
@@ -66,10 +66,6 @@ FEATURES                                                   *triforce-features*
 TABLE OF CONTENTS                                 *triforce-table-of-contents*
 
 - |triforce-installation|
-    - |triforce-`lazy.nvim`|
-    - |triforce-`pckr.nvim`|
-    - |triforce-`paq-nvim`|
-    - |triforce-`vim-plug`|
 - |triforce-configuration|
     - |triforce-configuration-options|
     - |triforce-custom-levels|
@@ -123,8 +119,7 @@ Triforce has the following requirements:
 - `nvzone/volt` <https://github.com/nvzone/volt> - UI framework dependency
 - A patched font <https://www.nerdfonts.com/> - For icons
 
-
-LAZY.NVIM ~
+lazy.nvim ~
 
 >lua
     {
@@ -134,8 +129,7 @@ LAZY.NVIM ~
     }
 <
 
-
-PCKR.NVIM ~
+pckr.nvim ~
 
 >lua
     require('pckr').add({
@@ -149,8 +143,7 @@ PCKR.NVIM ~
     })
 <
 
-
-PAQ-NVIM ~
+paq-nvim ~
 
 >lua
     require('paq')({
@@ -159,8 +152,7 @@ PAQ-NVIM ~
     })
 <
 
-
-VIM-PLUG ~
+vim-plug ~
 
 >vim
     Plug 'nvzone/volt'
