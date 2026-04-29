@@ -98,6 +98,8 @@ function Tracker.setup(debug)
     return
   end
 
+  start_file_watch(stats_module.db_path)
+
   timer:start(
     30000,
     30000,
