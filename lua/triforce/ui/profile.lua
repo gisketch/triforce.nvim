@@ -145,7 +145,7 @@ function Profile.redraw()
     return
   end
 
-  vim.bo[Profile.dimensions.float.buf].modifiable = true
+  vim.api.nvim_set_option_value('modifiable', true, { buf = Profile.dimensions.float.buf })
   volt.gen_data({
     {
       buf = Profile.dimensions.float.buf,
@@ -169,7 +169,7 @@ function Profile.redraw()
   end
 
   volt.redraw(Profile.dimensions.float.buf, 'all')
-  vim.bo[Profile.dimensions.float.buf].modifiable = false
+  vim.api.nvim_set_option_value('modifiable', false, { buf = Profile.dimensions.float.buf })
 end
 
 ---Get activity level highlight based on lines typed
@@ -817,7 +817,7 @@ function Profile.cycle_tab(back, num)
     Profile.current_tab = num
   end
 
-  vim.bo[Profile.dimensions.float.buf].modifiable = true
+  vim.api.nvim_set_option_value('modifiable', true, { buf = Profile.dimensions.float.buf })
   volt.gen_data({
     {
       buf = Profile.dimensions.float.buf,
@@ -852,7 +852,7 @@ function Profile.cycle_tab(back, num)
   end
 
   volt.redraw(Profile.dimensions.float.buf, 'all')
-  vim.bo[Profile.dimensions.float.buf].modifiable = false
+  vim.api.nvim_set_option_value('modifiable', false, { buf = Profile.dimensions.float.buf })
   vim.api.nvim_win_set_cursor(Profile.dimensions.float.win, { 1, 0 })
 
   for _, key in ipairs({ 'h', 'H', '<Left>', 'l', 'L', '<Right>' }) do
@@ -880,7 +880,7 @@ function Profile.open(tab)
   Profile.dimensions.float = {}
   Profile.dimensions.float.buf = vim.api.nvim_create_buf(false, true)
 
-  vim.bo[Profile.dimensions.float.buf].filetype = 'triforce-profile'
+  vim.api.nvim_set_option_value('filetype', 'triforce-profile', { buf = Profile.dimensions.float.buf })
 
   if Config.config.backdrop and Config.config.backdrop.enabled then
     Profile.dimensions.dim_float = {}
@@ -896,7 +896,11 @@ function Profile.open(tab)
       border = 'none',
     })
 
-    vim.wo[Profile.dimensions.dim_float.win].winblend = Config.config.backdrop.winblend or 20
+    vim.api.nvim_set_option_value(
+      'winblend',
+      Config.config.backdrop.winblend or 20,
+      { win = Profile.dimensions.dim_float.win }
+    )
   end
 
   volt.gen_data({
