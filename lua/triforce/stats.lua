@@ -120,17 +120,30 @@ function Stats.load(debug)
     return Stats.default_stats()
   end
 
-  local lines = vim.fn.readfile(path)
-  if not lines or vim.tbl_isempty(lines) then
+  local stat = uv.fs_stat(path)
+  local fd = uv.fs_open(path, 'r', tonumber('644', 8))
+  if not (stat and fd) then
     return Stats.default_stats()
   end
 
-  local content = table.concat(lines, '\n')
-  local ok, stats = pcall(vim.json.decode, content) ---@type boolean, Stats
+  local data = uv.fs_read(fd, stat.size)
+  uv.fs_close(fd)
+  if not data or data == '' then
+    return Stats.default_stats()
+  end
+
+  local lines = vim.split(data, '\n', { trimempty = false })
+  local ok, stats = pcall(vim.json.decode, data) ---@type boolean, Stats
   if not (ok and Util.is_type('table', stats)) then
     -- Backup corrupted file
     local backup = ('%s.backup.%s'):format(path, os.time())
-    vim.fn.writefile(lines, backup)
+    local backup_fd = uv.fs_open(backup, 'w', tonumber('644', 8))
+    if not backup_fd then
+      return Stats.default_stats()
+    end
+
+    uv.fs_write(backup_fd, lines)
+    uv.fs_close(backup_fd)
 
     if debug then
       vim.notify('Corrupted stats backed up to: ' .. backup, WARN)
