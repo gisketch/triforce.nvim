@@ -61,10 +61,6 @@ so much smoother and helped me focus on bringing those ideas to life.
 ## Table of Contents
 
 - [Installation](#installation)
-  - [`lazy.nvim`](#lazynvim)
-  - [`pckr.nvim`](#pckrnvim)
-  - [`paq-nvim`](#paq-nvim)
-  - [`vim-plug`](#vim-plug)
 - [Configuration](#configuration)
   - [Configuration Options](#configuration-options)
   - [Custom Levels](#custom-levels)
@@ -118,7 +114,8 @@ Triforce has the following requirements:
 - [`nvzone/volt`](https://github.com/nvzone/volt) - UI framework dependency
 - A [patched font](https://www.nerdfonts.com/) - For icons
 
-### `lazy.nvim`
+<details>
+<summary>lazy.nvim</summary>
 
 ```lua
 {
@@ -128,7 +125,9 @@ Triforce has the following requirements:
 }
 ```
 
-### `pckr.nvim`
+</details>
+<details>
+<summary>pckr.nvim</summary>
 
 ```lua
 require('pckr').add({
@@ -142,7 +141,9 @@ require('pckr').add({
 })
 ```
 
-### `paq-nvim`
+</details>
+<details>
+<summary>paq-nvim</summary>
 
 ```lua
 require('paq')({
@@ -151,13 +152,16 @@ require('paq')({
 })
 ```
 
-
-### `vim-plug`
+</details>
+<details>
+<summary>vim-plug</summary>
 
 ```vim
 Plug 'nvzone/volt'
 Plug 'gisketch/triforce.nvim'
 ```
+
+</details>
 
 ---
 
