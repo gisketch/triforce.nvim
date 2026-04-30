@@ -34,7 +34,7 @@ function M.optget(option, param, param_value)
   end
   if
     vim.list_contains({ 'win', 'buf' }, param)
-    and not (param_value and type(param_value) == 'number' and M.is_int(param_value, param_value < 0))
+    and not (param_value and type(param_value) == 'number' and M.is_int(param_value, param_value >= 0))
   then
     error('Missing/bad value for `win`/`buf` parameter!', ERROR)
   end
@@ -254,7 +254,9 @@ function M.is_int(x, cond)
     x = { x, { 'table', 'number' } },
     cond = { cond, { 'boolean', 'nil' }, true },
   })
-  cond = cond ~= nil and cond or true
+  if cond == nil then
+    cond = true
+  end
 
   if M.is_type('number', x) then
     ---@cast x number
@@ -411,7 +413,9 @@ function M.cycle_range(curr, first, last, back)
     last = { last, { 'number' } },
     back = { back, { 'boolean', 'nil' }, true },
   })
-  back = back ~= nil and back or false
+  if back == nil then
+    back = false
+  end
 
   if not M.is_int({ curr, first, last }) then
     error('Value is not an integer!', ERROR)
@@ -451,7 +455,9 @@ function M.is_file(path, writable)
     path = { path, { 'string' } },
     writable = { writable, { 'boolean', 'nil' }, true },
   })
-  writable = writable ~= nil and writable or false
+  if writable == nil then
+    writable = false
+  end
 
   if writable then
     return vim.fn.filereadable(path) == 1 and vim.fn.filewritable(path) == 1

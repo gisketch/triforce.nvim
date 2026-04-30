@@ -64,7 +64,12 @@ function Tracker.setup(debug)
 
   local stats_module = require('triforce.stats')
 
-  Tracker.debug = debug ~= nil and debug or false
+  if debug == nil then
+    Tracker.debug = false
+  else
+    Tracker.debug = debug
+  end
+
   Tracker.current_stats = stats_module.load(Tracker.debug)
   Tracker.current_date = os.date('%Y-%m-%d')
   Tracker.lines_today = 0

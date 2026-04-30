@@ -42,6 +42,7 @@ local ERROR = vim.log.levels.ERROR
 local WARN = vim.log.levels.WARN
 local uv = vim.uv or vim.loop
 local Util = require('triforce.util')
+local Languages = require('triforce.languages')
 
 ---@class Triforce.Stats
 ---@field calibrated? true
@@ -67,19 +68,19 @@ Stats.level_config = {
 ---@return Stats stats
 function Stats.default_stats()
   local stats = { ---@type Stats
-    xp = 0,
-    level = 1,
-    chars_typed = 0,
-    lines_typed = 0,
-    sessions = 0,
-    time_coding = 0,
-    last_session_start = 0,
     achievements = {},
     chars_by_language = {},
-    daily_activity = {},
+    chars_typed = 0,
     current_streak = 0,
-    longest_streak = 0,
+    daily_activity = {},
     db_path = vim.fs.joinpath(vim.fn.stdpath('data'), 'triforce_stats.json'),
+    last_session_start = 0,
+    level = 1,
+    lines_typed = 0,
+    longest_streak = 0,
+    sessions = 0,
+    time_coding = 0,
+    xp = 0,
   }
 
   return stats
@@ -113,7 +114,9 @@ end
 ---@return Stats merged
 function Stats.load(debug)
   Util.validate({ debug = { debug, { 'boolean', 'nil' }, true } })
-  debug = debug ~= nil and debug or false
+  if debug == nil then
+    debug = false
+  end
 
   local path = Stats.get_stats_path()
   if vim.fn.filereadable(path) == 0 then
@@ -142,11 +145,15 @@ function Stats.load(debug)
       return Stats.default_stats()
     end
 
-    uv.fs_write(backup_fd, lines)
+    local bytes = uv.fs_write(backup_fd, lines)
     uv.fs_close(backup_fd)
 
+    if not bytes then
+      vim.notify(('Corrupted stats could not be backed up to `%s`'):format(backup), WARN)
+    end
+
     if debug then
-      vim.notify('Corrupted stats backed up to: ' .. backup, WARN)
+      vim.notify(('Corrupted stats backed up to `%s`'):format(backup), WARN)
     end
 
     return Stats.default_stats()
@@ -212,7 +219,7 @@ function Stats.save(stats, path)
 
   local data_to_save = Util.prepare_for_save(stats)
   local ok, json = pcall(vim.json.encode, data_to_save)
-  if not ok then
+  if not (ok and json) then
     vim.notify('Failed to encode stats to JSON', ERROR)
     return false
   end
@@ -442,9 +449,8 @@ function Stats.add_xp(stats, amount)
   })
 
   local ft = Util.optget('filetype', 'buf', vim.api.nvim_get_current_buf())
-  local langs_module = require('triforce.languages')
-  local keys = vim.tbl_keys(langs_module.langs) --[[@as string[]\]]
-  if vim.list_contains(langs_module.ignored_langs, ft) or not vim.list_contains(keys, ft) then
+  local keys = vim.tbl_keys(Languages.langs) --[[@as string[]\]]
+  if vim.list_contains(Languages.ignored_langs, ft) or not vim.list_contains(keys, ft) then
     return false
   end
 
@@ -608,7 +614,7 @@ function Stats.export_stats(stats)
   vim.keymap.set('n', 'q', function()
     pcall(vim.api.nvim_buf_delete, bufnr, { force = true })
     pcall(vim.api.nvim_win_close, win, true)
-  end, { noremap = true, silent = true, buffer = bufnr })
+  end, { buffer = bufnr })
 end
 
 ---Export data to a specified JSON file
@@ -638,7 +644,7 @@ function Stats.export_to_json(stats, target, indent)
   end
 
   local ok, data = pcall(vim.json.encode, stats, { sort_keys = true, indent = indent })
-  if not ok then
+  if not (ok and data) then
     uv.fs_close(fd)
     error('Unable to encode stats!', ERROR)
   end

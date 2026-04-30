@@ -42,7 +42,6 @@ local defaults = { ---@type TriforceConfigDefaults
 ---Setup options.
 --- ---
 ---@field config TriforceConfigDefaults
----@field float? { bufnr: integer, win: integer }|nil
 local Config = {}
 
 ---@param silent? boolean
@@ -87,8 +86,7 @@ function Config.new_config(opts)
   if Config.config.backdrop and Config.config.backdrop.winblend then
     if Config.config.backdrop.winblend >= 100 then
       Config.config.backdrop.winblend = 100
-    end
-    if Config.config.backdrop.winblend <= 0 then
+    elseif Config.config.backdrop.winblend <= 0 then
       Config.config.backdrop.winblend = 0
     end
   end
@@ -126,26 +124,6 @@ function Config.setup(opts)
 
   -- Setup custom path if provided
   stats_module.db_path = Config.config.db_path
-end
-
-function Config.close_window()
-  if not Config.float then
-    return
-  end
-
-  pcall(vim.api.nvim_win_close, Config.float.win, true)
-  pcall(vim.api.nvim_buf_delete, Config.float.bufnr, { force = true })
-
-  Config.float = nil
-end
-
-function Config.toggle_window()
-  if Config.float then
-    Config.close_window()
-    return
-  end
-
-  Config.open_window()
 end
 
 function Config.open_window()
@@ -193,10 +171,14 @@ function Config.open_window()
   Util.optset('buftype', 'nowrite', 'buf', bufnr)
   Util.optset('modifiable', false, 'buf', bufnr)
 
-  vim.keymap.set('n', 'q', Config.close_window, { buffer = bufnr })
-  vim.keymap.set('n', '<Esc>', Config.close_window, { buffer = bufnr })
-
-  Config.float = { bufnr = bufnr, win = win }
+  vim.keymap.set('n', 'q', function()
+    pcall(vim.api.nvim_win_close, win, true)
+    pcall(vim.api.nvim_buf_delete, bufnr, { force = true })
+  end, { buffer = bufnr })
+  vim.keymap.set('n', '<Esc>', function()
+    pcall(vim.api.nvim_win_close, win, true)
+    pcall(vim.api.nvim_buf_delete, bufnr, { force = true })
+  end, { buffer = bufnr })
 end
 
 ---@return string|nil config_str

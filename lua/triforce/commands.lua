@@ -1,3 +1,5 @@
+---@module 'triforce.types'
+
 ---@class Triforce.Commands
 local Commands = {}
 
@@ -11,7 +13,7 @@ function Commands.setup()
     local triforce = require('triforce')
 
     if subcommand == 'config' then
-      require('triforce.config').toggle_window()
+      require('triforce.config').open_window()
       return
     end
 
