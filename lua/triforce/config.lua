@@ -18,6 +18,7 @@ local defaults = { ---@type TriforceConfigDefaults
     TriforceHeat3 = '#a0a0a0',
     TriforceHeat4 = '#707070',
   },
+  icon_engine = 'builtin',
   ignore_ft = {},
   keymap = { show_profile = '' },
   levels = {},
@@ -121,6 +122,12 @@ function Config.setup(opts)
   if Config.config.ignore_ft then
     langs_module.exclude_langs(Config.config.ignore_ft)
   end
+
+  Config.config.icon_engine = (
+    Config.config.icon_engine and vim.list_contains({ 'builtin', 'mini' }, Config.config.icon_engine)
+  )
+      and Config.config.icon_engine
+    or 'builtin'
 
   -- Setup custom path if provided
   stats_module.db_path = Config.config.db_path

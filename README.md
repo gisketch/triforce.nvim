@@ -108,11 +108,12 @@ so much smoother and helped me focus on bringing those ideas to life.
 
 ## Installation
 
-Triforce has the following requirements:
+**Requirements:**
 
 - [Neovim](https://github.com/neovim/neovim) >=v0.9.0
-- [`nvzone/volt`](https://github.com/nvzone/volt) - UI framework dependency
+- [nvzone/volt](https://github.com/nvzone/volt) - UI framework dependency
 - A [patched font](https://www.nerdfonts.com/) - For icons
+  - [mini.icons](https://github.com/nvim-mini/mini.icons) **(OPTIONAL)**
 
 <details>
 <summary>lazy.nvim</summary>
@@ -174,8 +175,17 @@ Triforce comes with sensible defaults, but you can customize everything:
 
 ```lua
 require('triforce').setup({
-  enabled = true,              -- Enable/disable the entire plugin
-  gamification_enabled = true, -- Enable XP, levels, achievements
+  -- Enable/disable the entire plugin
+  enabled = true,
+
+  -- Select what icon engine to use to provide with filetype icons:
+  --
+  -- - `'builtin'` - Use the built-in icons (default)
+  -- - `'mini'` - Use `mini.icons`
+  icon_engine = 'builtin', ---@type 'builtin'|'mini'
+
+  -- Enable XP, levels, achievements
+  gamification_enabled = true,
 
   -- Backdrop control
   backdrop = {

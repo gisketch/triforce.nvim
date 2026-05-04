@@ -9,6 +9,21 @@ local DAYS_PER_MONTH = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
 ---@class Triforce.Util
 local M = {}
 
+---Checks if module `mod` exists to be imported.
+--- ---
+---@param mod string The `require()` argument to be checked
+---@return boolean exists A boolean indicating whether the module exists or not
+---@nodiscard
+function M.mod_exists(mod)
+  M.validate({ mod = { mod, { 'string' } } })
+
+  if mod == '' then
+    return false
+  end
+  local exists = pcall(require, mod)
+  return exists
+end
+
 ---@overload fun(option: string|vim.wo|vim.bo): value: any
 ---@overload fun(option: string|vim.wo|vim.bo, param: 'scope', param_value: 'local'|'global'): value: any
 ---@overload fun(option: string|vim.wo|vim.bo, param: 'ft', param_value: string): value: any

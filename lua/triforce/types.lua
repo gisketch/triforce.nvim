@@ -1,6 +1,9 @@
 ---@meta
 ---@diagnostic disable:unused-local
 
+---@enum (key) TriforceIconEngine
+local icon_engines = { builtin = 1, mini = 1 }
+
 ---@class LevelTier
 ---Ending level for this tier (use `math.huge` for infinite).
 --- ---
@@ -134,6 +137,12 @@
 ---Default highlight groups for the heats.
 --- ---
 ---@field heat_highlights? Triforce.Config.Heat
+-- Select what icon engine to use to provide with filetype icons:
+--
+-- - `'builtin'` - Use the built-in icons (default)
+-- - `'mini'` - Use `mini.icons`
+-- ---
+---@field icon_engine? TriforceIconEngine
 ---List of ignored filetypes.
 --- ---
 ---@field ignore_ft? string[]
@@ -166,6 +175,7 @@
 ---@field enabled boolean
 ---@field gamification_enabled boolean
 ---@field heat_highlights Triforce.Config.Heat
+---@field icon_engine TriforceIconEngine
 ---@field ignore_ft string[]
 ---@field keymap TriforceConfig.Keymap
 ---@field level_progression LevelProgression

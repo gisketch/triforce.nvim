@@ -10,14 +10,14 @@ local Util = require('triforce.util')
 ---Mappings for popular programming languages, in `{ name, icon }` tuples.
 --- ---
 ---@field langs table<string, TriforceLanguage>
-local Languages = {}
+local M = {}
 
-Languages.ignored_langs = {}
-Languages.langs = {
+M.ignored_langs = {}
+M.langs = {
   -- Web
   javascript = { name = 'JavaScript', icon = '' }, -- nf-dev-javascript
   typescript = { name = 'TypeScript', icon = '' }, -- nf-seti-typescript
-  typescriptreact = { icon = '', name = 'TypeScript' }, -- nf-dev-react
+  typescriptreact = { name = 'TypeScript', icon = '' }, -- nf-dev-react
   javascriptreact = { name = 'JavaScript', icon = '' }, -- nf-dev-react
   html = { name = 'HTML', icon = '' }, -- nf-dev-html5
   xhtml = { name = 'XHTML', icon = '' }, -- nf-dev-html5
@@ -40,6 +40,7 @@ Languages.langs = {
   makefile = { name = 'Makefile', icon = '' }, -- nf-seti-makefile
   cmake = { name = 'CMake', icon = '' }, -- nf-dev-cmake
   fortran = { name = 'Fortran', icon = '' }, -- nf-dev-fortran
+  glsl = { name = 'GLSL', icon = '󰫴' }, -- nf-md-alpha_g
 
   -- Scripting
   python = { name = 'Python', icon = '' }, -- nf-dev-python
@@ -96,6 +97,9 @@ Languages.langs = {
   tex = { name = 'LaTeX', icon = '' }, -- nf-seti-tex
   org = { name = 'Org Mode', icon = '' }, -- nf-custom-orgmode
 
+  -- Tree-sitter
+  query = { name = 'Tree-sitter Query', icon = '󰘧' }, -- nf-md-lambda
+
   -- Other
   vim = { name = 'Vimscript', icon = '' }, -- nf-seti-vim
   r = { name = 'R', icon = '' }, -- nf-dev-r
@@ -108,43 +112,68 @@ Languages.langs = {
   cobol = { name = 'cobol', icon = '' }, -- nf-code-array
 }
 
+---@param ft string
+function M.set_mini_icon(ft)
+  Util.validate({ ft = { ft, { 'string' } } })
+
+  ---@module 'mini.icons'
+  if not (_G.MiniIcons and M.langs[ft]) then
+    return
+  end
+
+  local default_icon = M.langs[ft].icon or ''
+  local no_icon = _G.MiniIcons.get('filetype', '')
+  local icon = _G.MiniIcons.get('filetype', ft)
+  if icon == no_icon and default_icon ~= '' then
+    icon = default_icon
+  elseif icon == no_icon and default_icon == '' then
+    icon = no_icon
+  end
+
+  M.langs[ft].icon = icon
+end
+
 ---Get icon for a filetype.
 ---
 ---Returns `nil` if not a valid one.
 ---@param ft string
 ---@return string|nil icon
-function Languages.get_icon(ft)
+function M.get_icon(ft)
   Util.validate({ ft = { ft, { 'string' } } })
 
-  if vim.list_contains(Languages.ignored_langs, ft) then
+  if vim.list_contains(M.ignored_langs, ft) then
     return
   end
-  if not Languages.langs[ft] then
+  if not M.langs[ft] then
     return ''
   end
 
-  return Languages.langs[ft].icon or ''
+  if require('triforce.config').config.icon_engine == 'mini' then
+    M.set_mini_icon(ft)
+  end
+
+  return M.langs[ft].icon or ''
 end
 
 ---@param ft string
 ---@return boolean excluded
-function Languages.is_excluded(ft)
+function M.is_excluded(ft)
   Util.validate({ ft = { ft, { 'string' } } })
 
-  return vim.list_contains(Languages.ignored_langs, ft)
+  return vim.list_contains(M.ignored_langs, ft)
 end
 
 ---@param langs string[]
-function Languages.exclude_langs(langs)
+function M.exclude_langs(langs)
   Util.validate({ langs = { langs, { 'table' } } })
 
-  Languages.ignored_langs = vim.tbl_deep_extend('keep', langs, Languages.ignored_langs)
+  M.ignored_langs = vim.tbl_deep_extend('keep', langs, M.ignored_langs)
 end
 
 ---Check if language should be tracked
 ---@param ft string
 ---@return boolean tracked
-function Languages.should_track(ft)
+function M.should_track(ft)
   Util.validate({ ft = { ft, { 'string' } } })
 
   if ft == '' then
@@ -152,7 +181,7 @@ function Languages.should_track(ft)
   end
 
   -- Track only if we have an icon for it or if user adds custom mapping
-  return not Languages.is_excluded(ft) and Languages.langs[ft] and Languages.langs[ft].icon ~= nil
+  return not M.is_excluded(ft) and M.langs[ft] and M.langs[ft].icon ~= nil
 end
 
 ---Get display name for language.
@@ -160,17 +189,17 @@ end
 ---Returns `nil` if `ft` is not valid.
 ---@param ft string
 ---@return string|nil name
-function Languages.get_display_name(ft)
+function M.get_display_name(ft)
   Util.validate({ ft = { ft, { 'string' } } })
 
-  if Languages.is_excluded(ft) then
+  if M.is_excluded(ft) then
     return
   end
-  if not Languages.langs[ft] then
+  if not M.langs[ft] then
     return ''
   end
 
-  return Languages.langs[ft].name or ft
+  return M.langs[ft].name or ft
 end
 
 ---Get full display with icon
@@ -178,15 +207,15 @@ end
 ---Returns `nil` if `ft` is not valid.
 ---@param ft string
 ---@return string|nil full_display
-function Languages.get_full_display(ft)
+function M.get_full_display(ft)
   Util.validate({ ft = { ft, { 'string' } } })
 
-  if Languages.is_excluded(ft) then
+  if M.is_excluded(ft) then
     return
   end
 
-  local icon = Languages.get_icon(ft)
-  local name = Languages.get_display_name(ft)
+  local icon = M.get_icon(ft)
+  local name = M.get_display_name(ft)
 
   return icon == '' and name or ('%s %s'):format(icon, name)
 end
@@ -194,18 +223,18 @@ end
 ---Register custom languages.
 --- ---
 ---@param custom_langs table<string, TriforceLanguage>
-function Languages.register_custom_languages(custom_langs)
+function M.register_custom_languages(custom_langs)
   Util.validate({ custom_langs = { custom_langs, { 'table' } } })
   if not custom_langs or vim.tbl_isempty(custom_langs) then
     return
   end
 
   for ft, config in pairs(custom_langs) do
-    if not (Languages.is_excluded(ft) or Languages.langs[ft]) then
-      Languages.langs[ft] = { icon = config.icon or '', name = config.name or '' }
+    if not (M.is_excluded(ft) or M.langs[ft]) then
+      M.langs[ft] = { icon = config.icon or '', name = config.name or '' }
     end
   end
 end
 
-return Languages
+return M
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:
