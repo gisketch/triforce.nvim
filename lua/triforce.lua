@@ -10,10 +10,8 @@ local Levels = require('triforce.levels')
 ---@class Triforce
 local M = {}
 
-M.close_config = Config.close_window
 M.get_stats = Tracker.get_stats
 M.open_config = Config.open_window
-M.toggle_config = Config.toggle_window
 
 ---@param opts? TriforceConfig
 function M.setup(opts)
