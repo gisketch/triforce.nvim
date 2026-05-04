@@ -1,5 +1,5 @@
 *triforce.txt*
-                               For NVIM >=v0.9.0    Last change: 2026 April 29
+                                 For NVIM >=v0.9.0    Last change: 2026 May 04
 
 ==============================================================================
 1. triforce.nvim                                      *triforce-triforce.nvim*
@@ -113,11 +113,12 @@ TABLE OF CONTENTS                                 *triforce-table-of-contents*
 
 INSTALLATION                                           *triforce-installation*
 
-Triforce has the following requirements:
+**Requirements:**
 
 - Neovim <https://github.com/neovim/neovim> >=v0.9.0
-- `nvzone/volt` <https://github.com/nvzone/volt> - UI framework dependency
+- nvzone/volt <https://github.com/nvzone/volt> - UI framework dependency
 - A patched font <https://www.nerdfonts.com/> - For icons
+    - mini.icons <https://github.com/nvim-mini/mini.icons> **(OPTIONAL)**
 
 lazy.nvim ~
 
@@ -169,8 +170,17 @@ Defaults ~
 
 >lua
     require('triforce').setup({
-      enabled = true,              -- Enable/disable the entire plugin
-      gamification_enabled = true, -- Enable XP, levels, achievements
+      -- Enable/disable the entire plugin
+      enabled = true,
+    
+      -- Select what icon engine to use to provide with filetype icons:
+      --
+      -- - `'builtin'` - Use the built-in icons (default)
+      -- - `'mini'` - Use `mini.icons`
+      icon_engine = 'builtin', ---@type 'builtin'|'mini'
+    
+      -- Enable XP, levels, achievements
+      gamification_enabled = true,
     
       -- Backdrop control
       backdrop = {
