@@ -154,8 +154,7 @@ function Tracker.on_text_changed(bufnr)
   -- Check for day rollover
   Tracker.check_date_rollover()
 
-  local buftype = Util.optget('buftype', 'buf', bufnr)
-  if vim.list_contains({ 'terminal', 'help', 'nowrite', 'nofile' }, buftype) then
+  if vim.list_contains({ 'terminal', 'help', 'nowrite', 'nofile' }, Util.optget('buftype', 'buf', bufnr)) then
     return
   end
 

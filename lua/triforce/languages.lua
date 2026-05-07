@@ -140,7 +140,6 @@ end
 ---@return string|nil icon
 function M.get_icon(ft)
   Util.validate({ ft = { ft, { 'string' } } })
-
   if vim.list_contains(M.ignored_langs, ft) then
     return
   end
