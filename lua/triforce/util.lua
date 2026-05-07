@@ -85,7 +85,7 @@ function M.optset(option, value, param, param_value)
   end
   if
     vim.list_contains({ 'win', 'buf' }, param)
-    and not (param_value and type(param_value) == 'number' and M.is_int(param_value, param_value < 0))
+    and not (param_value and type(param_value) == 'number' and M.is_int(param_value, param_value >= 0))
   then
     error('Missing/bad value for `win`/`buf` parameter!', ERROR)
   end
