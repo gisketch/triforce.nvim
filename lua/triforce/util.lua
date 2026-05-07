@@ -24,17 +24,15 @@ function M.mod_exists(mod)
   return exists
 end
 
----@overload fun(option: string|vim.wo|vim.bo): value: any
----@overload fun(option: string|vim.wo|vim.bo, param: 'scope', param_value: 'local'|'global'): value: any
----@overload fun(option: string|vim.wo|vim.bo, param: 'ft', param_value: string): value: any
----@overload fun(option: string|vim.wo|vim.bo, param: 'buf'|'win', param_value: integer): value: any
+---@overload fun(option: string, param: 'scope', param_value: 'local'|'global'): value: any
+---@overload fun(option: string, param: 'ft', param_value: string): value: any
+---@overload fun(option: string, param: 'buf'|'win', param_value: integer): value: any
 function M.optget(option, param, param_value)
   M.validate({
     option = { option, { 'string' } },
-    param = { param, { 'string', 'nil' }, true },
+    param = { param, { 'string' } },
     param_value = { param_value, { 'string', 'number', 'nil' }, true },
   })
-  param = param or 'buf'
   if not vim.list_contains({ 'scope', 'ft', 'buf', 'win' }, param) then
     error(('Bad parameter: `%s`\nCan only accept `scope`, `ft`, `buf` or `win`!'):format(vim.inspect(param)), ERROR)
   end
@@ -57,20 +55,18 @@ function M.optget(option, param, param_value)
   return vim.api.nvim_get_option_value(option, { [param] = param_value })
 end
 
----@overload fun(option: string|vim.wo|vim.bo, value: any)
----@overload fun(option: string|vim.wo|vim.bo, value: any, param: 'scope', param_value: 'local'|'global')
----@overload fun(option: string|vim.wo|vim.bo, value: any, param: 'ft', param_value: string)
----@overload fun(option: string|vim.wo|vim.bo, value: any, param: 'buf'|'win', param_value: integer)
+---@overload fun(option: string, value: any, param: 'scope', param_value: 'local'|'global')
+---@overload fun(option: string, value: any, param: 'ft', param_value: string)
+---@overload fun(option: string, value: any, param: 'buf'|'win', param_value: integer)
 function M.optset(option, value, param, param_value)
   M.validate({
     option = { option, { 'string' } },
-    param = { param, { 'string', 'nil' }, true },
+    param = { param, { 'string' } },
     param_value = { param_value, { 'string', 'number', 'nil' }, true },
   })
   if value == nil then
     error('Empty option value is unacceptable!', ERROR)
   end
-  param = param or 'buf'
   if not vim.list_contains({ 'scope', 'ft', 'buf', 'win' }, param) then
     error(('Bad parameter: `%s`\nCan only accept `scope`, `ft`, `buf` or `win`!'):format(vim.inspect(param)), ERROR)
   end
@@ -112,13 +108,15 @@ end
 ---@param feature string
 ---@return boolean has
 function M.vim_has(feature)
+  M.validate({ feature = { feature, { 'string' } } })
+
   return vim.fn.has(feature) == 1
 end
 
 ---Dynamic `vim.validate()` wrapper. Covers both legacy and newer implementations
 ---@param T table<string, vim.validate.Spec|ValidateSpec>
 function M.validate(T)
-  local max = M.vim_has('nvim-0.11') and 3 or 4
+  local max = vim.fn.has('nvim-0.11') == 1 and 3 or 4
   for name, spec in pairs(T) do
     while #spec > max do
       table.remove(spec, #spec)
@@ -126,7 +124,7 @@ function M.validate(T)
     T[name] = spec
   end
 
-  if M.vim_has('nvim-0.11') then
+  if max == 3 then
     for name, spec in pairs(T) do
       table.insert(spec, 1, name)
       vim.validate(unpack(spec))
