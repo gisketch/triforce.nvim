@@ -75,7 +75,7 @@ function Tracker.setup(debug)
   Tracker.lines_today = 0
   stats_module.start_session(Tracker.current_stats)
   Tracker.augroup = vim.api.nvim_create_augroup('TriforceTracker', { clear = true })
-  vim.api.nvim_create_autocmd({ 'TextChanged', 'InsertCharPre' }, {
+  vim.api.nvim_create_autocmd({ 'InsertCharPre', 'TextChangedI' }, {
     group = Tracker.augroup,
     callback = function(ev)
       Tracker.on_text_changed(ev.buf)
