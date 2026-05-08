@@ -1,8 +1,9 @@
 local INFO = vim.log.levels.INFO
 local ERROR = vim.log.levels.ERROR
 local WARN = vim.log.levels.WARN
-local Util = require('triforce.util')
 local uv = vim.uv or vim.loop
+local Langs = require('triforce.languages')
+local Util = require('triforce.util')
 
 ---@class Triforce.Tracker
 ---@field augroup? integer
@@ -75,18 +76,22 @@ function Tracker.setup(debug)
   Tracker.lines_today = 0
   stats_module.start_session(Tracker.current_stats)
   Tracker.augroup = vim.api.nvim_create_augroup('TriforceTracker', { clear = true })
-  vim.api.nvim_create_autocmd({ 'InsertCharPre', 'TextChangedI' }, {
+
+  vim.api.nvim_create_autocmd({ 'InsertCharPre', 'TextChanged' }, {
     group = Tracker.augroup,
     callback = function(ev)
-      Tracker.on_text_changed(ev.buf)
+      if Util.optget('modified', 'buf', ev.buf) then
+        Tracker.on_text_changed(ev.buf)
+      end
     end,
   })
   vim.api.nvim_create_autocmd('BufWritePre', {
     group = Tracker.augroup,
     callback = function(ev)
-      local ft = Util.optget('filetype', 'buf', ev.buf)
-      local modified = Util.optget('modified', 'buf', ev.buf)
-      if modified and not vim.list_contains(require('triforce.languages').ignored_langs, ft) then
+      if
+        Util.optget('modified', 'buf', ev.buf)
+        and not vim.list_contains(Langs.ignored_langs, Util.optget('filetype', 'buf', ev.buf))
+      then
         Tracker.on_save()
       end
     end,
@@ -189,12 +194,11 @@ function Tracker.on_text_changed(bufnr)
 
   -- Track character by language
   local filetype = Util.optget('filetype', 'buf', bufnr) --[[@as string]]
-  if filetype ~= '' and require('triforce.languages').should_track(filetype) then
+  if filetype ~= '' and Langs.should_track(filetype) then
     -- Initialize if needed
     if not Tracker.current_stats.chars_by_language then
       Tracker.current_stats.chars_by_language = {}
     end
-
     Tracker.current_stats.chars_by_language[filetype] = (Tracker.current_stats.chars_by_language[filetype] or 0) + 1
   end
 
