@@ -110,6 +110,7 @@ M.langs = {
   PKGBUILD = { name = 'PKGBUILD', icon = '' }, -- nf-dev-terminal,
   prolog = { name = 'prolog', icon = '' }, -- nf-dev-prolog
   cobol = { name = 'cobol', icon = '' }, -- nf-code-array
+  dockerfile = { name = 'Dockerfile', icon = '󰡨' }, -- nf-md-docker
 }
 
 ---@param ft string
