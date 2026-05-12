@@ -50,23 +50,23 @@ local Languages = require('triforce.languages')
 ---Configurable level progression.
 --- ---
 ---@field level_config LevelProgression
-local Stats = {}
+local M = {}
 
-Stats.level_config = {
-  tier_1 = { min_level = 1, max_level = 10, xp_per_level = 300 },
-  tier_2 = { min_level = 11, max_level = 20, xp_per_level = 500 },
-  tier_3 = { min_level = 21, max_level = 30, xp_per_level = 1000 },
-  tier_4 = { min_level = 31, max_level = 40, xp_per_level = 2000 },
-  tier_5 = { min_level = 41, max_level = 50, xp_per_level = 3000 },
+M.level_config = {
+  tier_1 = { min_level = 1, max_level = 10, xp_per_level = 500 },
+  tier_2 = { min_level = 11, max_level = 20, xp_per_level = 750 },
+  tier_3 = { min_level = 21, max_level = 30, xp_per_level = 1250 },
+  tier_4 = { min_level = 31, max_level = 40, xp_per_level = 2500 },
+  tier_5 = { min_level = 41, max_level = 50, xp_per_level = 3750 },
   tier_6 = { min_level = 51, max_level = 75, xp_per_level = 5000 },
-  tier_7 = { min_level = 76, max_level = 100, xp_per_level = 7500 },
-  tier_8 = { min_level = 101, max_level = 150, xp_per_level = 10000 },
+  tier_7 = { min_level = 76, max_level = 100, xp_per_level = 10000 },
+  tier_8 = { min_level = 101, max_level = 150, xp_per_level = 12500 },
   tier_9 = { min_level = 151, max_level = 225, xp_per_level = 15000 },
-  tier_10 = { min_level = 226, max_level = 300, xp_per_level = 20000 },
+  tier_10 = { min_level = 226, max_level = math.huge, xp_per_level = 25000 },
 }
 
 ---@return Stats stats
-function Stats.default_stats()
+function M.default_stats()
   local stats = { ---@type Stats
     achievements = {},
     chars_by_language = {},
@@ -88,20 +88,20 @@ end
 
 ---Get the stats file path
 ---@return string db_path
-function Stats.get_stats_path()
-  return Stats.db_path or Stats.default_stats().db_path
+function M.get_stats_path()
+  return M.db_path or M.default_stats().db_path
 end
 
 ---@param stats Stats
 ---@return boolean valid
-function Stats.validate_stats(stats)
+function M.validate_stats(stats)
   Util.validate({ stats = { stats, { 'table' } } })
   if vim.tbl_isempty(stats) or vim.islist(stats) then
     return false
   end
 
   local keys = vim.tbl_keys(stats) --[[@as string[]\]]
-  for _, key in ipairs(vim.tbl_keys(Stats.default_stats())) do
+  for _, key in ipairs(vim.tbl_keys(M.default_stats())) do
     if not vim.list_contains(keys, key) then
       return false
     end
@@ -112,27 +112,27 @@ end
 ---Load stats from disk
 ---@param debug? boolean
 ---@return Stats merged
-function Stats.load(debug)
+function M.load(debug)
   Util.validate({ debug = { debug, { 'boolean', 'nil' }, true } })
   if debug == nil then
     debug = false
   end
 
-  local path = Stats.get_stats_path()
+  local path = M.get_stats_path()
   if vim.fn.filereadable(path) == 0 then
-    return Stats.default_stats()
+    return M.default_stats()
   end
 
   local stat = uv.fs_stat(path)
   local fd = uv.fs_open(path, 'r', tonumber('644', 8))
   if not (stat and fd) then
-    return Stats.default_stats()
+    return M.default_stats()
   end
 
   local data = uv.fs_read(fd, stat.size)
   uv.fs_close(fd)
   if not data or data == '' then
-    return Stats.default_stats()
+    return M.default_stats()
   end
 
   local lines = vim.split(data, '\n', { trimempty = false })
@@ -142,7 +142,7 @@ function Stats.load(debug)
     local backup = ('%s.backup.%s'):format(path, os.time())
     local backup_fd = uv.fs_open(backup, 'w', tonumber('644', 8))
     if not backup_fd then
-      return Stats.default_stats()
+      return M.default_stats()
     end
 
     local bytes = uv.fs_write(backup_fd, lines)
@@ -156,7 +156,7 @@ function Stats.load(debug)
       vim.notify(('Corrupted stats backed up to `%s`'):format(backup), WARN)
     end
 
-    return Stats.default_stats()
+    return M.default_stats()
   end
 
   -- Fix chars_by_language if it was saved as array
@@ -175,7 +175,7 @@ function Stats.load(debug)
   end
 
   -- Merge with defaults to ensure all fields exist
-  local merged = vim.tbl_deep_extend('force', Stats.default_stats(), stats)
+  local merged = vim.tbl_deep_extend('force', M.default_stats(), stats)
 
   -- Recalculate level from XP to fix any inconsistencies
   -- (e.g., if user changed level progression config after playing)
@@ -183,7 +183,7 @@ function Stats.load(debug)
     return merged
   end
 
-  local calculated_level = Stats.calculate_level(merged.xp)
+  local calculated_level = M.calculate_level(merged.xp)
   if calculated_level ~= merged.level then
     if debug then
       vim.notify(
@@ -206,16 +206,16 @@ end
 ---@param stats? Stats
 ---@param path? string
 ---@return boolean success
-function Stats.save(stats, path)
+function M.save(stats, path)
   Util.validate({
     stats = { stats, { 'table', 'nil' }, true },
     path = { path, { 'string', 'nil' }, true },
   })
-  if not (stats and Stats.validate_stats(stats)) then
+  if not (stats and M.validate_stats(stats)) then
     vim.notify('Unable to save stats!', ERROR)
     return false
   end
-  path = (path and Util.is_file(path)) and path or Stats.get_stats_path()
+  path = (path and Util.is_file(path)) and path or M.get_stats_path()
 
   local data_to_save = Util.prepare_for_save(stats)
   local ok, json = pcall(vim.json.encode, data_to_save)
@@ -251,84 +251,84 @@ function Stats.save(stats, path)
   return true
 end
 
-function Stats.calibrate_tiers()
-  if Stats.calibrated then
+function M.calibrate_tiers()
+  if M.calibrated then
     return
   end
-  local last_level = Stats.level_config.tier_1.max_level
+  local last_level = M.level_config.tier_1.max_level
 
-  if Stats.level_config.tier_2.min_level >= last_level then
-    Stats.level_config.tier_2.min_level = last_level + 1
+  if M.level_config.tier_2.min_level >= last_level then
+    M.level_config.tier_2.min_level = last_level + 1
   end
-  if Stats.level_config.tier_2.max_level == math.huge then
-    Stats.level_config.tier_2.max_level = Stats.level_config.tier_3.min_level - 1
+  if M.level_config.tier_2.max_level == math.huge then
+    M.level_config.tier_2.max_level = M.level_config.tier_3.min_level - 1
   end
-  last_level = Stats.level_config.tier_2.max_level
+  last_level = M.level_config.tier_2.max_level
 
-  if Stats.level_config.tier_3.min_level >= last_level then
-    Stats.level_config.tier_3.min_level = last_level + 1
+  if M.level_config.tier_3.min_level >= last_level then
+    M.level_config.tier_3.min_level = last_level + 1
   end
-  if Stats.level_config.tier_3.max_level == math.huge then
-    Stats.level_config.tier_3.max_level = Stats.level_config.tier_4.min_level - 1
+  if M.level_config.tier_3.max_level == math.huge then
+    M.level_config.tier_3.max_level = M.level_config.tier_4.min_level - 1
   end
-  last_level = Stats.level_config.tier_3.max_level
+  last_level = M.level_config.tier_3.max_level
 
-  if Stats.level_config.tier_4.min_level >= last_level then
-    Stats.level_config.tier_4.min_level = last_level + 1
+  if M.level_config.tier_4.min_level >= last_level then
+    M.level_config.tier_4.min_level = last_level + 1
   end
-  if Stats.level_config.tier_4.max_level == math.huge then
-    Stats.level_config.tier_4.max_level = Stats.level_config.tier_5.min_level - 1
+  if M.level_config.tier_4.max_level == math.huge then
+    M.level_config.tier_4.max_level = M.level_config.tier_5.min_level - 1
   end
-  last_level = Stats.level_config.tier_4.max_level
+  last_level = M.level_config.tier_4.max_level
 
-  if Stats.level_config.tier_5.min_level >= last_level then
-    Stats.level_config.tier_5.min_level = last_level + 1
+  if M.level_config.tier_5.min_level >= last_level then
+    M.level_config.tier_5.min_level = last_level + 1
   end
-  if Stats.level_config.tier_5.max_level == math.huge then
-    Stats.level_config.tier_5.max_level = Stats.level_config.tier_6.min_level - 1
+  if M.level_config.tier_5.max_level == math.huge then
+    M.level_config.tier_5.max_level = M.level_config.tier_6.min_level - 1
   end
-  last_level = Stats.level_config.tier_5.max_level
+  last_level = M.level_config.tier_5.max_level
 
-  if Stats.level_config.tier_6.min_level >= last_level then
-    Stats.level_config.tier_6.min_level = last_level + 1
+  if M.level_config.tier_6.min_level >= last_level then
+    M.level_config.tier_6.min_level = last_level + 1
   end
-  if Stats.level_config.tier_6.max_level == math.huge then
-    Stats.level_config.tier_6.max_level = Stats.level_config.tier_7.min_level - 1
+  if M.level_config.tier_6.max_level == math.huge then
+    M.level_config.tier_6.max_level = M.level_config.tier_7.min_level - 1
   end
-  last_level = Stats.level_config.tier_6.max_level
+  last_level = M.level_config.tier_6.max_level
 
-  if Stats.level_config.tier_7.min_level >= last_level then
-    Stats.level_config.tier_7.min_level = last_level + 1
+  if M.level_config.tier_7.min_level >= last_level then
+    M.level_config.tier_7.min_level = last_level + 1
   end
-  if Stats.level_config.tier_7.max_level == math.huge then
-    Stats.level_config.tier_7.max_level = Stats.level_config.tier_8.min_level - 1
+  if M.level_config.tier_7.max_level == math.huge then
+    M.level_config.tier_7.max_level = M.level_config.tier_8.min_level - 1
   end
-  last_level = Stats.level_config.tier_7.max_level
+  last_level = M.level_config.tier_7.max_level
 
-  if Stats.level_config.tier_8.min_level >= last_level then
-    Stats.level_config.tier_8.min_level = last_level + 1
+  if M.level_config.tier_8.min_level >= last_level then
+    M.level_config.tier_8.min_level = last_level + 1
   end
-  if Stats.level_config.tier_8.max_level == math.huge then
-    Stats.level_config.tier_8.max_level = Stats.level_config.tier_9.min_level - 1
+  if M.level_config.tier_8.max_level == math.huge then
+    M.level_config.tier_8.max_level = M.level_config.tier_9.min_level - 1
   end
-  last_level = Stats.level_config.tier_8.max_level
+  last_level = M.level_config.tier_8.max_level
 
-  if Stats.level_config.tier_9.min_level >= last_level then
-    Stats.level_config.tier_9.min_level = last_level + 1
+  if M.level_config.tier_9.min_level >= last_level then
+    M.level_config.tier_9.min_level = last_level + 1
   end
-  if Stats.level_config.tier_9.max_level == math.huge then
-    Stats.level_config.tier_9.max_level = Stats.level_config.tier_10.min_level - 1
+  if M.level_config.tier_9.max_level == math.huge then
+    M.level_config.tier_9.max_level = M.level_config.tier_10.min_level - 1
   end
-  last_level = Stats.level_config.tier_9.max_level
+  last_level = M.level_config.tier_9.max_level
 
-  if Stats.level_config.tier_10.min_level >= last_level then
-    Stats.level_config.tier_10.min_level = last_level + 1
+  if M.level_config.tier_10.min_level >= last_level then
+    M.level_config.tier_10.min_level = last_level + 1
   end
-  if Stats.level_config.tier_10.max_level ~= math.huge then
-    Stats.level_config.tier_10.max_level = math.huge
+  if M.level_config.tier_10.max_level ~= math.huge then
+    M.level_config.tier_10.max_level = math.huge
   end
 
-  Stats.calibrated = true
+  M.calibrated = true
 end
 
 ---Calculate level from XP
@@ -338,7 +338,7 @@ end
 ---  Levels 21+: 1000 XP each
 ---@param xp number
 ---@return integer level
-function Stats.calculate_level(xp)
+function M.calculate_level(xp)
   Util.validate({ xp = { xp, { 'number' } } })
   if xp <= 0 then
     return 1
@@ -348,101 +348,101 @@ function Stats.calculate_level(xp)
   local accumulated_xp = 0
 
   -- Tier 1: Levels 1-10 (300 XP each)
-  local tier_1_total = Stats.level_config.tier_1.max_level * Stats.level_config.tier_1.xp_per_level
+  local tier_1_total = M.level_config.tier_1.max_level * M.level_config.tier_1.xp_per_level
   if xp <= tier_1_total then
-    return 1 + math.floor(xp / Stats.level_config.tier_1.xp_per_level)
+    return 1 + math.floor(xp / M.level_config.tier_1.xp_per_level)
   end
   accumulated_xp = tier_1_total
-  level = Stats.level_config.tier_1.max_level
+  level = M.level_config.tier_1.max_level
 
   -- Tier 2: Levels 11-20 (500 XP each)
-  local tier_2_range = Stats.level_config.tier_2.max_level - Stats.level_config.tier_2.min_level + 1
-  local tier_2_total = tier_2_range * Stats.level_config.tier_2.xp_per_level
+  local tier_2_range = M.level_config.tier_2.max_level - M.level_config.tier_2.min_level + 1
+  local tier_2_total = tier_2_range * M.level_config.tier_2.xp_per_level
   if xp <= accumulated_xp + tier_2_total then
-    return (level + 1) + math.floor((xp - accumulated_xp) / Stats.level_config.tier_2.xp_per_level)
+    return (level + 1) + math.floor((xp - accumulated_xp) / M.level_config.tier_2.xp_per_level)
   end
   accumulated_xp = accumulated_xp + tier_2_total
-  level = Stats.level_config.tier_2.max_level
+  level = M.level_config.tier_2.max_level
 
   -- Tier 3: Levels 21-30 (1000 XP each)
-  local tier_3_range = Stats.level_config.tier_3.max_level - Stats.level_config.tier_3.min_level + 1
-  local tier_3_total = tier_3_range * Stats.level_config.tier_3.xp_per_level
+  local tier_3_range = M.level_config.tier_3.max_level - M.level_config.tier_3.min_level + 1
+  local tier_3_total = tier_3_range * M.level_config.tier_3.xp_per_level
   if xp <= accumulated_xp + tier_3_total then
-    return (level + 1) + math.floor((xp - accumulated_xp) / Stats.level_config.tier_3.xp_per_level)
+    return (level + 1) + math.floor((xp - accumulated_xp) / M.level_config.tier_3.xp_per_level)
   end
   accumulated_xp = accumulated_xp + tier_3_total
-  level = Stats.level_config.tier_3.max_level
+  level = M.level_config.tier_3.max_level
 
   -- Tier 4: Levels 31-40 (2000 XP each)
-  local tier_4_range = Stats.level_config.tier_4.max_level - Stats.level_config.tier_4.min_level + 1
-  local tier_4_total = tier_4_range * Stats.level_config.tier_4.xp_per_level
+  local tier_4_range = M.level_config.tier_4.max_level - M.level_config.tier_4.min_level + 1
+  local tier_4_total = tier_4_range * M.level_config.tier_4.xp_per_level
   if xp <= accumulated_xp + tier_4_total then
-    return (level + 1) + math.floor((xp - accumulated_xp) / Stats.level_config.tier_4.xp_per_level)
+    return (level + 1) + math.floor((xp - accumulated_xp) / M.level_config.tier_4.xp_per_level)
   end
   accumulated_xp = accumulated_xp + tier_4_total
-  level = Stats.level_config.tier_4.max_level
+  level = M.level_config.tier_4.max_level
 
   -- Tier 5: Levels 41-50 (3000 XP each)
-  local tier_5_range = Stats.level_config.tier_5.max_level - Stats.level_config.tier_5.min_level + 1
-  local tier_5_total = tier_5_range * Stats.level_config.tier_5.xp_per_level
+  local tier_5_range = M.level_config.tier_5.max_level - M.level_config.tier_5.min_level + 1
+  local tier_5_total = tier_5_range * M.level_config.tier_5.xp_per_level
   if xp <= accumulated_xp + tier_5_total then
-    return (level + 1) + math.floor((xp - accumulated_xp) / Stats.level_config.tier_5.xp_per_level)
+    return (level + 1) + math.floor((xp - accumulated_xp) / M.level_config.tier_5.xp_per_level)
   end
   accumulated_xp = accumulated_xp + tier_5_total
-  level = Stats.level_config.tier_5.max_level
+  level = M.level_config.tier_5.max_level
 
   -- Tier 6: Levels 51-75 (5000 XP each)
-  local tier_6_range = Stats.level_config.tier_6.max_level - Stats.level_config.tier_6.min_level + 1
-  local tier_6_total = tier_6_range * Stats.level_config.tier_6.xp_per_level
+  local tier_6_range = M.level_config.tier_6.max_level - M.level_config.tier_6.min_level + 1
+  local tier_6_total = tier_6_range * M.level_config.tier_6.xp_per_level
   if xp <= accumulated_xp + tier_6_total then
-    return (level + 1) + math.floor((xp - accumulated_xp) / Stats.level_config.tier_6.xp_per_level)
+    return (level + 1) + math.floor((xp - accumulated_xp) / M.level_config.tier_6.xp_per_level)
   end
   accumulated_xp = accumulated_xp + tier_6_total
-  level = Stats.level_config.tier_6.max_level
+  level = M.level_config.tier_6.max_level
 
   -- Tier 7: Levels 76-100 (7500 XP each)
-  local tier_7_range = Stats.level_config.tier_7.max_level - Stats.level_config.tier_7.min_level + 1
-  local tier_7_total = tier_7_range * Stats.level_config.tier_7.xp_per_level
+  local tier_7_range = M.level_config.tier_7.max_level - M.level_config.tier_7.min_level + 1
+  local tier_7_total = tier_7_range * M.level_config.tier_7.xp_per_level
   if xp <= accumulated_xp + tier_7_total then
-    return (level + 1) + math.floor((xp - accumulated_xp) / Stats.level_config.tier_7.xp_per_level)
+    return (level + 1) + math.floor((xp - accumulated_xp) / M.level_config.tier_7.xp_per_level)
   end
   accumulated_xp = accumulated_xp + tier_7_total
-  level = Stats.level_config.tier_7.max_level
+  level = M.level_config.tier_7.max_level
 
   -- Tier 8: Levels 101-150 (10000 XP each)
-  local tier_8_range = Stats.level_config.tier_8.max_level - Stats.level_config.tier_8.min_level + 1
-  local tier_8_total = tier_8_range * Stats.level_config.tier_8.xp_per_level
+  local tier_8_range = M.level_config.tier_8.max_level - M.level_config.tier_8.min_level + 1
+  local tier_8_total = tier_8_range * M.level_config.tier_8.xp_per_level
   if xp <= accumulated_xp + tier_8_total then
-    return (level + 1) + math.floor((xp - accumulated_xp) / Stats.level_config.tier_8.xp_per_level)
+    return (level + 1) + math.floor((xp - accumulated_xp) / M.level_config.tier_8.xp_per_level)
   end
   accumulated_xp = accumulated_xp + tier_8_total
-  level = Stats.level_config.tier_8.max_level
+  level = M.level_config.tier_8.max_level
 
   -- Tier 9: Levels 151-225 (15000 XP each)
-  local tier_9_range = Stats.level_config.tier_9.max_level - Stats.level_config.tier_9.min_level + 1
-  local tier_9_total = tier_9_range * Stats.level_config.tier_9.xp_per_level
+  local tier_9_range = M.level_config.tier_9.max_level - M.level_config.tier_9.min_level + 1
+  local tier_9_total = tier_9_range * M.level_config.tier_9.xp_per_level
   if xp <= accumulated_xp + tier_9_total then
-    return (level + 1) + math.floor((xp - accumulated_xp) / Stats.level_config.tier_9.xp_per_level)
+    return (level + 1) + math.floor((xp - accumulated_xp) / M.level_config.tier_9.xp_per_level)
   end
   accumulated_xp = accumulated_xp + tier_9_total
-  level = Stats.level_config.tier_9.max_level
+  level = M.level_config.tier_9.max_level
 
   -- Tier 10: Levels 226+ (15000 XP each)
-  return level + math.floor((xp - accumulated_xp) / Stats.level_config.tier_10.xp_per_level) + 1
+  return level + math.floor((xp - accumulated_xp) / M.level_config.tier_10.xp_per_level) + 1
 end
 
 ---Calculate XP needed for next level
 ---@param current_level integer
 ---@return integer xp_needed
-function Stats.xp_for_next_level(current_level)
-  return Util.get_total_xp_for_level(current_level + 1, Stats.level_config)
+function M.xp_for_next_level(current_level)
+  return Util.get_total_xp_for_level(current_level + 1, M.level_config)
 end
 
 ---Add XP and update level
 ---@param stats Stats
 ---@param amount number
 ---@return boolean leveled_up
-function Stats.add_xp(stats, amount)
+function M.add_xp(stats, amount)
   Util.validate({
     stats = { stats, { 'table' } },
     amount = { amount, { 'number' } },
@@ -456,14 +456,14 @@ function Stats.add_xp(stats, amount)
 
   local old_level = stats.level
   stats.xp = stats.xp + amount
-  stats.level = Stats.calculate_level(stats.xp)
+  stats.level = M.calculate_level(stats.xp)
 
   return stats.level > old_level
 end
 
 ---Start a new session
 ---@param stats Stats
-function Stats.start_session(stats)
+function M.start_session(stats)
   Util.validate({ stats = { stats, { 'table' } } })
 
   stats.sessions = stats.sessions + 1
@@ -472,7 +472,7 @@ end
 
 ---End the current session
 ---@param stats Stats
-function Stats.end_session(stats)
+function M.end_session(stats)
   Util.validate({ stats = { stats, { 'table' } } })
 
   -- Time is accumulated per-keystroke in tracker.lua (activity-based),
@@ -493,7 +493,7 @@ end
 ---@param stats Stats
 ---@return integer current_streak
 ---@return integer longest_streak
-function Stats.calculate_streaks(stats)
+function M.calculate_streaks(stats)
   Util.validate({ stats = { stats, { 'table' } } })
 
   if not stats.daily_activity then
@@ -567,7 +567,7 @@ end
 ---Record activity for today
 ---@param stats Stats
 ---@param lines_today integer Number of lines typed today
-function Stats.record_daily_activity(stats, lines_today)
+function M.record_daily_activity(stats, lines_today)
   Util.validate({
     stats = { stats, { 'table' } },
     lines_today = { lines_today, { 'number' } },
@@ -581,14 +581,14 @@ function Stats.record_daily_activity(stats, lines_today)
   stats.daily_activity[today] = (stats.daily_activity[today] or 0) + lines_today
 
   -- Update streaks
-  local current, longest = Stats.calculate_streaks(stats)
+  local current, longest = M.calculate_streaks(stats)
   stats.current_streak = current
   stats.longest_streak = longest
 end
 
 ---Export data to a new empty buffer
 ---@param stats Stats
-function Stats.export_stats(stats)
+function M.export_stats(stats)
   Util.validate({ stats = { stats, { 'table' } } })
 
   local data = vim.split(vim.inspect(stats), '\n', { plain = true, trimempty = true })
@@ -621,7 +621,7 @@ end
 ---@param stats Stats
 ---@param target string
 ---@param indent? string
-function Stats.export_to_json(stats, target, indent)
+function M.export_to_json(stats, target, indent)
   Util.validate({
     stats = { stats, { 'table' } },
     target = { target, { 'string' } },
@@ -656,7 +656,7 @@ end
 ---Export data to a specified Markdown file
 ---@param stats Stats
 ---@param target string
-function Stats.export_to_md(stats, target)
+function M.export_to_md(stats, target)
   Util.validate({
     stats = { stats, { 'table' } },
     target = { target, { 'string' } },
@@ -697,10 +697,10 @@ end
 ---Get streak with proper calculation
 ---@param stats Stats
 ---@return integer current
-function Stats.get_current_streak(stats)
-  local current = Stats.calculate_streaks(stats)
+function M.get_current_streak(stats)
+  local current = M.calculate_streaks(stats)
   return current
 end
 
-return Stats
+return M
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:

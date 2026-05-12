@@ -23,37 +23,37 @@ local defaults = { ---@type TriforceConfigDefaults
   keymap = { show_profile = '' },
   levels = {},
   level_progression = {
-    tier_1 = { min_level = 1, max_level = 10, xp_per_level = 300 },
-    tier_2 = { min_level = 11, max_level = 20, xp_per_level = 500 },
-    tier_3 = { min_level = 21, max_level = 30, xp_per_level = 1000 },
-    tier_4 = { min_level = 31, max_level = 40, xp_per_level = 2000 },
-    tier_5 = { min_level = 41, max_level = 50, xp_per_level = 3000 },
+    tier_1 = { min_level = 1, max_level = 10, xp_per_level = 500 },
+    tier_2 = { min_level = 11, max_level = 20, xp_per_level = 750 },
+    tier_3 = { min_level = 21, max_level = 30, xp_per_level = 1250 },
+    tier_4 = { min_level = 31, max_level = 40, xp_per_level = 2500 },
+    tier_5 = { min_level = 41, max_level = 50, xp_per_level = 3750 },
     tier_6 = { min_level = 51, max_level = 75, xp_per_level = 5000 },
-    tier_7 = { min_level = 76, max_level = 100, xp_per_level = 7500 },
-    tier_8 = { min_level = 101, max_level = 150, xp_per_level = 10000 },
+    tier_7 = { min_level = 76, max_level = 100, xp_per_level = 10000 },
+    tier_8 = { min_level = 101, max_level = 150, xp_per_level = 12500 },
     tier_9 = { min_level = 151, max_level = 225, xp_per_level = 15000 },
-    tier_10 = { min_level = 226, max_level = 300, xp_per_level = 20000 },
+    tier_10 = { min_level = 226, max_level = math.huge, xp_per_level = 25000 },
   },
   notifications = { enabled = true, level_up = true, achievements = true },
   override_levels = false,
-  xp_rewards = { char = 1, line = 1, save = 50 },
+  xp_rewards = { char = 1, line = 1, save = 10 },
 }
 
 ---@class Triforce.Config
 ---Setup options.
 --- ---
 ---@field config TriforceConfigDefaults
-local Config = {}
+local M = {}
 
 ---@param silent? boolean
 ---@return boolean gamified
-function Config.has_gamification(silent)
+function M.has_gamification(silent)
   Util.validate({ silent = { silent, { 'boolean', 'nil' }, true } })
   if silent == nil then
     silent = false
   end
 
-  if Config.config.gamification_enabled ~= nil and Config.config.gamification_enabled then
+  if M.config.gamification_enabled ~= nil and M.config.gamification_enabled then
     return true
   end
 
@@ -64,31 +64,29 @@ function Config.has_gamification(silent)
 end
 
 ---@return TriforceConfigDefaults defaults
-function Config.defaults()
+function M.defaults()
   return defaults
 end
 
 ---@param opts? TriforceConfig
-function Config.new_config(opts)
+function M.new_config(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
-  Config.config = setmetatable(vim.tbl_deep_extend('keep', opts or {}, Config.defaults()), {
-    __index = defaults,
-  })
+  M.config = vim.tbl_deep_extend('keep', opts or {}, defaults)
 
-  local keys = vim.tbl_keys(Config.defaults()) --[[@as string[]\]]
-  for k, _ in pairs(Config.config) do
+  local keys = vim.tbl_keys(M.defaults()) --[[@as string[]\]]
+  for k, _ in pairs(M.config) do
     ---@cast k string
     if not vim.list_contains(keys, k) then
-      Config.config[k] = nil
+      M.config[k] = nil
     end
   end
 
-  if Config.config.backdrop and Config.config.backdrop.winblend then
-    if Config.config.backdrop.winblend >= 100 then
-      Config.config.backdrop.winblend = 100
-    elseif Config.config.backdrop.winblend <= 0 then
-      Config.config.backdrop.winblend = 0
+  if M.config.backdrop and M.config.backdrop.winblend then
+    if M.config.backdrop.winblend >= 100 then
+      M.config.backdrop.winblend = 100
+    elseif M.config.backdrop.winblend <= 0 then
+      M.config.backdrop.winblend = 0
     end
   end
 end
@@ -96,12 +94,12 @@ end
 ---Setup the plugin with user configuration
 --- ---
 ---@param opts? TriforceConfig User configuration options.
-function Config.setup(opts)
+function M.setup(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
-  Config.new_config(opts or {})
+  M.new_config(opts or {})
 
-  if not Config.config.enabled then
+  if not M.config.enabled then
     return
   end
 
@@ -109,33 +107,31 @@ function Config.setup(opts)
   local langs_module = require('triforce.languages')
 
   -- Apply custom level progression to stats module
-  if Config.config.level_progression then
-    stats_module.level_config = Config.config.level_progression
+  if M.config.level_progression then
+    stats_module.level_config = M.config.level_progression
     stats_module.calibrate_tiers()
   end
 
   -- Register custom languages if provided
-  if Config.config.custom_languages then
-    langs_module.register_custom_languages(Config.config.custom_languages)
+  if M.config.custom_languages then
+    langs_module.register_custom_languages(M.config.custom_languages)
   end
 
-  if Config.config.ignore_ft then
-    langs_module.exclude_langs(Config.config.ignore_ft)
+  if M.config.ignore_ft then
+    langs_module.exclude_langs(M.config.ignore_ft)
   end
 
-  Config.config.icon_engine = (
-    Config.config.icon_engine and vim.list_contains({ 'builtin', 'mini' }, Config.config.icon_engine)
-  )
-      and Config.config.icon_engine
+  M.config.icon_engine = (M.config.icon_engine and vim.list_contains({ 'builtin', 'mini' }, M.config.icon_engine))
+      and M.config.icon_engine
     or 'builtin'
 
   -- Setup custom path if provided
-  stats_module.db_path = Config.config.db_path
+  stats_module.db_path = M.config.db_path
 end
 
-function Config.open_window()
+function M.open_window()
   local bufnr = vim.api.nvim_create_buf(false, true)
-  local conf_data = Config.get_config() or ''
+  local conf_data = M.get_config() or ''
   if conf_data == '' then
     return
   end
@@ -189,17 +185,17 @@ function Config.open_window()
 end
 
 ---@return string|nil config_str
-function Config.get_config()
-  if not Config.config then
+function M.get_config()
+  if not M.config then
     return
   end
 
   local opts = {} ---@type TriforceConfig
-  for k, v in pairs(Config.config) do
+  for k, v in pairs(M.config) do
     opts[k] = v
   end
   return vim.inspect(opts)
 end
 
-return Config
+return M
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:

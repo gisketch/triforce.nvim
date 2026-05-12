@@ -57,7 +57,7 @@ local icon_engines = { builtin = 1, mini = 1 }
 ---XP gained per new line (default: `1`).
 --- ---
 ---@field line? number
----XP gained per file save (default: `50`).
+---XP gained per file save (default: `10`).
 --- ---
 ---@field save? number
 

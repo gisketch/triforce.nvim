@@ -1,10 +1,10 @@
 ---@module 'triforce.types'
 
 ---@class Triforce.Commands
-local Commands = {}
+local M = {}
 
 -- Create user commands with subcommands
-function Commands.setup()
+function M.setup()
   vim.api.nvim_create_user_command('Triforce', function(opts)
     local subcommand = opts.fargs[1]
     local subcommand2 = opts.fargs[2] or '' ---@type string|nil
@@ -50,11 +50,10 @@ function Commands.setup()
 
       if subcommand2 ~= 'export' then
         vim.notify(
-          [[
-Usage: :Triforce stats
-        :Triforce stats export
-        :Triforce stats export json </path/to/file>
-        :Triforce stats export markdown </path/to/file>]],
+          [[Usage: :Triforce stats
+       :Triforce stats export
+       :Triforce stats export json </path/to/file>
+       :Triforce stats export markdown </path/to/file>]],
           vim.log.levels.INFO
         )
         return
@@ -67,9 +66,8 @@ Usage: :Triforce stats
 
       if not vim.list_contains({ 'json', 'markdown' }, subcommand3) then
         vim.notify(
-          [[
-Usage: :Triforce stats export json <path/to/file>
-        :Triforce stats export markdown </path/to/file>]],
+          [[Usage: :Triforce stats export json <path/to/file>
+       :Triforce stats export markdown </path/to/file>]],
           vim.log.levels.INFO
         )
         return
@@ -97,8 +95,7 @@ Usage: :Triforce stats export json <path/to/file>
     -- Plan B: If subcommand value is not valid then abort and print usage
     if subcommand ~= 'debug' then
       vim.notify(
-        [[
-Usage: :Triforce config
+        [[Usage: :Triforce config
        :Triforce debug xp | achievement | languages | fix
        :Triforce profile
        :Triforce reset
@@ -106,8 +103,7 @@ Usage: :Triforce config
        :Triforce stats export
        :Triforce stats export json <path/to/file>
        :Triforce stats export markdown </path/to/file>
-       :Triforce stats save
-       ]],
+       :Triforce stats save]],
         vim.log.levels.INFO
       )
       return
@@ -209,5 +205,5 @@ Usage: :Triforce config
   })
 end
 
-return Commands
+return M
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:

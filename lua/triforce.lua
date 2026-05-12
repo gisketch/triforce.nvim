@@ -1,11 +1,11 @@
 local ERROR = vim.log.levels.ERROR
 local WARN = vim.log.levels.WARN
 local INFO = vim.log.levels.INFO
-local Util = require('triforce.util')
 local Config = require('triforce.config')
-local Tracker = require('triforce.tracker')
-local Stats = require('triforce.stats')
 local Levels = require('triforce.levels')
+local Stats = require('triforce.stats')
+local Tracker = require('triforce.tracker')
+local Util = require('triforce.util')
 
 ---@class Triforce
 local M = {}
@@ -54,9 +54,8 @@ function M.setup(opts)
 
   Tracker.setup()
 
-  if config.achievements then
-    M.new_achievements(config.achievements)
-  end
+  M.new_achievements(config.achievements or {})
+
   if config.levels and not vim.tbl_isempty(config.levels) then
     Levels.add_levels(config.levels)
   end

@@ -9,7 +9,15 @@
 ---@field width integer
 ---@field xpad integer
 
----@alias PaginationKey 'h'|'H'|'<Left>'|'l'|'L'|'<Right>'
+---@enum (key) PaginationKey
+local pagination = { ---@diagnostic disable-line:unused-local
+  H = 1,
+  L = 1,
+  ['<Left>'] = 1,
+  ['<Right>'] = 1,
+  h = 1,
+  l = 1,
+}
 
 local volt = require('volt')
 local voltui = require('volt.ui')
@@ -125,12 +133,11 @@ function Profile.pagination_fun(key)
       end
     elseif vim.list_contains({ 'l', 'L', '<Right>' }, key) then
       local stats = tracker.get_stats()
-      if stats then
-        local levels = levels_module.get_all_levels(stats)
-        if Profile.levels_page < math.ceil(#levels / Profile.levels_per_page) then
-          Profile.levels_page = Profile.levels_page + 1
-          Profile.redraw()
-        end
+      if
+        stats and Profile.levels_page < math.ceil(#(levels_module.get_all_levels(stats)) / Profile.levels_per_page)
+      then
+        Profile.levels_page = Profile.levels_page + 1
+        Profile.redraw()
       end
     end
   end
