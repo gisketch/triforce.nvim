@@ -406,8 +406,7 @@ function M.debug_achievement()
   local achievements = achievement_mod.get_all_achievements(M.current_stats)
 
   -- Pick a random achievement
-  local random_idx = math.random(1, #achievements)
-  local achievement = achievements[random_idx]
+  local achievement = achievements[math.random(1, #achievements)]
 
   -- Show notification
   M.notify_achievement(achievement.name, achievement.desc, achievement.icon)
