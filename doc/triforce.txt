@@ -413,7 +413,7 @@ By default, Triforce awards XP for different coding activities:
 
 - **Character typed**: 1 XP
 - **New line**: 1 XP
-- **File save**: 50 XP
+- **File save**: 10 XP
 
 You can customize these values to match your preferences. For example, if you
 want to emphasize quality over quantity and reward saves more:
@@ -434,8 +434,8 @@ Or if you prefer to focus on typing volume:
     require('triforce').setup({
       xp_rewards = {
         char = 2,    -- More XP per character
-        line = 5,    -- Moderate XP for lines
-        save = 25,   -- Less emphasis on saves
+        line = 3,    -- Moderate XP for lines
+        save = 5,   -- Less emphasis on saves
       },
     })
 <
