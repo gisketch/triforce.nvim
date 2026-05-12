@@ -1,5 +1,5 @@
 *triforce.txt*
-                                 For NVIM >=v0.9.0    Last change: 2026 May 04
+                                 For NVIM >=v0.9.0    Last change: 2026 May 12
 
 ==============================================================================
 1. triforce.nvim                                      *triforce-triforce.nvim*
@@ -231,9 +231,16 @@ Defaults ~
     
       -- Customize level progression (optional)
       level_progression = {
-        tier_1 = { min_level = 1, max_level = 10, xp_per_level = 300 },   -- Levels 1-10
-        tier_2 = { min_level = 11, max_level = 20, xp_per_level = 500 },  -- Levels 11-20
-        tier_3 = { min_level = 21, max_level = math.huge, xp_per_level = 1000 }, -- Levels 21+
+        tier_1 = { min_level = 1, max_level = 10, xp_per_level = 500 },
+        tier_2 = { min_level = 11, max_level = 20, xp_per_level = 750 },
+        tier_3 = { min_level = 21, max_level = 30, xp_per_level = 1250 },
+        tier_4 = { min_level = 31, max_level = 40, xp_per_level = 2500 },
+        tier_5 = { min_level = 41, max_level = 50, xp_per_level = 3750 },
+        tier_6 = { min_level = 51, max_level = 75, xp_per_level = 5000 },
+        tier_7 = { min_level = 76, max_level = 100, xp_per_level = 10000 },
+        tier_8 = { min_level = 101, max_level = 150, xp_per_level = 12500 },
+        tier_9 = { min_level = 151, max_level = 225, xp_per_level = 15000 },
+        tier_10 = { min_level = 226, max_level = math.huge, xp_per_level = 25000 },
       },
     
       -- Customize XP rewards (optional)
@@ -360,9 +367,16 @@ LEVEL PROGRESSION ~
 By default Triforce uses a **simple, easy-to-reach** leveling system. The
 default leveling system is:
 
-- **Levels 1-10**: 300 XP per level
-- **Levels 11-20**: 500 XP per level
-- **Levels 21+**: 1,000 XP per level
+- **Levels 1-10**: 500 XP per level
+- **Levels 11-20**: 750 XP per level
+- **Levels 21-30**: 1,250 XP per level
+- **Levels 31-40**: 2,500 XP per level
+- **Levels 41-50**: 3,750 XP per level
+- **Levels 51-75**: 5,000 XP per level
+- **Levels 76-100**: 10,000 XP per level
+- **Levels 101-150**: 12,500 XP per level
+- **Levels 151-225**: 15,000 XP per level
+- **Levels +226**: 25,000 XP per level
 
 Example progression:
 
@@ -372,15 +386,22 @@ Example progression:
 - **Level 20**: 8,000 XP (`3,000 + 10 × 500`)
 - **Level 30**: 18,000 XP (`8,000 + 10 × 1,000`)
 
-You can customize this by overriding `level_progression` in your setup. For
-example, to make it even easier:
+You can customize this by overriding `level_progression` in your setup. The
+defaults are:
 
 >lua
     require('triforce').setup({
       level_progression = {
-        tier_1 = { min_level = 1, max_level = 15, xp_per_level = 200 },
-        tier_2 = { min_level = 16, max_level = 30, xp_per_level = 400 },
-        tier_3 = { min_level = 31, max_level = math.huge, xp_per_level = 800 },
+        tier_1 = { min_level = 1, max_level = 10, xp_per_level = 500 },
+        tier_2 = { min_level = 11, max_level = 20, xp_per_level = 750 },
+        tier_3 = { min_level = 21, max_level = 30, xp_per_level = 1250 },
+        tier_4 = { min_level = 31, max_level = 40, xp_per_level = 2500 },
+        tier_5 = { min_level = 41, max_level = 50, xp_per_level = 3750 },
+        tier_6 = { min_level = 51, max_level = 75, xp_per_level = 5000 },
+        tier_7 = { min_level = 76, max_level = 100, xp_per_level = 10000 },
+        tier_8 = { min_level = 101, max_level = 150, xp_per_level = 12500 },
+        tier_9 = { min_level = 151, max_level = 225, xp_per_level = 15000 },
+        tier_10 = { min_level = 226, max_level = math.huge, xp_per_level = 25000 },
       },
     })
 <
