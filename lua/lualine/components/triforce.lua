@@ -1,6 +1,6 @@
 local lualine_require = require('lualine_require')
 local highlight = require('lualine.highlight')
-local triforce_lualine = require('triforce.lualine')
+local Triforce = require('triforce')
 
 ---@class LuaLine.Super
 ---@field private _reset_components function
@@ -40,7 +40,6 @@ local triforce_lualine = require('triforce.lualine')
 ---@field opts Triforce.LualineConfig.Streak
 ---@field callback fun(opts: Triforce.LualineConfig.Streak)
 
--- local M = require('lualine_require').require('lualine.component'):extend()
 ---@class TriforceLualine
 ---@field options Triforce.LualineConfig
 ---@field achievements TriforceLualine.Achievements
@@ -54,17 +53,17 @@ local M = lualine_require.require('lualine.component'):extend()
 function M:init(opts)
   M.super:init(opts)
 
-  self.options = vim.tbl_deep_extend('keep', self.options or {}, triforce_lualine.get_defaults(), {
+  self.options = vim.tbl_deep_extend('keep', self.options or {}, Triforce.lualine.get_defaults(), {
     achievements = { enabled = false },
     level = { enabled = true },
     session_time = { enabled = false },
     streak = { enabled = false },
   })
 
-  self.achievements = { opts = self.options.achievements, callback = triforce_lualine.achievements }
-  self.level = { opts = self.options.level, callback = triforce_lualine.level }
-  self.session_time = { opts = self.options.session_time, callback = triforce_lualine.session_time }
-  self.streak = { opts = self.options.streak, callback = triforce_lualine.streak }
+  self.achievements = { opts = self.options.achievements, callback = Triforce.lualine.achievements }
+  self.level = { opts = self.options.level, callback = Triforce.lualine.level }
+  self.session_time = { opts = self.options.session_time, callback = Triforce.lualine.session_time }
+  self.streak = { opts = self.options.streak, callback = Triforce.lualine.streak }
 
   local hl_info = vim.api.nvim_get_hl(0, { name = 'Character' })
   local fg = hl_info.fg or nil

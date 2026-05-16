@@ -6,12 +6,24 @@ local Levels = require('triforce.levels')
 local Stats = require('triforce.stats')
 local Tracker = require('triforce.tracker')
 local Util = require('triforce.util')
+local UI = require('triforce.ui')
 
 ---@class Triforce
+---@field achievement Triforce.Achievements
+---@field commands Triforce.Commands
+---@field config Triforce.Config
+---@field get_stats fun(): stats: Stats|nil
+---@field health Triforce.Health
+---@field languages Triforce.Languages
+---@field levels Triforce.Levels
+---@field lualine Triforce.Lualine
+---@field open_config function
+---@field random_stats Triforce.RandomStats
+---@field stats Triforce.Stats
+---@field tracker Triforce.Tracker
+---@field ui Triforce.Ui
+---@field util Triforce.Util
 local M = {}
-
-M.get_stats = Tracker.get_stats
-M.open_config = Config.open_window
 
 ---@param opts? TriforceConfig
 function M.setup(opts)
@@ -64,7 +76,7 @@ function M.setup(opts)
     group = vim.api.nvim_create_augroup('TriforceProfile', { clear = true }),
     desc = 'Sync Triforce with colorscheme changes',
     callback = function()
-      require('triforce.ui.profile').setup_highlights()
+      UI.profile.setup_highlights()
     end,
   })
 end
@@ -81,13 +93,12 @@ function M.show_profile(tab)
     Tracker.setup()
   end
 
-  local Profile = require('triforce.ui.profile')
-  local tab_n = (tab and Profile.tabs_map[tab]) and Profile.tabs_map[tab] or Profile.current_tab
-  if Profile.current_tab ~= tab_n and Profile.dimensions.float and Profile.dimensions.dim_float then
-    Profile.cycle_tab(nil, tab_n)
+  local tab_n = (tab and UI.profile.tabs_map[tab]) and UI.profile.tabs_map[tab] or UI.profile.current_tab
+  if UI.profile.current_tab ~= tab_n and UI.profile.dimensions.float and UI.profile.dimensions.dim_float then
+    UI.profile.cycle_tab(nil, tab_n)
     return
   end
-  Profile.toggle(tab_n)
+  UI.profile.toggle(tab_n)
 end
 
 ---Reset all stats (useful for testing)
@@ -189,5 +200,20 @@ function M.new_achievements(achievements)
   require('triforce.achievement').new_achievements(achievements, Tracker.get_stats())
 end
 
-return M
+local Triforce = setmetatable(M, { ---@type Triforce
+  __index = function(self, k)
+    if Util.mod_exists('triforce.' .. k) then
+      return require('triforce.' .. k)
+    end
+    if k == 'get_stats' then
+      return require('triforce.tracker').get_stats
+    end
+    if k == 'open_config' then
+      return require('triforce.config').open_window
+    end
+    return rawget(self, k) or nil
+  end,
+})
+
+return Triforce
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:
