@@ -15,7 +15,7 @@ jobs:
     name: pandoc to vimdoc
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.3
       - name: Run panvimdoc
         uses: kdheepak/panvimdoc@main
         with:
