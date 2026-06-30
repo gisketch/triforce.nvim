@@ -1,5 +1,5 @@
 *triforce.txt*
-                                For NVIM >=v0.9.0    Last change: 2026 June 09
+                                For NVIM >=v0.9.0    Last change: 2026 June 30
 
 ==============================================================================
 1. triforce.nvim                                      *triforce-triforce.nvim*
@@ -126,6 +126,14 @@ lazy.nvim ~
     {
       'gisketch/triforce.nvim',
       dependencies = { 'nvzone/volt' },
+      keys = {
+        {
+          '<leader>tp',
+          function()
+            require('triforce').show_profile()
+          end,
+        },
+      },
       opts = {},
     }
 <
@@ -211,12 +219,6 @@ Defaults ~
     
         -- Show achievement unlock notifications
         achievements = true,
-      },
-    
-      -- Keymap configuration
-      keymap = {
-        -- Set to nil to disable default keymap
-        show_profile = '<leader>tp',
       },
     
       -- Auto-save interval (in seconds)
