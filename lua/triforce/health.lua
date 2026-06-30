@@ -28,7 +28,7 @@ function M.check()
     return
   end
 
-  if not config.config.enabled then
+  if not config.get().enabled then
     vim.health.warn('Triforce is disabled in configuration')
     return
   end
@@ -36,7 +36,7 @@ function M.check()
   vim.health.ok('Plugin is enabled')
 
   vim.health.start('Gamification')
-  if not config.config.gamification_enabled then
+  if not config.get().gamification_enabled then
     vim.health.warn('Gamification is disabled')
     return
   end

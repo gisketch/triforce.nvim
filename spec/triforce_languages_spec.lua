@@ -19,9 +19,7 @@ describe('triforce', function()
       }
       local ok = pcall(triforce.setup, { custom_languages = custom_langs })
       assert.is_true(ok)
-
-      local config = require('triforce.config')
-      assert.is_same(config.config.custom_languages, custom_langs)
+      assert.is_same(require('triforce.config').get().custom_languages, custom_langs)
     end)
 
     it('should process ignored languages', function()

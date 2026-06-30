@@ -9,6 +9,9 @@
 ---@field width integer
 ---@field xpad integer
 
+local MONTHS = { 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' }
+local DAYS = { 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' }
+
 ---@enum (key) PaginationKey
 local pagination = { ---@diagnostic disable-line:unused-local
   H = 1,
@@ -65,11 +68,11 @@ Profile.dimensions = { width = math.floor(vim.o.columns * 0.66), height = math.f
 ---Close up profile window
 function Profile.close()
   local Config = require('triforce.config')
-  if not (Profile.dimensions.float or (Config.config.backdrop.enabled and Profile.dimensions.dim_float)) then
+  if not (Profile.dimensions.float or (Config.get().backdrop.enabled and Profile.dimensions.dim_float)) then
     return
   end
 
-  if Config.config.backdrop and Config.config.backdrop.enabled then
+  if Config.get().backdrop and Config.get().backdrop.enabled then
     pcall(vim.api.nvim_buf_delete, Profile.dimensions.dim_float.buf, { force = true })
     pcall(vim.api.nvim_win_close, Profile.dimensions.dim_float.win, true)
     Profile.dimensions.dim_float = nil
@@ -88,7 +91,7 @@ function Profile.toggle(tab)
   tab = tab or nil
 
   local Config = require('triforce.config')
-  if not (Profile.dimensions.float and (Config.config.backdrop.enabled and Profile.dimensions.dim_float)) then
+  if not (Profile.dimensions.float and (Config.get().backdrop.enabled and Profile.dimensions.dim_float)) then
     Profile.open(tab)
     return
   end
@@ -181,7 +184,7 @@ end
 
 ---Get activity level highlight based on lines typed
 ---@param lines integer
----@return 'TriforceHeat4'|'TriforceHeat0'|'TriforceHeat1'|'TriforceHeat2'|'TriforceHeat3' hl
+---@return 'TriforceHeat0'|'TriforceHeat1'|'TriforceHeat2'|'TriforceHeat3'|'TriforceHeat4' hl
 function Profile.get_activity_hl(lines)
   if lines == 0 then
     return 'TriforceHeat4' -- Lightest
@@ -208,15 +211,12 @@ function Profile.build_activity_heatmap(stats)
   end
 
   local year = os.date('%Y')
-  local current_month = tonumber(os.date('%m'))
-
-  local months = { 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' }
-  local days = { 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' }
+  local current_month = tonumber(os.date('%m'), 10)
 
   local months_to_show = 7
   local squares_len = months_to_show * 4
-  local current_year_num = tonumber(year)
-  local month_seq = {}
+  local current_year_num = tonumber(year, 10)
+  local month_seq = {} ---@type { month: integer, year: integer }[]
   for offset = months_to_show - 1, 0, -1 do
     local m = current_month - offset
     local y = current_year_num
@@ -234,7 +234,7 @@ function Profile.build_activity_heatmap(stats)
 
   for idx, my in ipairs(month_seq) do
     local month_idx = my.month
-    table.insert(lines[1], { '  ' .. months[month_idx] .. '  ', 'TriforceRed' })
+    table.insert(lines[1], { '  ' .. MONTHS[month_idx] .. '  ', 'TriforceRed' })
     table.insert(lines[1], { idx == #month_seq and '' or '  ' })
   end
 
@@ -242,7 +242,7 @@ function Profile.build_activity_heatmap(stats)
   table.insert(lines[2], hrline[1])
 
   for day = 1, 7 do
-    local line = { { days[day], 'Comment' }, { ' │ ', 'Comment' } }
+    local line = { { DAYS[day], 'Comment' }, { ' │ ', 'Comment' } }
     table.insert(lines, line)
   end
 
@@ -744,7 +744,7 @@ function Profile.setup_highlights()
     { name = 3, mix_pct = 65 },
     { name = 4, mix_pct = 80 },
   }
-  local heat_hls = config.config.heat_highlights or config.defaults().heat_highlights
+  local heat_hls = config.get().heat_highlights or config.defaults().heat_highlights
   for _, level in ipairs(heat_levels) do
     local hl = ('TriforceHeat%d'):format(level.name)
     local fg = heat_hls[hl] ---@type string|nil
@@ -889,7 +889,7 @@ function Profile.open(tab)
 
   vim.api.nvim_set_option_value('filetype', 'triforce-profile', { buf = Profile.dimensions.float.buf })
 
-  if Config.config.backdrop and Config.config.backdrop.enabled then
+  if Config.get().backdrop and Config.get().backdrop.enabled then
     Profile.dimensions.dim_float = {}
     Profile.dimensions.dim_float.buf = vim.api.nvim_create_buf(false, true)
     Profile.dimensions.dim_float.win = vim.api.nvim_open_win(Profile.dimensions.dim_float.buf, false, {
@@ -905,7 +905,7 @@ function Profile.open(tab)
 
     vim.api.nvim_set_option_value(
       'winblend',
-      Config.config.backdrop.winblend or 20,
+      Config.get().backdrop.winblend or 20,
       { win = Profile.dimensions.dim_float.win }
     )
   end
@@ -940,7 +940,7 @@ function Profile.open(tab)
     { h = Profile.dimensions.height, w = Profile.dimensions.width - Profile.dimensions.xpad * 2 }
   )
   volt.mappings({
-    bufs = { Profile.dimensions.float.buf, Config.config.backdrop.enabled and Profile.dimensions.dim_float.buf or nil },
+    bufs = { Profile.dimensions.float.buf, Config.get().backdrop.enabled and Profile.dimensions.dim_float.buf or nil },
     winclosed_event = true,
     after_close = Profile.close,
   })

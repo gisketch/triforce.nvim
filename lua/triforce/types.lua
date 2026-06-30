@@ -61,13 +61,6 @@ local icon_engines = { builtin = 1, mini = 1 }
 --- ---
 ---@field save? number
 
----@class TriforceConfig.Keymap
----Keymap for showing profile. A `nil` value sets no keymap.
----
----Set to a keymap like `"<leader>tp"` to enable.
---- ---
----@field show_profile? string
-
 ---Notification configuration.
 --- ---
 ---@class TriforceConfig.Notifications
@@ -81,14 +74,26 @@ local icon_engines = { builtin = 1, mini = 1 }
 --- ---
 ---@field level_up? boolean
 
+---@class TriforceConfigDefaults.Notifications: TriforceConfig.Notifications
+---@field achievements boolean
+---@field enabled boolean
+---@field level_up boolean
+
 ---Default highlight groups for the heats.
 --- ---
----@class Triforce.Config.Heat
+---@class TriforceConfig.Heat
 ---@field TriforceHeat0? string
 ---@field TriforceHeat1? string
 ---@field TriforceHeat2? string
 ---@field TriforceHeat3? string
 ---@field TriforceHeat4? string
+
+---@class TriforceConfigDefaults.Heat: TriforceConfig.Heat
+---@field TriforceHeat0 string
+---@field TriforceHeat1 string
+---@field TriforceHeat2 string
+---@field TriforceHeat3 string
+---@field TriforceHeat4 string
 
 ---@class TriforceConfig.Backdrop
 ---Whether to enable the backdrop (i.e. dimming the background).
@@ -99,6 +104,10 @@ local icon_engines = { builtin = 1, mini = 1 }
 ---The amount of transparency for the window (0-100).
 --- ---
 ---@field winblend? integer
+
+---@class TriforceConfigDefaults.Backdrop: TriforceConfig.Backdrop
+---@field enabled boolean
+---@field winblend integer
 
 ---Triforce setup configuration.
 --- ---
@@ -136,7 +145,7 @@ local icon_engines = { builtin = 1, mini = 1 }
 ---@field gamification_enabled? boolean
 ---Default highlight groups for the heats.
 --- ---
----@field heat_highlights? Triforce.Config.Heat
+---@field heat_highlights? TriforceConfig.Heat
 -- Select what icon engine to use to provide with filetype icons:
 --
 -- - `'builtin'` - Use the built-in icons (default)
@@ -146,9 +155,6 @@ local icon_engines = { builtin = 1, mini = 1 }
 ---List of ignored filetypes.
 --- ---
 ---@field ignore_ft? string[]
----Keymap configuration.
---- ---
----@field keymap? TriforceConfig.Keymap
 ---List of custom level titles.
 --- ---
 ---@field levels? LevelParams[]
@@ -168,19 +174,18 @@ local icon_engines = { builtin = 1, mini = 1 }
 ---@class TriforceConfigDefaults: TriforceConfig
 ---@field achievements Achievement[]
 ---@field auto_save_interval integer
----@field backdrop TriforceConfig.Backdrop
+---@field backdrop TriforceConfigDefaults.Backdrop
 ---@field custom_languages table<string, TriforceLanguage>
 ---@field db_path string
 ---@field debug boolean
 ---@field enabled boolean
 ---@field gamification_enabled boolean
----@field heat_highlights Triforce.Config.Heat
+---@field heat_highlights TriforceConfigDefaults.Heat
 ---@field icon_engine TriforceIconEngine
 ---@field ignore_ft string[]
----@field keymap TriforceConfig.Keymap
 ---@field level_progression LevelProgression
 ---@field levels LevelParams[]
----@field notifications TriforceConfig.Notifications
+---@field notifications TriforceConfigDefaults.Notifications
 ---@field override_levels boolean
 ---@field xp_rewards XPRewards
 
@@ -223,20 +228,18 @@ function A.check(stats) end
 ---@field [3]? boolean
 ---@field [4]? string
 
----@enum (key) Months
-local months = {
-  [1] = 1,
-  [2] = 1,
-  [3] = 1,
-  [4] = 1,
-  [5] = 1,
-  [6] = 1,
-  [7] = 1,
-  [8] = 1,
-  [9] = 1,
-  [10] = 1,
-  [11] = 1,
-  [12] = 1,
-}
+---@alias Months
+---|1
+---|2
+---|3
+---|4
+---|5
+---|6
+---|7
+---|8
+---|9
+---|10
+---|11
+---|12
 
 -- vim: set ts=2 sts=2 sw=2 et ai si sta:

@@ -20,7 +20,6 @@ local defaults = { ---@type TriforceConfigDefaults
   },
   icon_engine = 'builtin',
   ignore_ft = {},
-  keymap = { show_profile = '' },
   levels = {},
   level_progression = {
     tier_1 = { min_level = 1, max_level = 10, xp_per_level = 500 },
@@ -40,10 +39,27 @@ local defaults = { ---@type TriforceConfigDefaults
 }
 
 ---@class Triforce.Config
+local M = {}
+
 ---Setup options.
 --- ---
----@field config TriforceConfigDefaults
-local M = {}
+---@type TriforceConfigDefaults
+local config = {} ---@diagnostic disable-line:missing-fields
+
+---@return TriforceConfigDefaults config
+function M.get()
+  return config
+end
+
+---@param k string
+---@param v any
+function M.set(k, v)
+  if not defaults[k] then
+    return
+  end
+
+  config[k] = v
+end
 
 ---@param silent? boolean
 ---@return boolean gamified
@@ -53,7 +69,7 @@ function M.has_gamification(silent)
     silent = false
   end
 
-  if M.config.gamification_enabled ~= nil and M.config.gamification_enabled then
+  if config.gamification_enabled ~= nil and config.gamification_enabled then
     return true
   end
 
@@ -72,21 +88,21 @@ end
 function M.new_config(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
-  M.config = vim.tbl_deep_extend('keep', opts or {}, defaults)
+  config = vim.tbl_deep_extend('keep', opts or {}, defaults) --[[@as TriforceConfigDefaults]]
 
   local keys = vim.tbl_keys(M.defaults()) --[[@as string[]\]]
-  for k, _ in pairs(M.config) do
+  for k, _ in pairs(config) do
     ---@cast k string
     if not vim.list_contains(keys, k) then
-      M.config[k] = nil
+      config[k] = nil
     end
   end
 
-  if M.config.backdrop and M.config.backdrop.winblend then
-    if M.config.backdrop.winblend >= 100 then
-      M.config.backdrop.winblend = 100
-    elseif M.config.backdrop.winblend <= 0 then
-      M.config.backdrop.winblend = 0
+  if config.backdrop and config.backdrop.winblend then
+    if config.backdrop.winblend >= 100 then
+      config.backdrop.winblend = 100
+    elseif config.backdrop.winblend <= 0 then
+      config.backdrop.winblend = 0
     end
   end
 end
@@ -99,7 +115,7 @@ function M.setup(opts)
 
   M.new_config(opts or {})
 
-  if not M.config.enabled then
+  if not config.enabled then
     return
   end
 
@@ -107,26 +123,26 @@ function M.setup(opts)
   local langs_module = require('triforce.languages')
 
   -- Apply custom level progression to stats module
-  if M.config.level_progression then
-    stats_module.level_config = M.config.level_progression
+  if config.level_progression then
+    stats_module.level_config = config.level_progression
     stats_module.calibrate_tiers()
   end
 
   -- Register custom languages if provided
-  if M.config.custom_languages then
-    langs_module.register_custom_languages(M.config.custom_languages)
+  if config.custom_languages then
+    langs_module.register_custom_languages(config.custom_languages)
   end
 
-  if M.config.ignore_ft then
-    langs_module.exclude_langs(M.config.ignore_ft)
+  if config.ignore_ft then
+    langs_module.exclude_langs(config.ignore_ft)
   end
 
-  M.config.icon_engine = (M.config.icon_engine and vim.list_contains({ 'builtin', 'mini' }, M.config.icon_engine))
-      and M.config.icon_engine
+  config.icon_engine = (config.icon_engine and vim.list_contains({ 'builtin', 'mini' }, config.icon_engine))
+      and config.icon_engine
     or 'builtin'
 
   -- Setup custom path if provided
-  stats_module.db_path = M.config.db_path
+  stats_module.db_path = config.db_path
 end
 
 function M.open_window()
@@ -186,12 +202,12 @@ end
 
 ---@return string|nil config_str
 function M.get_config()
-  if not M.config then
+  if not config then
     return
   end
 
   local opts = {} ---@type TriforceConfig
-  for k, v in pairs(M.config) do
+  for k, v in pairs(config) do
     opts[k] = v
   end
   return vim.inspect(opts)

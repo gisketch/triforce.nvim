@@ -2,7 +2,6 @@ local INFO = vim.log.levels.INFO
 local ERROR = vim.log.levels.ERROR
 local WARN = vim.log.levels.WARN
 local uv = vim.uv or vim.loop
-local Langs = require('triforce.languages')
 local Util = require('triforce.util')
 
 ---@class Triforce.Tracker
@@ -90,7 +89,7 @@ function M.setup(debug)
     callback = function(ev)
       if
         Util.optget('modified', 'buf', ev.buf)
-        and not vim.list_contains(Langs.ignored_langs, Util.optget('filetype', 'buf', ev.buf))
+        and not vim.list_contains(require('triforce.languages').ignored_langs, Util.optget('filetype', 'buf', ev.buf))
       then
         M.on_save()
       end
@@ -194,7 +193,7 @@ function M.on_text_changed(bufnr)
 
   -- Track character by language
   local filetype = Util.optget('filetype', 'buf', bufnr) --[[@as string]]
-  if filetype ~= '' and Langs.should_track(filetype) then
+  if filetype ~= '' and require('triforce.languages').should_track(filetype) then
     -- Initialize if needed
     if not M.current_stats.chars_by_language then
       M.current_stats.chars_by_language = {}
@@ -252,7 +251,7 @@ function M.notify_level_up()
     return
   end
 
-  local notifications = require('triforce.config').config.notifications
+  local notifications = require('triforce.config').get().notifications
   if not (notifications and notifications.enabled and notifications.level_up) then
     return
   end
@@ -279,7 +278,7 @@ function M.notify_achievement(name, desc, icon)
     icon = { icon, { 'string', 'nil' }, true },
   })
 
-  local notifications = require('triforce.config').config.notifications
+  local notifications = require('triforce.config').get().notifications
   if not notifications or not (notifications.enabled and notifications.achievements) then
     return
   end

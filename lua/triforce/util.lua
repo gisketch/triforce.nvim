@@ -241,7 +241,7 @@ end
 ---Get XP rewards from config
 ---@return XPRewards rewards
 function M.get_xp_rewards()
-  return require('triforce.config').config.xp_rewards or { char = 1, line = 1, save = 10 }
+  return require('triforce.config').get().xp_rewards or { char = 1, line = 1, save = 10 }
 end
 
 ---Prepare stats for JSON encoding (handle empty tables)

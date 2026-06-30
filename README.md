@@ -122,6 +122,14 @@ so much smoother and helped me focus on bringing those ideas to life.
 {
   'gisketch/triforce.nvim',
   dependencies = { 'nvzone/volt' },
+  keys = {
+    {
+      '<leader>tp',
+      function()
+        require('triforce').show_profile()
+      end,
+    },
+  },
   opts = {},
 }
 ```
@@ -216,12 +224,6 @@ require('triforce').setup({
 
     -- Show achievement unlock notifications
     achievements = true,
-  },
-
-  -- Keymap configuration
-  keymap = {
-    -- Set to nil to disable default keymap
-    show_profile = '<leader>tp',
   },
 
   -- Auto-save interval (in seconds)

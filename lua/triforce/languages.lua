@@ -148,7 +148,7 @@ function M.get_icon(ft)
     return ''
   end
 
-  if require('triforce.config').config.icon_engine == 'mini' then
+  if require('triforce.config').get().icon_engine == 'mini' then
     M.set_mini_icon(ft)
   end
 

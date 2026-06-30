@@ -1,3 +1,5 @@
+local Util = require('triforce.util')
+
 ---@class Triforce
 ---@field achievement Triforce.Achievements
 ---@field commands Triforce.Commands
@@ -7,7 +9,6 @@
 ---@field languages Triforce.Languages
 ---@field levels Triforce.Levels
 ---@field lualine Triforce.Lualine
----@field open fun(tab?: 1|2|3|4)
 ---@field open_config function
 ---@field random_stats Triforce.RandomStats
 ---@field stats Triforce.Stats
@@ -18,8 +19,6 @@ local M = {}
 
 ---@param opts? TriforceConfig
 function M.setup(opts)
-  local Util = require('triforce.util')
-
   -- Check Neovim version compatibility
   if not Util.vim_has('nvim-0.9') then
     vim.api.nvim_err_writeln('triforce.nvim requires Neovim >= 0.9.0') ---@diagnostic disable-line:deprecated
@@ -41,18 +40,32 @@ function M.setup(opts)
     desc = 'Triforce: Show profile',
   })
 
-  local Levels = require('triforce.levels')
-  Levels.setup(Config.config.override_levels)
+  require('triforce.levels').setup(Config.get().override_levels)
   require('triforce.commands').setup()
 
+  ---@diagnostic disable:undefined-field
   -- Set up keymap if provided
-  if Config.config.keymap and Config.config.keymap.show_profile and Config.config.keymap.show_profile ~= '' then
-    vim.keymap.set('n', Config.config.keymap.show_profile, M.show_profile, {
-      desc = 'Show Triforce Profile',
-      silent = true,
-      noremap = true,
-    })
+  if Config.get().keymap and Config.get().keymap.show_profile and Config.get().keymap.show_profile ~= '' then
+    if vim.g.triforce_keymap_deprecation_warning ~= 1 then
+      vim.notify(
+        [[triforce.nvim - WARNING: The `keymap` setup option has been deprecated.
+From now on you'll have to make your Triforce keymap manually. Please read the plugin's README
+for more information.
+
+Sorry for the inconvenience!]],
+        vim.log.levels.WARN
+      )
+      vim.g.triforce_keymap_deprecation_warning = 1
+    end
+
+    vim.keymap.set(
+      'n',
+      Config.get().keymap.show_profile,
+      M.show_profile,
+      { desc = 'Show Triforce Profile', noremap = true }
+    )
   end
+  ---@diagnostic enable:undefined-field
 
   if not Config.has_gamification(true) then
     return
@@ -60,10 +73,10 @@ function M.setup(opts)
 
   require('triforce.tracker').setup()
 
-  M.new_achievements(Config.config.achievements or {})
+  M.new_achievements(Config.get().achievements or {})
 
-  if Config.config.levels and not vim.tbl_isempty(Config.config.levels) then
-    Levels.add_levels(Config.config.levels)
+  if Config.get().levels and not vim.tbl_isempty(Config.get().levels) then
+    require('triforce.levels').add_levels(Config.get().levels)
   end
 
   vim.api.nvim_create_autocmd('ColorScheme', {
@@ -78,7 +91,7 @@ end
 ---Show profile UI
 ---@param tab? string
 function M.show_profile(tab)
-  require('triforce.util').validate({ tab = { tab, { 'string', 'nil' }, true } })
+  Util.validate({ tab = { tab, { 'string', 'nil' }, true } })
   if not require('triforce.config').has_gamification() then
     return
   end
@@ -168,7 +181,7 @@ end
 ---@param file string
 ---@param indent? string
 function M.export_stats_to_json(file, indent)
-  require('triforce.util').validate({
+  Util.validate({
     file = { file, { 'string' } },
     indent = { indent, { 'string', 'nil' }, true },
   })
@@ -182,7 +195,7 @@ end
 ---Export stats to Markdown
 ---@param file string
 function M.export_stats_to_md(file)
-  require('triforce.util').validate({ file = { file, { 'string' } } })
+  Util.validate({ file = { file, { 'string' } } })
   if not require('triforce.config').has_gamification() then
     return
   end
@@ -192,7 +205,7 @@ end
 
 ---@param achievements Achievement[]|Achievement
 function M.new_achievements(achievements)
-  require('triforce.util').validate({ achievements = { achievements, { 'table' } } })
+  Util.validate({ achievements = { achievements, { 'table' } } })
   if not require('triforce.config').has_gamification() then
     return
   end
@@ -204,11 +217,8 @@ local Triforce = setmetatable(M, { ---@type Triforce
   ---@param self Triforce
   ---@param k string|integer
   __index = function(self, k)
-    if require('triforce.util').mod_exists('triforce.' .. k) then
+    if Util.mod_exists('triforce.' .. k) then
       return require('triforce.' .. k)
-    end
-    if k == 'open' then
-      return self.ui.profile.open
     end
     if k == 'get_stats' then
       return self.tracker.get_stats
