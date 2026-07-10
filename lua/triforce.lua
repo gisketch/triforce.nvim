@@ -99,11 +99,12 @@ function M.show_profile(tab)
 end
 
 ---Reset all stats (useful for testing)
-function M.reset_stats()
+function M.reset()
   if not require('triforce.config').has_gamification() then
     return
   end
   require('triforce.tracker').reset_stats()
+  require('triforce.items').reset_all_items()
 end
 
 ---Debug language tracking

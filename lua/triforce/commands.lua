@@ -33,7 +33,7 @@ function M.setup()
       return
     end
     if subcommand == 'reset' then
-      triforce.reset_stats()
+      triforce.reset()
       return
     end
 
