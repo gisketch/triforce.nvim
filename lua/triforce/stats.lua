@@ -458,7 +458,10 @@ function M.add_xp(stats, amount)
   local old_level = stats.level
   stats.xp = stats.xp + amount
   stats.level = M.calculate_level(stats.xp)
-  stats.currency = stats.currency + math.floor(amount / 2)
+
+  if require('triforce.config').get().items.enabled then
+    stats.currency = stats.currency + math.floor(amount / 2)
+  end
 
   return stats.level > old_level
 end

@@ -7,6 +7,7 @@ local defaults = { ---@type TriforceConfigDefaults
   auto_save_interval = 300,
   backdrop = { enabled = true, winblend = 20 },
   custom_languages = {},
+  items = { enabled = false },
   db_path = vim.fs.joinpath(vim.fn.stdpath('data'), 'triforce_stats.json'),
   debug = false,
   enabled = true,
@@ -161,6 +162,8 @@ Sorry for the inconvenience!]],
 
   -- Setup custom path if provided
   stats_module.db_path = config.db_path
+
+  require('triforce.items').setup(config.items)
 end
 
 function M.open_window()
