@@ -9,6 +9,9 @@
 ---Total characters typed.
 --- ---
 ---@field chars_typed integer
+---Currency for items.
+--- ---
+---@field currency integer
 ---Current consecutive day streak.
 --- ---
 ---@field current_streak integer
@@ -71,6 +74,7 @@ function M.default_stats()
     achievements = {},
     chars_by_language = {},
     chars_typed = 0,
+    currency = 0,
     current_streak = 0,
     daily_activity = {},
     db_path = vim.fs.joinpath(vim.fn.stdpath('data'), 'triforce_stats.json'),
@@ -331,11 +335,8 @@ function M.calibrate_tiers()
   M.calibrated = true
 end
 
----Calculate level from XP
----Simple tier-based progression:
----  Levels 1-10: 300 XP each
----  Levels 11-20: 500 XP each
----  Levels 21+: 1000 XP each
+---Calculate level from XP.
+--- ---
 ---@param xp number
 ---@return integer level
 function M.calculate_level(xp)
@@ -457,6 +458,7 @@ function M.add_xp(stats, amount)
   local old_level = stats.level
   stats.xp = stats.xp + amount
   stats.level = M.calculate_level(stats.xp)
+  stats.currency = stats.currency + math.floor(amount / 2)
 
   return stats.level > old_level
 end
