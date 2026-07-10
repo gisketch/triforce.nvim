@@ -109,6 +109,12 @@ local icon_engines = { builtin = 1, mini = 1 }
 ---@field enabled boolean
 ---@field winblend integer
 
+---@class TriforceConfig.Items
+---@field enabled? boolean
+
+---@class TriforceConfigDefaults.Items: TriforceConfig.Items
+---@field enabled boolean
+
 ---Triforce setup configuration.
 --- ---
 ---@class TriforceConfig
@@ -155,6 +161,7 @@ local icon_engines = { builtin = 1, mini = 1 }
 ---List of ignored filetypes.
 --- ---
 ---@field ignore_ft? string[]
+---@field items? TriforceConfig.Items
 ---List of custom level titles.
 --- ---
 ---@field levels? LevelParams[]
@@ -183,6 +190,7 @@ local icon_engines = { builtin = 1, mini = 1 }
 ---@field heat_highlights TriforceConfigDefaults.Heat
 ---@field icon_engine TriforceIconEngine
 ---@field ignore_ft string[]
+---@field items TriforceConfigDefaults.Items
 ---@field level_progression LevelProgression
 ---@field levels LevelParams[]
 ---@field notifications TriforceConfigDefaults.Notifications

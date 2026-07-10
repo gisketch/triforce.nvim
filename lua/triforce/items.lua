@@ -9,15 +9,18 @@ local items_path = vim.fs.joinpath(vim.fn.stdpath('state'), 'triforce_items.json
 
 ---@class Triforce.Items.Spec
 ---@field base_price integer
----@field callback fun(self: Triforce.Items.Spec, stats: Stats): success: boolean
+---@field callback fun(self: Triforce.Items.FullSpec, stats: Stats): success: boolean
 ---@field desc string
 ---@field filetypes? string[]
----@field level_cap? nil|fun(self: Triforce.Items.Spec): cap: integer
+---@field level_cap? nil|fun(self: Triforce.Items.FullSpec): cap: integer
 ---@field max_uses? integer
 ---@field name string
 ---@field once? boolean
 ---@field times_used? integer
----@field price? fun(self: Triforce.Items.Spec, stats: Stats): price: integer
+---@field price? fun(self: Triforce.Items.FullSpec, stats: Stats): price: integer
+
+---@class Triforce.Items
+local M = {}
 
 ---@class Triforce.Items.FullSpec: Triforce.Items.Spec
 ---@field callback fun(self: Triforce.Items.FullSpec, stats: Stats): success: boolean
@@ -28,22 +31,46 @@ local items_path = vim.fs.joinpath(vim.fn.stdpath('state'), 'triforce_items.json
 ---@field price nil|fun(self: Triforce.Items.FullSpec, stats: Stats): price: integer
 ---@field times_used integer
 ---@field used boolean
-
----@class Triforce.Items
-local M = {}
-
----@class Triforce.ItemsObj: Triforce.Items.FullSpec
 local Item = {}
+
+---@param stats Stats
+function Item:available(stats)
+  if self.level_cap > 0 and stats.level >= self.level_cap then
+    vim.notify('(triforce.nvim): Level is higher than the limit!', ERROR)
+    return false
+  end
+  if stats.currency < self:price(stats) then
+    vim.notify('(triforce.nvim): Not enough currency!', ERROR)
+    return false
+  end
+  if self.once and self.times_used > 0 then
+    vim.notify('(triforce.nvim): Item cannot be used again!', ERROR)
+    return false
+  end
+  if not self.once and self.max_uses < self.times_used then
+    vim.notify('(triforce.nvim): Item cannot be used more than its maximum!', ERROR)
+    return false
+  end
+  return true
+end
 
 ---@param T Triforce.Items.Spec
 ---@return Triforce.Items.FullSpec item
 function Item:new(T)
   local item = setmetatable(T, { __index = Item }) ---@type Triforce.Items.FullSpec
   item.max_uses = T.max_uses or 0
-  item.level_cap = T.level_cap and T:level_cap() or 0
+  item.level_cap = T.level_cap and T.level_cap(item) or 0
   item.filetypes = T.filetypes or {}
   item.times_used = 0
   item.used = false
+
+  local cb = item.callback
+  item.callback = function(O, stats)
+    if not O:available(stats) then
+      return false
+    end
+    return cb(item, stats)
+  end
   return item
 end
 
@@ -61,17 +88,6 @@ local items = { ---@type table<string, Triforce.Items.Spec>
       return require('triforce.stats').level_config.tier_10.min_level
     end,
     callback = function(self, stats)
-      if
-        (self.once and self.times_used > 0)
-        or (not self.once and self.max_uses ~= 0 and self.max_uses < self.times_used)
-      then
-        vim.notify('Maximum exceeded!', ERROR)
-        vim.print(self.once)
-        vim.print(self.times_used)
-        vim.print(self.max_uses)
-        return false
-      end
-
       local Stats = require('triforce.stats')
       local level_boost = nil ---@type integer|nil
       for _, tier in pairs(Stats.level_config) do
@@ -83,7 +99,7 @@ local items = { ---@type table<string, Triforce.Items.Spec>
       end
 
       if not level_boost then
-        vim.notify('Unable to boost higher!', ERROR)
+        vim.notify('(triforce.nvim) Unable to boost higher!', ERROR)
         return false
       end
       self.times_used = self.times_used + 1
@@ -102,19 +118,17 @@ local function setup_watch()
 
   event = uv.new_fs_event()
   if not event then
-    vim.notify('Unable to setup item file setup event!', ERROR)
+    vim.notify('(triforce.nvim): Unable to setup item file setup event!', ERROR)
     return
   end
 
   event:start(items_path, {}, function(err, filename, events)
-    if err then
-      vim.notify(('Error while watching events for `%s`:\n%s'):format(filename, err), ERROR)
+    if err or not events.change then
+      if err then
+        vim.notify(('Error while watching events for `%s`:\n%s'):format(filename, err), ERROR)
+      end
       return
     end
-    if not events.change then
-      return
-    end
-
     M.read_items()
   end)
 
@@ -179,7 +193,14 @@ function M.read_items()
   end
 
   local json_ok, data = pcall(vim.json.decode, raw_data) ---@type boolean, table<string, Triforce.Items.FullSpec>|nil|?
-  all_items = (json_ok and data) and vim.tbl_deep_extend('force', all_items, data) or all_items
+  if not (json_ok and data) then
+    return
+  end
+  for name, item in pairs(data) do
+    for k, v in pairs(item) do
+      all_items[name][k] = v
+    end
+  end
 end
 
 function M.save_items()
@@ -244,33 +265,36 @@ function M.buy_item(id)
 end
 
 function M.reset_all_items()
-  if vim.g.triforce_items_loaded ~= 1 then
-    return
-  end
+  if vim.g.triforce_items_loaded == 1 then
+    for name, item in pairs(all_items) do
+      item.times_used = 0
+      all_items[name] = vim.deepcopy(item)
+    end
 
-  for name, item in pairs(all_items) do
-    item.times_used = 0
-    all_items[name] = vim.deepcopy(item)
+    local fd = uv.fs_open(items_path, 'w', tonumber('644', 8))
+    if not fd then
+      return
+    end
+
+    uv.fs_ftruncate(fd, 0)
+    uv.fs_close(fd)
+
+    M.save_items()
   end
 end
 
----@param opts TriforceOpts.Items
+---@param opts TriforceConfigDefaults.Items
 function M.setup(opts)
   Util.validate({ opts = { opts, { 'table' } } })
-  if vim.g.triforce_items_loaded == 1 or not opts.enabled then
-    return
-  end
+  if vim.g.triforce_items_loaded ~= 1 and opts.enabled then
+    for id, item_spec in pairs(items) do
+      all_items[id] = Item:new(item_spec)
+    end
+    M.read_items()
+    M.save_items()
 
-  for id, item_spec in pairs(items) do
-    all_items[id] = Item:new(item_spec)
+    setup_watch()
   end
-  local read_items = M.read_items()
-  if read_items and not vim.tbl_isempty(read_items) then
-    all_items = vim.tbl_deep_extend('force', all_items, read_items)
-  end
-  M.save_items()
-
-  setup_watch()
 end
 
 return M
