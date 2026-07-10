@@ -113,6 +113,24 @@ end
 function M.setup(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
+  opts = opts or {}
+
+  ---@diagnostic disable:undefined-field
+  if opts.keymap and opts.keymap.show_profile and opts.keymap.show_profile ~= '' then
+    if vim.g.triforce_keymap_deprecation_warning ~= 1 then
+      vim.notify(
+        [[triforce.nvim - WARNING: The `keymap` setup option has been deprecated.
+From now on you'll have to make your Triforce keymap manually. Please read the plugin's README
+for more information.
+
+Sorry for the inconvenience!]],
+        vim.log.levels.WARN
+      )
+      vim.g.triforce_keymap_deprecation_warning = 1
+    end
+  end
+  ---@diagnostic enable:undefined-field
+
   M.new_config(opts or {})
 
   if not config.enabled then

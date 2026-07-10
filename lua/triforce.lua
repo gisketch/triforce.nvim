@@ -46,18 +46,6 @@ function M.setup(opts)
   ---@diagnostic disable:undefined-field
   -- Set up keymap if provided
   if Config.get().keymap and Config.get().keymap.show_profile and Config.get().keymap.show_profile ~= '' then
-    if vim.g.triforce_keymap_deprecation_warning ~= 1 then
-      vim.notify(
-        [[triforce.nvim - WARNING: The `keymap` setup option has been deprecated.
-From now on you'll have to make your Triforce keymap manually. Please read the plugin's README
-for more information.
-
-Sorry for the inconvenience!]],
-        vim.log.levels.WARN
-      )
-      vim.g.triforce_keymap_deprecation_warning = 1
-    end
-
     vim.keymap.set(
       'n',
       Config.get().keymap.show_profile,
