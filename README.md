@@ -900,6 +900,7 @@ Currently only these formats are supported:
 - [ ] **Leaderboards**: Compete with friends or the community
 - [X] **Exclude by Filetype**: Add filetypes you don't want to track
 - [X] **Custom Achievements**: Define your own achievement criteria
+- [X] **Currency and Items**: Add currency to enable buying certain items (`:Triforce items ...`)
 - [X] **Export Stats**: Export to JSON or Markdown reports
 - [ ] **Weekly/Monthly Reports**: Automated summaries via notifications
 - [ ] **Themes**: Customizable color schemes for the profile UI
