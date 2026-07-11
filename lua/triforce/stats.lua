@@ -46,6 +46,7 @@ local WARN = vim.log.levels.WARN
 local uv = vim.uv or vim.loop
 local Util = require('triforce.util')
 local Languages = require('triforce.languages')
+local xp_multiplier = 1 ---@type number
 
 ---@class Triforce.Stats
 ---@field calibrated? true
@@ -54,6 +55,16 @@ local Languages = require('triforce.languages')
 --- ---
 ---@field level_config LevelProgression
 local M = {}
+
+---@param n number
+function M.set_xp_multiplier(n)
+  Util.validate({ n = { n, { 'number' } } })
+  if n <= 0 then
+    return
+  end
+
+  xp_multiplier = n
+end
 
 M.level_config = {
   tier_1 = { min_level = 1, max_level = 10, xp_per_level = 500 },
@@ -439,6 +450,16 @@ function M.xp_for_next_level(current_level)
   return Util.get_total_xp_for_level(current_level + 1, M.level_config)
 end
 
+function M.add_currency(stats, amount)
+  Util.validate({
+    stats = { stats, { 'table' } },
+    amount = { amount, { 'number' } },
+  })
+
+  stats.currency = stats.currency + amount
+  return stats.currency
+end
+
 ---Add XP and update level
 ---@param stats Stats
 ---@param amount number
@@ -456,11 +477,11 @@ function M.add_xp(stats, amount)
   end
 
   local old_level = stats.level
-  stats.xp = stats.xp + amount
+  stats.xp = (stats.xp + amount) * xp_multiplier
   stats.level = M.calculate_level(stats.xp)
 
   if require('triforce.config').get().items.enabled then
-    stats.currency = stats.currency + math.floor(amount / 2)
+    stats.currency = M.add_currency(stats, math.floor(amount / 2))
   end
 
   return stats.level > old_level
