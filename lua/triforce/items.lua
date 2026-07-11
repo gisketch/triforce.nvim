@@ -4,6 +4,7 @@
 local uv = vim.uv or vim.loop
 local ERROR = vim.log.levels.ERROR
 local Util = require('triforce.util')
+local timers = {} ---@type table<string, uv.uv_timer_t>
 
 local items_path = vim.fs.joinpath(vim.fn.stdpath('state'), 'triforce_items.json')
 
@@ -66,9 +67,19 @@ function Item:new(T)
 
   local cb = item.callback
   item.callback = function(O, stats)
-    if not O:available(stats) then
+    local filetype = Util.optget('filetype', 'buf', vim.api.nvim_get_current_buf()) --[[@as string]]
+    local is_ft = vim.tbl_isempty(O.filetypes)
+    for _, ft in ipairs(O.filetypes) do
+      if vim.list_contains({ '*', filetype }, ft) then
+        is_ft = true
+        break
+      end
+    end
+    if not (is_ft and O:available(stats)) then
       return false
     end
+
+    stats.currency = stats.currency - O:price(stats)
     return cb(item, stats)
   end
   return item
@@ -92,7 +103,7 @@ local items = { ---@type table<string, Triforce.Items.Spec>
       local level_boost = nil ---@type integer|nil
       for _, tier in pairs(Stats.level_config) do
         ---@cast tier LevelTier
-        if stats.level >= tier.min_level and stats.level <= tier.max_level and tier.max_level ~= math.huge then
+        if stats.level >= tier.min_level and stats.level <= tier.max_level then
           level_boost = tier.max_level - stats.level + 1
           break
         end
@@ -104,6 +115,33 @@ local items = { ---@type table<string, Triforce.Items.Spec>
       end
       self.times_used = self.times_used + 1
       return Stats.add_xp(stats, Stats.xp_for_next_level(stats.level + level_boost))
+    end,
+  },
+  xp_timer_2x = {
+    name = 'XP Multiplier (2X, 30 minutes)',
+    desc = 'Duplicate your XP gain for 30 minutes. Closing Neovim will cancel this timer!',
+    base_price = 500,
+    price = function(self)
+      return self.base_price
+    end,
+    once = false,
+    callback = function()
+      timers.xp_timer_2x = uv.new_timer()
+      if not timers.xp_timer_2x then
+        vim.notify('(triforce.nvim): Unable to create timer!')
+        return false
+      end
+
+      local Stats = require('triforce.stats')
+      Stats.set_xp_multiplier(2)
+      timers.xp_timer_2x:start(
+        30 * 60 * 1000, -- minutes * seconds * milliseconds
+        0,
+        vim.schedule_wrap(function()
+          Stats.set_xp_multiplier(1)
+        end)
+      )
+      return true
     end,
   },
 }
@@ -294,6 +332,19 @@ function M.setup(opts)
     M.save_items()
 
     setup_watch()
+
+    vim.api.nvim_create_autocmd('VimLeavePre', {
+      group = vim.api.nvim_create_augroup('TriforceItems', { clear = false }),
+      once = true,
+      callback = function()
+        for name, timer in pairs(timers) do
+          if timer:is_active() then
+            timer:stop()
+            timers[name] = nil
+          end
+        end
+      end,
+    })
   end
 end
 
