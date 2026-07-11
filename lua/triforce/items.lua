@@ -90,7 +90,7 @@ local items = { ---@type table<string, Triforce.Items.Spec>
     name = 'Single XP Boost',
     desc = 'Use this for a rapid XP boost to the next XP tier (unavailable for max tier).',
     once = false,
-    base_price = 500,
+    base_price = 1500,
     max_uses = 0,
     price = function(self, stats)
       return math.floor(self.base_price * (self.times_used <= 0 and 1 or (math.log(self.times_used) + stats.level)))
@@ -121,11 +121,18 @@ local items = { ---@type table<string, Triforce.Items.Spec>
     name = 'XP Multiplier (2X, 30 minutes)',
     desc = 'Duplicate your XP gain for 30 minutes. Closing Neovim will cancel this timer!',
     base_price = 500,
+    once = false,
     price = function(self)
       return self.base_price
     end,
-    once = false,
     callback = function()
+      if timers.xp_timer_2x then
+        if timers.xp_timer_2x:is_active() then
+          timers.xp_timer_2x:close()
+        end
+        timers.xp_timer_2x = nil
+      end
+
       timers.xp_timer_2x = uv.new_timer()
       if not timers.xp_timer_2x then
         vim.notify('(triforce.nvim): Unable to create timer!')
@@ -136,6 +143,74 @@ local items = { ---@type table<string, Triforce.Items.Spec>
       Stats.set_xp_multiplier(2)
       timers.xp_timer_2x:start(
         30 * 60 * 1000, -- minutes * seconds * milliseconds
+        0,
+        vim.schedule_wrap(function()
+          Stats.set_xp_multiplier(1)
+        end)
+      )
+      return true
+    end,
+  },
+  xp_timer_3x = {
+    name = 'XP Multiplier (3X, 15 minutes)',
+    desc = 'Triplicate your XP gain for 15 minutes (cannot be stacked). Closing Neovim will cancel this timer!',
+    base_price = 1250,
+    once = false,
+    price = function(self)
+      return self.base_price
+    end,
+    callback = function()
+      if timers.xp_timer_3x then
+        if timers.xp_timer_3x:is_active() then
+          timers.xp_timer_3x:close()
+        end
+        timers.xp_timer_3x = nil
+      end
+
+      timers.xp_timer_3x = uv.new_timer()
+      if not timers.xp_timer_3x then
+        vim.notify('(triforce.nvim): Unable to create timer!')
+        return false
+      end
+
+      local Stats = require('triforce.stats')
+      Stats.set_xp_multiplier(3)
+      timers.xp_timer_3x:start(
+        15 * 60 * 1000, -- minutes * seconds * milliseconds
+        0,
+        vim.schedule_wrap(function()
+          Stats.set_xp_multiplier(1)
+        end)
+      )
+      return true
+    end,
+  },
+  xp_timer_5x = {
+    name = 'XP Multiplier (5X, 5 minutes)',
+    desc = 'Multiplie your XP gain by 5, for 5 minutes (cannot be stacked). Closing Neovim will cancel this timer!',
+    base_price = 2000,
+    once = false,
+    price = function(self)
+      return self.base_price
+    end,
+    callback = function()
+      if timers.xp_timer_5x then
+        if timers.xp_timer_5x:is_active() then
+          timers.xp_timer_5x:close()
+        end
+        timers.xp_timer_5x = nil
+      end
+
+      timers.xp_timer_5x = uv.new_timer()
+      if not timers.xp_timer_5x then
+        vim.notify('(triforce.nvim): Unable to create timer!')
+        return false
+      end
+
+      local Stats = require('triforce.stats')
+      Stats.set_xp_multiplier(5)
+      timers.xp_timer_5x:start(
+        15 * 60 * 1000, -- minutes * seconds * milliseconds
         0,
         vim.schedule_wrap(function()
           Stats.set_xp_multiplier(1)
