@@ -195,6 +195,9 @@ require('triforce').setup({
   -- Enable XP, levels, achievements
   gamification_enabled = true,
 
+  -- Items configuration
+  items = { enabled = true },
+
   -- Backdrop control
   backdrop = {
     -- Whether to enable the backdrop (i.e. enable background dimming).
