@@ -210,7 +210,7 @@ local items = { ---@type table<string, Triforce.Items.Spec>
       local Stats = require('triforce.stats')
       Stats.set_xp_multiplier(5)
       timers.xp_timer_5x:start(
-        15 * 60 * 1000, -- minutes * seconds * milliseconds
+        5 * 60 * 1000, -- minutes * seconds * milliseconds
         0,
         vim.schedule_wrap(function()
           Stats.set_xp_multiplier(1)
