@@ -1,5 +1,5 @@
 *triforce.txt*
-                                For NVIM >=v0.9.0    Last change: 2026 June 30
+                                For NVIM >=v0.9.0    Last change: 2026 July 11
 
 ==============================================================================
 1. triforce.nvim                                      *triforce-triforce.nvim*
@@ -189,6 +189,9 @@ Defaults ~
     
       -- Enable XP, levels, achievements
       gamification_enabled = true,
+    
+      -- Items configuration
+      items = { enabled = true },
     
       -- Backdrop control
       backdrop = {
@@ -962,6 +965,7 @@ ROADMAP                                                     *triforce-roadmap*
 - **Leaderboards**: Compete with friends or the community
 - **Exclude by Filetype**: Add filetypes you don’t want to track
 - **Custom Achievements**: Define your own achievement criteria
+- **Currency and Items**: Add currency to enable buying certain items (`:Triforce items ...`)
 - **Export Stats**: Export to JSON or Markdown reports
 - **Weekly/Monthly Reports**: Automated summaries via notifications
 - **Themes**: Customizable color schemes for the profile UI
