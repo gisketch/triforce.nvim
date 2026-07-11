@@ -6,6 +6,7 @@ local Util = require('triforce.util')
 ---@field config Triforce.Config
 ---@field get_stats fun(): stats: Stats|nil
 ---@field health Triforce.Health
+---@field items Triforce.Items
 ---@field languages Triforce.Languages
 ---@field levels Triforce.Levels
 ---@field lualine Triforce.Lualine
@@ -84,9 +85,9 @@ function M.show_profile(tab)
     return
   end
 
-  local Tracker = require('triforce.tracker')
-  if not Tracker.current_stats then
-    Tracker.setup()
+  local stats = require('triforce.tracker').get_stats()
+  if not stats then
+    require('triforce.tracker').setup()
   end
 
   local UI = require('triforce.ui')
@@ -120,19 +121,16 @@ function M.save_stats()
   if not require('triforce.config').has_gamification() then
     return
   end
-  local Tracker = require('triforce.tracker')
-  if not Tracker.current_stats then
+  local stats = require('triforce.tracker').get_stats()
+  if not stats then
     vim.notify('No stats to save!', vim.log.levels.WARN)
     return
   end
-  if not (Tracker.current_stats and require('triforce.stats').save(Tracker.current_stats)) then
+  if not (stats and require('triforce.stats').save(stats)) then
     vim.notify('Failed to save stats!', vim.log.levels.ERROR)
     return
   end
-  vim.notify(
-    ('Stats saved successfully in `%s`'):format(vim.fn.fnamemodify(Tracker.current_stats.db_path, ':~')),
-    vim.log.levels.INFO
-  )
+  vim.notify(('Stats saved successfully in `%s`'):format(vim.fn.fnamemodify(stats.db_path, ':~')), vim.log.levels.INFO)
 end
 
 ---Debug: Show current XP progress

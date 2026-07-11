@@ -14,89 +14,98 @@ function M.setup()
 
     if subcommand == 'config' then
       require('triforce.config').open_window()
-      return
-    end
-
-    if subcommand == 'profile' then
+    elseif subcommand == 'profile' then
       local options = vim.tbl_keys(require('triforce.ui.profile').tabs_map) --[[@as string[]\]]
       if subcommand2 == '' then
-        subcommand2 = nil
-      elseif not vim.list_contains(options, subcommand2) then
+        triforce.show_profile()
+      elseif vim.list_contains(options, subcommand2) then
+        triforce.show_profile(subcommand2)
+      else
         local msg = 'Usage:\n    :Triforce profile'
         for _, option in ipairs(options) do
           msg = ('%s\n    :Triforce profile %s'):format(msg, option)
         end
         vim.notify(msg, vim.log.levels.INFO)
-        return
       end
-      triforce.show_profile(subcommand2)
-      return
-    end
-    if subcommand == 'reset' then
+    elseif subcommand == 'reset' then
       triforce.reset()
-      return
-    end
-
-    if subcommand == 'stats' then
+    elseif subcommand == 'items' then
+      if subcommand2 == '' then
+        vim.notify(
+          [[Usage: :Triforce items buy <item>
+       :Triforce items currency
+       :Triforce items list]],
+          vim.log.levels.INFO
+        )
+      elseif subcommand2 == 'currency' then
+        vim.notify(tostring(triforce.tracker.get_stats().currency), vim.log.levels.INFO)
+      elseif subcommand2 == 'list' then
+        local msg = ''
+        for _, item in ipairs(triforce.items.get_items_by_name()) do
+          msg = (msg .. (msg == '' and '%s' or '\n%s')):format(item)
+        end
+        vim.notify(msg, vim.log.levels.INFO)
+      elseif subcommand2 == 'buy' then
+        if not vim.list_contains(triforce.items.get_items_by_name(), subcommand3) then
+          vim.notify('Usage: :Triforce items buy <item>', vim.log.levels.INFO)
+        else
+          triforce.items.buy_item(subcommand3)
+        end
+      end
+    elseif subcommand == 'stats' then
       if subcommand2 == '' then
         vim.notify(vim.inspect(triforce.get_stats()), vim.log.levels.INFO)
-        return
-      end
-
-      if subcommand2 == 'save' then
+      elseif subcommand2 == 'save' then
         triforce.save_stats()
-        return
-      end
-
-      if subcommand2 ~= 'export' then
+      elseif subcommand2 ~= 'export' then
         vim.notify(
           [[Usage: :Triforce stats
        :Triforce stats export
        :Triforce stats export json </path/to/file>
-       :Triforce stats export markdown </path/to/file>]],
+       :Triforce stats export markdown </path/to/file>
+       :Triforce stats save]],
           vim.log.levels.INFO
         )
-        return
-      end
-
-      if subcommand3 == '' then
+      elseif subcommand3 == '' then
         triforce.export_stats()
-        return
-      end
-
-      if not vim.list_contains({ 'json', 'markdown' }, subcommand3) then
+      elseif not vim.list_contains({ 'json', 'markdown' }, subcommand3) then
         vim.notify(
           [[Usage: :Triforce stats export json <path/to/file>
        :Triforce stats export markdown </path/to/file>]],
           vim.log.levels.INFO
         )
-        return
-      end
-
-      if subcommand3 == 'markdown' then
+      elseif subcommand3 == 'markdown' then
         if subcommand4 == '' then
           vim.notify('Usage: :Triforce stats export markdown </path/to/file>', vim.log.levels.INFO)
-          return
+        else
+          triforce.export_stats_to_md(subcommand4)
         end
-
-        triforce.export_stats_to_md(subcommand4)
-        return
-      end
-
-      if subcommand4 == '' then
+      elseif subcommand4 == '' then
         vim.notify('Usage: :Triforce stats export json </path/to/file>', vim.log.levels.INFO)
-        return
+      else
+        triforce.export_stats_to_json(subcommand4)
       end
+    elseif subcommand == 'debug' then
+      local debug_ops = {
+        xp = triforce.debug_xp,
+        achievement = triforce.debug_achievement,
+        languages = triforce.debug_languages,
+        fix = triforce.debug_fix_level,
+      }
 
-      triforce.export_stats_to_json(subcommand4)
-      return
-    end
-
-    -- Plan B: If subcommand value is not valid then abort and print usage
-    if subcommand ~= 'debug' then
+      -- Plan B: If subcommand2 value is not valid then abort and print usage
+      if not vim.list_contains(vim.tbl_keys(debug_ops), subcommand2) then
+        vim.notify('Usage: :Triforce debug xp | achievement | languages | fix', vim.log.levels.INFO)
+      else
+        local operation = debug_ops[subcommand2]
+        operation()
+      end
+    else
       vim.notify(
         [[Usage: :Triforce config
-       :Triforce debug xp | achievement | languages | fix
+       :Triforce debug <xp|achievement|languages|fix>
+       :Triforce items buy <item>
+       :Triforce items <currency|list>
        :Triforce profile
        :Triforce reset
        :Triforce stats
@@ -106,24 +115,7 @@ function M.setup()
        :Triforce stats save]],
         vim.log.levels.INFO
       )
-      return
     end
-
-    local debug_ops = {
-      xp = triforce.debug_xp,
-      achievement = triforce.debug_achievement,
-      languages = triforce.debug_languages,
-      fix = triforce.debug_fix_level,
-    }
-
-    -- Plan B: If subcommand2 value is not valid then abort and print usage
-    if not vim.list_contains(vim.tbl_keys(debug_ops), subcommand2) then
-      vim.notify('Usage: :Triforce debug xp | achievement | languages | fix', vim.log.levels.INFO)
-      return
-    end
-
-    local operation = debug_ops[subcommand2]
-    operation()
   end, {
     nargs = '*',
     desc = 'Triforce gamification commands',
@@ -135,10 +127,10 @@ function M.setup()
 
       if #args == 2 then
         if args[2] == '' then
-          return { 'profile', 'stats', 'reset', 'debug', 'config' }
+          return { 'profile', 'stats', 'reset', 'debug', 'config', 'items' }
         end
         local res = {} ---@type string[]
-        for _, comp in ipairs({ 'profile', 'stats', 'reset', 'debug', 'config' }) do
+        for _, comp in ipairs({ 'profile', 'stats', 'reset', 'debug', 'config', 'items' }) do
           if vim.startswith(comp, args[2]) then
             table.insert(res, comp)
           end
@@ -182,6 +174,31 @@ function M.setup()
           end
           return res
         end
+        if args[2] == 'items' then
+          local res = {} ---@type string[]
+          for _, comp in ipairs({ 'buy', 'currency', 'list' }) do
+            if vim.startswith(comp, args[3]) then
+              table.insert(res, comp)
+            end
+          end
+          return res
+        end
+      end
+      if #args >= 4 and args[2] == 'items' and args[3] == 'buy' then
+        local items = require('triforce.items').get_items_by_name()
+        local used, res = {}, {} ---@type string[], string[]
+        for i = 4, #args - 1 do
+          if not vim.list_contains(items, args[i]) then
+            return res
+          end
+          table.insert(used, args[i])
+        end
+        for _, item in ipairs(items) do
+          if vim.startswith(item, args[#args]) and not vim.list_contains(used, item) then
+            table.insert(res, item)
+          end
+        end
+        return res
       end
       if #args >= 4 and args[2] == 'stats' and args[3] == 'export' then
         if #args == 4 then

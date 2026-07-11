@@ -10,7 +10,7 @@ local items_path = vim.fs.joinpath(vim.fn.stdpath('state'), 'triforce_items.json
 
 ---@class Triforce.Items.Spec
 ---@field base_price integer
----@field callback fun(self: Triforce.Items.FullSpec, stats: Stats): success: boolean
+---@field callback fun(self: Triforce.Items.FullSpec, stats: Stats): success: boolean, stats: Stats|?
 ---@field desc string
 ---@field filetypes? string[]
 ---@field level_cap? nil|fun(self: Triforce.Items.FullSpec): cap: integer
@@ -24,7 +24,7 @@ local items_path = vim.fs.joinpath(vim.fn.stdpath('state'), 'triforce_items.json
 local M = {}
 
 ---@class Triforce.Items.FullSpec: Triforce.Items.Spec
----@field callback fun(self: Triforce.Items.FullSpec, stats: Stats): success: boolean
+---@field callback fun(self: Triforce.Items.FullSpec, stats: Stats): success: boolean, stats: Stats|?
 ---@field filetypes string[]
 ---@field level_cap integer
 ---@field max_uses integer
@@ -76,11 +76,11 @@ function Item:new(T)
       end
     end
     if not (is_ft and O:available(stats)) then
-      return false
+      return false, stats
     end
 
     stats.currency = stats.currency - O:price(stats)
-    return cb(item, stats)
+    return cb(item, stats), stats
   end
   return item
 end
@@ -372,8 +372,12 @@ function M.buy_item(id)
     return false
   end
 
-  local res = all_items[id]:callback(require('triforce.tracker').get_stats())
+  local res, stats = all_items[id]:callback(require('triforce.tracker').get_stats())
   M.save_items()
+
+  if stats then
+    require('triforce.tracker').update_stats(stats)
+  end
   return res
 end
 
@@ -421,6 +425,15 @@ function M.setup(opts)
       end,
     })
   end
+end
+
+---@return string[] names
+function M.get_items_by_name()
+  local names = {} ---@type string[]
+  for name in pairs(all_items) do
+    table.insert(names, name)
+  end
+  return names
 end
 
 return M
