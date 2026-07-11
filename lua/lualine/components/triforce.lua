@@ -28,6 +28,10 @@ local Triforce = require('triforce')
 ---@field opts Triforce.LualineConfig.Achievements
 ---@field callback fun(opts: Triforce.LualineConfig.Achievements)
 
+---@class TriforceLualine.Currency
+---@field opts Triforce.LualineConfig.Currency
+---@field callback fun(opts: Triforce.LualineConfig.Currency)
+
 ---@class TriforceLualine.Level
 ---@field opts Triforce.LualineConfig.Level
 ---@field callback fun(opts: Triforce.LualineConfig.Level)
@@ -41,9 +45,10 @@ local Triforce = require('triforce')
 ---@field callback fun(opts: Triforce.LualineConfig.Streak)
 
 ---@class TriforceLualine
----@field options Triforce.LualineConfig
 ---@field achievements TriforceLualine.Achievements
+---@field currency TriforceLualine.Currency
 ---@field level TriforceLualine.Level
+---@field options Triforce.LualineConfig
 ---@field session_time TriforceLualine.SessionTime
 ---@field streak TriforceLualine.Streak
 ---@field private __is_lualine_component boolean
@@ -56,12 +61,14 @@ function M:init(opts)
   self.options = vim.tbl_deep_extend('keep', self.options or {}, Triforce.lualine.get_defaults(), {
     achievements = { enabled = false },
     level = { enabled = true },
+    currency = { enabled = true },
     session_time = { enabled = false },
     streak = { enabled = false },
   })
 
   self.achievements = { opts = self.options.achievements, callback = Triforce.lualine.achievements }
   self.level = { opts = self.options.level, callback = Triforce.lualine.level }
+  self.currency = { opts = self.options.currency, callback = Triforce.lualine.currency }
   self.session_time = { opts = self.options.session_time, callback = Triforce.lualine.session_time }
   self.streak = { opts = self.options.streak, callback = Triforce.lualine.streak }
 
@@ -79,7 +86,7 @@ function M:update_status()
 
   ---@type (TriforceLualine.Achievements|TriforceLualine.Level|TriforceLualine.SessionTime|TriforceLualine.Streak)[]
   local ordered = {}
-  for _, component in ipairs({ self.achievements, self.level, self.session_time, self.streak }) do
+  for _, component in ipairs({ self.currency, self.achievements, self.level, self.session_time, self.streak }) do
     if component.opts.enabled then
       table.insert(ordered, component)
     end

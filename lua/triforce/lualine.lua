@@ -60,9 +60,21 @@
 --- ---
 ---@field show? LevelShow
 
----Achievements component config
+---Level component config.
+--- ---
+---@class Triforce.LualineConfig.Currency
+---Enables the currency component.
+--- ---
+---@field enabled? boolean
+---Text prefix before currency number.
+--- ---
+---@field prefix? string
+
+---Achievements component config.
 --- ---
 ---@class Triforce.LualineConfig.Achievements
+---Enables the achievements component.
+--- ---
 ---@field enabled? boolean
 ---Nerd Font trophy icon
 --- ---
@@ -86,29 +98,43 @@
 --- ---
 ---@class Triforce.LualineConfig.SessionTime
 ---@field enabled? boolean
----Nerd Font clock icon
+---Nerd Font clock icon.
 --- ---
 ---@field icon? string
----Show time duration
+---Show time duration.
 --- ---
 ---@field show_duration? boolean
----Can be either `'short'` (`2h 34m`) or `'long'` (`2:34:12`)
+---Can be either `'short'` (`2h 34m`) or `'long'` (`2:34:12`).
 --- ---
 ---@field format? 'short'|'long'
 
+---@class Triforce.LualineComponents
+---@field achievements fun(opts?: Triforce.LualineConfig): component: string
+---@field currency fun(opts?: Triforce.LualineConfig): component: string
+---@field level fun(opts?: Triforce.LualineConfig): component: string
+---@field session_time fun(opts?: Triforce.LualineConfig): component: string
+---@field streak fun(opts?: Triforce.LualineConfig): component: string
+
 ---@class Triforce.LualineConfig
+---Achievements component config.
+--- ---
+---@field achievements? Triforce.LualineConfig.Achievements
+---Currency component config.
+--- ---
+---@field currency? Triforce.LualineConfig.Currency
 ---Level component config
 --- ---
 ---@field level? Triforce.LualineConfig.Level
----Achievements component config
---- ---
----@field achievements? Triforce.LualineConfig.Achievements
----Streak component config
---- ---
----@field streak? Triforce.LualineConfig.Streak
 ---Session time component config
 --- ---
 ---@field session_time? Triforce.LualineConfig.SessionTime
+---Streak component config
+--- ---
+---@field streak? Triforce.LualineConfig.Streak
+
+---@class Triforce.LualineConfig.CurrencyDefaults: Triforce.LualineConfig.Currency
+---@field enabled boolean
+---@field prefix string
 
 ---@class Triforce.LualineConfig.LevelDefaults: Triforce.LualineConfig.Level
 ---@field bar BarOptionsDefaults
@@ -131,6 +157,7 @@
 
 ---@class Triforce.LualineConfigDefaults: Triforce.LualineConfig
 ---@field achievements Triforce.LualineConfig.AchievementsDefaults
+---@field currency Triforce.LualineConfig.CurrencyDefaults
 ---@field level Triforce.LualineConfig.LevelDefaults
 ---@field session_time Triforce.LualineConfig.SessionTimeDefaults
 ---@field streak Triforce.LualineConfig.StreakDefaults
@@ -150,11 +177,8 @@ local M = {}
 ---@return Triforce.LualineConfigDefaults defaults
 function M.get_defaults()
   return { ---@type Triforce.LualineConfigDefaults
-    achievements = {
-      enabled = false,
-      icon = '',
-      show_count = true,
-    },
+    achievements = { enabled = false, icon = '', show_count = true },
+    currency = { enabled = true, prefix = '' },
     level = {
       enabled = true,
       bar = { length = 8, chars = { filled = '█', empty = '░' } },
@@ -162,17 +186,8 @@ function M.get_defaults()
       show = { level = true, bar = true, percent = false, xp = false, title = false, icon = false },
       title = false,
     },
-    session_time = {
-      enabled = false,
-      icon = '',
-      show_duration = true,
-      format = 'short',
-    },
-    streak = {
-      enabled = false,
-      icon = '',
-      show_days = true,
-    },
+    session_time = { enabled = false, icon = '', show_duration = true, format = 'short' },
+    streak = { enabled = false, icon = '', show_days = true },
   }
 end
 
@@ -253,17 +268,38 @@ local function format_time(seconds, format)
 end
 
 ---Level component - Shows level and XP progress
+---@param opts? Triforce.LualineConfig.Currency Component-specific options
+---@return string component
+function M.currency(opts)
+  Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
+
+  local stats = get_stats()
+  local config = vim.tbl_deep_extend('force', M.config.currency, opts or {})
+  if not (stats and config.enabled) then
+    return ''
+  end
+
+  local parts = {} ---@type string[]
+  if config.prefix then
+    table.insert(parts, config.prefix)
+  end
+
+  table.insert(parts, tostring(stats.currency))
+  return table.concat(parts, ' ')
+end
+
+---Level component - Shows level and XP progress
 ---@param opts? Triforce.LualineConfig.Level Component-specific options
 ---@return string component
 function M.level(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
   local stats = get_stats()
-  if not stats then
+  local config = vim.tbl_deep_extend('force', M.config.level, opts or {})
+  if not (stats and config.enabled) then
     return ''
   end
 
-  local config = vim.tbl_deep_extend('force', M.config.level, opts or {})
   local stats_module = require('triforce.stats')
   local xp_for_current = stats_module.xp_for_next_level(stats.level - 1)
   local xp_for_next = stats_module.xp_for_next_level(stats.level)
@@ -306,11 +342,10 @@ function M.achievements(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
   local stats = get_stats()
-  if not stats then
+  local config = vim.tbl_deep_extend('force', M.config.achievements, opts or {})
+  if not (stats and config.enabled) then
     return ''
   end
-
-  local config = vim.tbl_deep_extend('force', M.config.achievements, opts or {})
 
   -- Count achievements
   local all_achievements = require('triforce.achievement').get_all_achievements(stats)
@@ -341,11 +376,10 @@ function M.streak(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
   local stats = get_stats()
-  if not stats or stats.current_streak == 0 then
+  local config = vim.tbl_deep_extend('force', M.config.streak, opts or {})
+  if not (stats and config.enabled) or stats.current_streak == 0 then
     return ''
   end
-
-  local config = vim.tbl_deep_extend('force', M.config.streak, opts or {})
 
   -- Build component
   local parts = {} ---@type string[]
@@ -366,11 +400,11 @@ function M.session_time(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
   local stats = get_stats()
-  if not stats or stats.last_session_start == 0 then
+  local config = vim.tbl_deep_extend('force', M.config.session_time, opts or {})
+  if not (stats and config.enabled) or stats.last_session_start == 0 then
     return ''
   end
 
-  local config = vim.tbl_deep_extend('force', M.config.session_time, opts or {})
   local parts, duration = {}, os.time() - stats.last_session_start ---@type string[], integer
   if config.icon ~= '' then
     table.insert(parts, config.icon)
@@ -385,16 +419,17 @@ end
 
 ---Convenience function to get all components at once
 ---@param opts? Triforce.LualineConfig Configuration for all components
----@return Triforce.LualineConfig components Table with level, achievements, streak, session_time functions
+---@return Triforce.LualineComponents components Table with level, achievements, streak, session_time functions
 function M.components(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
   M.setup(opts)
   return {
-    level = M.level,
     achievements = M.achievements,
-    streak = M.streak,
+    currency = M.currency,
+    level = M.level,
     session_time = M.session_time,
+    streak = M.streak,
   }
 end
 
