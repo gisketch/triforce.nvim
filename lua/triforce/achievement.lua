@@ -4,12 +4,11 @@ local ERROR = vim.log.levels.ERROR
 local Util = require('triforce.util')
 
 ---@class Triforce.Achievements
----@field achievements Achievement[]
----@field unique_languages integer
 local M = {}
 
-M.unique_languages = 0
-M.achievements = {
+local unique_languages = 0 ---@type integer
+
+local achievements = { ---@type Achievement[]
   {
     id = 'first_100',
     name = 'First Steps',
@@ -142,7 +141,7 @@ M.achievements = {
     desc = 'Code in 3 different languages',
     icon = '🌍',
     check = function()
-      return M.unique_languages >= 3
+      return unique_languages >= 3
     end,
   },
   {
@@ -151,7 +150,7 @@ M.achievements = {
     desc = 'Code in 5 different languages',
     icon = '🌎',
     check = function()
-      return M.unique_languages >= 5
+      return unique_languages >= 5
     end,
   },
   {
@@ -160,7 +159,7 @@ M.achievements = {
     desc = 'Code in 10 different languages',
     icon = '🌏',
     check = function()
-      return M.unique_languages >= 10
+      return unique_languages >= 10
     end,
   },
   {
@@ -169,7 +168,7 @@ M.achievements = {
     desc = 'Code in 15 different languages',
     icon = '🗺️',
     check = function()
-      return M.unique_languages >= 15
+      return unique_languages >= 15
     end,
   },
 }
@@ -182,11 +181,11 @@ function M.get_all_achievements(stats)
   Util.validate({ stats = { stats, { 'table' } } })
 
   -- Count unique languages
-  M.unique_languages = 0
+  unique_languages = 0
   for _ in pairs(stats.chars_by_language or {}) do
-    M.unique_languages = M.unique_languages + 1
+    unique_languages = unique_languages + 1
   end
-  return M.achievements
+  return achievements
 end
 
 ---@param achievement Achievement[]|Achievement
@@ -226,15 +225,15 @@ function M.new_achievements(achievement, stats)
   achievement.icon = achievement.icon or ''
 
   local new = true ---@type boolean
-  for i, achv in ipairs(M.achievements) do
+  for i, achv in ipairs(achievements) do
     if achv.id == achievement.id then
-      M.achievements[i] = achievement
+      achievements[i] = achievement
       new = false
       break
     end
   end
   if new then
-    table.insert(M.achievements, achievement)
+    table.insert(achievements, achievement)
   end
 
   M.check_achievements(stats)

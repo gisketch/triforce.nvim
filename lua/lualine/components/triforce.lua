@@ -102,7 +102,6 @@ function M:update_status()
       msg = ((i ~= #ordered) and '%s%s | ' or '%s%s'):format(msg, component.callback(component.opts))
     end
   end
-
   return msg
 end
 

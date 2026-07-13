@@ -113,7 +113,6 @@ end
 ---@param opts? TriforceConfig User configuration options.
 function M.setup(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
-
   opts = opts or {}
 
   ---@diagnostic disable:undefined-field
@@ -132,7 +131,7 @@ Sorry for the inconvenience!]],
   end
   ---@diagnostic enable:undefined-field
 
-  M.new_config(opts or {})
+  M.new_config(opts)
 
   if not config.enabled then
     return
@@ -143,7 +142,7 @@ Sorry for the inconvenience!]],
 
   -- Apply custom level progression to stats module
   if config.level_progression then
-    stats_module.level_config = config.level_progression
+    stats_module.set_level_config(config.level_progression)
     stats_module.calibrate_tiers()
   end
 
@@ -161,7 +160,7 @@ Sorry for the inconvenience!]],
     or 'builtin'
 
   -- Setup custom path if provided
-  stats_module.db_path = config.db_path
+  stats_module.set_db_path(config.db_path)
 
   require('triforce.items').setup(config.items)
 end

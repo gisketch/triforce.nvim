@@ -28,10 +28,9 @@ local function get_default_titles()
 end
 
 ---@class Triforce.Levels
----@field levels LevelTitles
 local M = {}
 
-M.levels = {}
+local levels = {} ---@type LevelTitles
 
 ---@param override? boolean
 function M.setup(override)
@@ -41,33 +40,33 @@ function M.setup(override)
   end
 
   if not override then
-    M.levels = vim.tbl_deep_extend('keep', M.levels, get_default_titles())
+    levels = vim.tbl_deep_extend('keep', levels, get_default_titles())
   end
 end
 
----@param levels LevelParams[]|LevelParams
-function M.add_levels(levels)
-  Util.validate({ levels = { levels, { 'table' } } })
-  if vim.tbl_isempty(levels) then
+---@param lvls LevelParams[]|LevelParams
+function M.add_levels(lvls)
+  Util.validate({ lvls = { lvls, { 'table' } } })
+  if vim.tbl_isempty(lvls) then
     return
   end
 
-  ---@cast levels LevelParams[]
-  if vim.islist(levels) then
-    for _, lvl in ipairs(levels) do
+  if vim.islist(lvls) then
+    ---@cast lvls LevelParams[]
+    for _, lvl in ipairs(lvls) do
       M.add_levels(lvl)
     end
     return
   end
 
-  ---@cast levels LevelParams
+  ---@cast lvls LevelParams
   Util.validate({
-    levels_level = { levels.level, { 'number' } },
-    levels_title = { levels.title, { 'string' } },
-    levels_icon = { levels.icon, { 'string', 'nil' }, true },
+    lvls_level = { lvls.level, { 'number' } },
+    lvls_title = { lvls.title, { 'string' } },
+    lvls_icon = { lvls.icon, { 'string', 'nil' }, true },
   })
 
-  M.levels[levels.level] = { title = levels.title, icon = levels.icon or '' }
+  levels[lvls.level] = { title = lvls.title, icon = lvls.icon or '' }
 end
 
 ---@param stats Stats
@@ -75,7 +74,7 @@ end
 function M.get_all_levels(stats)
   Util.validate({ stats = { stats, { 'table' } } })
 
-  local keys = vim.tbl_keys(M.levels) --[[@as integer[]\]]
+  local keys = vim.tbl_keys(levels) --[[@as integer[]\]]
   local res = {} ---@type LevelSpec[]
   for _, lvl in ipairs(keys) do
     local title = M.get_level_title(lvl)
@@ -95,17 +94,17 @@ function M.get_level_icon(level)
     error(('Level `%s` is not valid!'):format(vim.inspect(level)), ERROR)
   end
 
-  if vim.tbl_isempty(M.levels) then
+  if vim.tbl_isempty(levels) then
     return ''
   end
 
   local values = {} ---@type integer[]
-  for k in pairs(M.levels) do
+  for k in pairs(levels) do
     if level - k <= 0 then
       table.insert(values, k)
     end
   end
-  return M.levels[math.min(unpack(values))].icon or '💫'
+  return levels[math.min(unpack(values))].icon or '💫'
 end
 
 ---Get title based on given level
@@ -124,12 +123,12 @@ function M.get_level_title(level, with_icon)
     with_icon = true
   end
 
-  if vim.tbl_isempty(M.levels) then
+  if vim.tbl_isempty(levels) then
     return ''
   end
 
   local values = {} ---@type integer[]
-  for k in pairs(M.levels) do
+  for k in pairs(levels) do
     if level - k <= 0 then
       table.insert(values, k)
     end
@@ -137,7 +136,7 @@ function M.get_level_title(level, with_icon)
 
   local l = math.min(unpack(values))
   if l then
-    return with_icon and ('%s %s'):format(M.levels[l].icon, M.levels[l].title) or M.levels[l].title
+    return with_icon and ('%s %s'):format(levels[l].icon, levels[l].title) or levels[l].title
   end
 
   return ''

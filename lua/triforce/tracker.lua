@@ -5,33 +5,43 @@ local uv = vim.uv or vim.loop
 local Util = require('triforce.util')
 
 local current_stats ---@type Stats
+local event ---@type nil|uv.uv_fs_event_t
+local augroup ---@type integer
+
+---Track line count per buffer to detect new lines.
+--- ---
+local buffer_line_counts = {} ---@type table<integer, integer>
+
+---Track lines typed today.
+--- ---
+local lines_today = 0 ---@type integer
+
+---Track current date to detect day rollover.
+--- ---
+local current_date = os.date('%Y-%m-%d') ---@type string|osdate
+
+---Flag to track if stats need saving.
+--- ---
+local dirty = false ---@type boolean
+
+---Last save timestamp to prevent rapid saves.
+--- ---
+local last_save_time = 0 ---@type integer
+
+---Timestamp of last keystroke (for activity-based time tracking).
+--- ---
+local last_activity_time = 0 ---@type integer
+
+---Seconds of inactivity before a gap is not counted as coding time.
+--- ---
+local idle_threshold = 300 ---@type integer
+
+---Debug mode is enabled.
+--- ---
+local debug_enabled = false ---@type boolean
 
 ---@class Triforce.Tracker
----@field augroup? integer
 local M = {}
-
----Track line count per buffer to detect new lines
-M.buffer_line_counts = {} ---@type table<integer, integer>
-
----Track lines typed today
-M.lines_today = 0 ---@type integer
-
----Track current date to detect day rollover
-M.current_date = os.date('%Y-%m-%d') ---@type string|osdate
-
----Flag to track if stats need saving
-M.dirty = false ---@type boolean
-
----Last save timestamp to prevent rapid saves
-M.last_save_time = 0 ---@type integer
-
----Timestamp of last keystroke (for activity-based time tracking)
-M.last_activity_time = 0 ---@type integer
-
----Seconds of inactivity before a gap is not counted as coding time
-M.idle_threshold = 300 ---@type integer
-
-M.debug = false ---@type boolean
 
 ---@param stats Stats
 function M.update_stats(stats)
@@ -42,25 +52,36 @@ end
 
 ---@param path string
 local function start_file_watch(path)
+  Util.validate({ path = { path, { 'string', 'nil' }, true } })
   if vim.g.triforce_watch_setup == 1 then
     return
   end
 
-  Util.validate({ path = { path, { 'string', 'nil' }, true } })
-
-  local event = uv.new_fs_event()
+  event = uv.new_fs_event()
   if not event then
     return
   end
 
-  local stats_module = require('triforce.stats')
-  event:start((path and Util.is_file(path)) and path or stats_module.get_stats_path(), {}, function(err, _, events)
-    if err or not events.change then
-      return
-    end
+  event:start(
+    (path and Util.is_file(path)) and path or require('triforce.stats').get_stats_path(),
+    {},
+    vim.schedule_wrap(function(err, _, events)
+      if not err and events.change then
+        current_stats = require('triforce.stats').load(debug_enabled)
+      end
+    end)
+  )
 
-    current_stats = stats_module.load(M.debug)
-  end)
+  vim.api.nvim_create_autocmd('VimLeavePre', {
+    group = augroup,
+    once = true,
+    callback = function()
+      if event and event:is_active() then
+        event:close()
+        event = nil
+      end
+    end,
+  })
 
   vim.g.triforce_watch_setup = 1
 end
@@ -69,23 +90,22 @@ end
 ---@param debug? boolean
 function M.setup(debug)
   Util.validate({ debug = { debug, { 'boolean', 'nil' }, true } })
+  if debug == nil then
+    debug = false
+  end
+
+  debug_enabled = debug
 
   local stats_module = require('triforce.stats')
 
-  if debug == nil then
-    M.debug = false
-  else
-    M.debug = debug
-  end
-
-  current_stats = stats_module.load(M.debug)
-  M.current_date = os.date('%Y-%m-%d')
-  M.lines_today = 0
+  current_stats = stats_module.load(debug_enabled)
+  current_date = os.date('%Y-%m-%d')
+  lines_today = 0
   stats_module.start_session(current_stats)
-  M.augroup = vim.api.nvim_create_augroup('TriforceTracker', { clear = true })
+  augroup = vim.api.nvim_create_augroup('TriforceTracker', { clear = true })
 
   vim.api.nvim_create_autocmd({ 'InsertCharPre', 'TextChanged' }, {
-    group = M.augroup,
+    group = augroup,
     callback = function(ev)
       if Util.optget('modified', 'buf', ev.buf) then
         M.on_text_changed(ev.buf)
@@ -93,21 +113,22 @@ function M.setup(debug)
     end,
   })
   vim.api.nvim_create_autocmd('BufWritePre', {
-    group = M.augroup,
+    group = augroup,
     callback = function(ev)
       if
         Util.optget('modified', 'buf', ev.buf)
-        and not vim.list_contains(require('triforce.languages').ignored_langs, Util.optget('filetype', 'buf', ev.buf))
+        and not vim.list_contains(
+          require('triforce.languages').get_ignored_langs(),
+          Util.optget('filetype', 'buf', ev.buf)
+        )
       then
         M.on_save()
       end
     end,
   })
   vim.api.nvim_create_autocmd('VimLeavePre', {
-    group = M.augroup,
-    callback = function()
-      M.shutdown()
-    end,
+    group = augroup,
+    callback = M.shutdown,
   })
   -- Auto-save timer (every 30 seconds if dirty)
   local timer = uv.new_timer()
@@ -115,42 +136,53 @@ function M.setup(debug)
     return
   end
 
-  start_file_watch(stats_module.db_path)
+  start_file_watch(stats_module.get_db_path())
 
   timer:start(
     30000,
     30000,
     vim.schedule_wrap(function()
-      if not (current_stats and M.dirty) then
+      if not (current_stats and dirty) then
         return
       end
 
       local now = os.time()
 
       -- Debounce: only save if at least 5 seconds since last save
-      if now - M.last_save_time < 5 or not stats_module.save(current_stats) then
+      if now - last_save_time < 5 or not stats_module.save(current_stats) then
         return
       end
 
-      M.dirty = false
-      M.last_save_time = now
+      dirty = false
+      last_save_time = now
     end)
   )
+
+  vim.api.nvim_create_autocmd('VimLeavePre', {
+    group = augroup,
+    once = true,
+    callback = function()
+      if timer and timer:is_active() then
+        timer:stop()
+        timer = nil
+      end
+    end,
+  })
 end
 
 ---Check if date has rolled over and update daily activity
 function M.check_date_rollover()
   local today = os.date('%Y-%m-%d')
-  if today == M.current_date then
+  if today == current_date then
     return
   end
 
   -- Day changed - record yesterday's lines and reset
-  if M.lines_today > 0 and current_stats then
-    require('triforce.stats').record_daily_activity(current_stats, M.lines_today)
+  if lines_today > 0 and current_stats then
+    require('triforce.stats').record_daily_activity(current_stats, lines_today)
   end
-  M.current_date = today
-  M.lines_today = 0
+  current_date = today
+  lines_today = 0
 end
 
 ---Track characters typed (called on text change)
@@ -172,32 +204,32 @@ function M.on_text_changed(bufnr)
 
   -- Activity-based time tracking: only count time between actual keystrokes
   local now = os.time()
-  if M.last_activity_time > 0 then
-    local elapsed = now - M.last_activity_time
-    if elapsed <= M.idle_threshold then
+  if last_activity_time > 0 then
+    local elapsed = now - last_activity_time
+    if elapsed <= idle_threshold then
       current_stats.time_coding = current_stats.time_coding + elapsed
-      M.dirty = true
+      dirty = true
     end
   end
-  M.last_activity_time = now
+  last_activity_time = now
 
   local current_line_count = vim.api.nvim_buf_line_count(bufnr)
-  local previous_line_count = M.buffer_line_counts[bufnr] or current_line_count
+  local previous_line_count = buffer_line_counts[bufnr] or current_line_count
 
   -- Track new lines if line count increased
   if current_line_count > previous_line_count then
     local new_lines = current_line_count - previous_line_count
     current_stats.lines_typed = current_stats.lines_typed + new_lines
-    M.lines_today = M.lines_today + new_lines
+    lines_today = lines_today + new_lines
     stats_module.add_xp(current_stats, Util.get_xp_rewards().line * new_lines)
   end
 
   -- Update the tracked line count
-  M.buffer_line_counts[bufnr] = current_line_count
+  buffer_line_counts[bufnr] = current_line_count
 
   -- Track character typed
   current_stats.chars_typed = current_stats.chars_typed + 1
-  M.dirty = true
+  dirty = true
 
   -- Track character by language
   local filetype = Util.optget('filetype', 'buf', bufnr) --[[@as string]]
@@ -235,7 +267,7 @@ function M.on_save()
   end
 
   local leveled_up = require('triforce.stats').add_xp(current_stats, Util.get_xp_rewards().save)
-  M.dirty = true
+  dirty = true
 
   if leveled_up then
     M.notify_level_up()
@@ -243,13 +275,13 @@ function M.on_save()
 
   -- Save immediately on file save
   local now = os.time()
-  if now - M.last_save_time < 2 then -- Prevent saves more than once per 2 seconds
+  if now - last_save_time < 2 then -- Prevent saves more than once per 2 seconds
     return
   end
 
   if require('triforce.stats').save(current_stats) then
-    M.dirty = false
-    M.last_save_time = now
+    dirty = false
+    last_save_time = now
   end
 end
 
@@ -314,28 +346,28 @@ function M.shutdown()
   local stats_module = require('triforce.stats')
 
   -- Record today's lines before shutdown
-  if M.lines_today > 0 then
-    stats_module.record_daily_activity(current_stats, M.lines_today)
+  if lines_today > 0 then
+    stats_module.record_daily_activity(current_stats, lines_today)
   end
 
   -- Add final active time chunk if user typed recently before closing
-  if M.last_activity_time > 0 then
+  if last_activity_time > 0 then
     local now = os.time()
-    local elapsed = now - M.last_activity_time
-    if elapsed <= M.idle_threshold then
+    local elapsed = now - last_activity_time
+    if elapsed <= idle_threshold then
       current_stats.time_coding = current_stats.time_coding + elapsed
     end
   end
 
-  stats_module.end_session(current_stats)
+  current_stats = stats_module.end_session(current_stats)
 
   -- Force save on shutdown, ignore debounce
   if not stats_module.save(current_stats) then
     error('Failed to save stats on shutdown!', ERROR)
   end
 
-  M.dirty = false
-  M.last_save_time = os.time()
+  dirty = false
+  last_save_time = os.time()
 end
 
 ---Reset all stats (for testing)
@@ -434,7 +466,7 @@ function M.debug_fix_level()
     return
   end
 
-  if not M.debug then
+  if not debug_enabled then
     return
   end
 
@@ -452,7 +484,7 @@ function M.debug_fix_level()
   end
 
   current_stats.level = calculated_level
-  M.dirty = true
+  dirty = true
   stats_module.save(current_stats)
 
   vim.notify(

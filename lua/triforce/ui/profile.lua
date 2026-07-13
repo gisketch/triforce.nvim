@@ -12,15 +12,7 @@
 local MONTHS = { 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec' }
 local DAYS = { 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat' }
 
----@enum (key) PaginationKey
-local pagination = { ---@diagnostic disable-line:unused-local
-  H = 1,
-  L = 1,
-  ['<Left>'] = 1,
-  ['<Right>'] = 1,
-  h = 1,
-  l = 1,
-}
+---@alias PaginationKey 'H'|'L'|'<Left>'|'<Right>'|'h'|'l'
 
 local volt = require('volt')
 local voltui = require('volt.ui')

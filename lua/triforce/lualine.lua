@@ -191,22 +191,21 @@ function M.get_defaults()
   }
 end
 
-M.config = M.get_defaults()
+local cfg = M.get_defaults()
 
 ---Setup lualine integration with custom config
 ---@param opts? Triforce.LualineConfig User configuration
 function M.setup(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
-  M.config = vim.tbl_deep_extend('keep', opts or {}, M.config)
-
-  if not vim.list_contains({ 'short', 'long' }, M.config.session_time.format) then
-    M.config.session_time.format = M.get_defaults().session_time.format
+  cfg = vim.tbl_deep_extend('force', cfg, opts or {})
+  if not vim.list_contains({ 'short', 'long' }, cfg.session_time.format) then
+    cfg.session_time.format = M.get_defaults().session_time.format
   end
 end
 
 ---Get current stats safely
----@return Stats|nil stats
+---@return Stats|nil|? stats
 local function get_stats()
   local ok, triforce = pcall(require, 'triforce')
   if not ok then
@@ -274,7 +273,7 @@ function M.currency(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
   local stats = get_stats()
-  local config = vim.tbl_deep_extend('force', M.config.currency, opts or {})
+  local config = vim.tbl_deep_extend('force', cfg.currency, opts or {})
   if not (stats and config.enabled) then
     return ''
   end
@@ -295,7 +294,7 @@ function M.level(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
   local stats = get_stats()
-  local config = vim.tbl_deep_extend('force', M.config.level, opts or {})
+  local config = vim.tbl_deep_extend('force', cfg.level, opts or {})
   if not (stats and config.enabled) then
     return ''
   end
@@ -342,7 +341,7 @@ function M.achievements(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
   local stats = get_stats()
-  local config = vim.tbl_deep_extend('force', M.config.achievements, opts or {})
+  local config = vim.tbl_deep_extend('force', cfg.achievements, opts or {})
   if not (stats and config.enabled) then
     return ''
   end
@@ -376,7 +375,7 @@ function M.streak(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
   local stats = get_stats()
-  local config = vim.tbl_deep_extend('force', M.config.streak, opts or {})
+  local config = vim.tbl_deep_extend('force', cfg.streak, opts or {})
   if not (stats and config.enabled) or stats.current_streak == 0 then
     return ''
   end
@@ -400,7 +399,7 @@ function M.session_time(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
   local stats = get_stats()
-  local config = vim.tbl_deep_extend('force', M.config.session_time, opts or {})
+  local config = vim.tbl_deep_extend('force', cfg.session_time, opts or {})
   if not (stats and config.enabled) or stats.last_session_start == 0 then
     return ''
   end

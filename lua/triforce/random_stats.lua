@@ -191,10 +191,11 @@ function M.format_language_name(filetype)
   Util.validate({ filetype = { filetype, { 'string' } } })
 
   local language_names = {} ---@type table<string, string>
-  for ft, spec in pairs(require('triforce.languages').langs) do
+  for ft, spec in pairs(require('triforce.languages').get_langs()) do
     language_names[ft] = spec.name
   end
 
+  require('triforce.languages').set_langs(language_names)
   return language_names[filetype] or filetype
 end
 

@@ -48,13 +48,16 @@ local Util = require('triforce.util')
 local Languages = require('triforce.languages')
 local xp_multiplier = 1 ---@type number
 
+local calibrated ---@type boolean
+local db_path = nil ---@type nil|string|?
+
 ---@class Triforce.Stats
----@field calibrated? true
----@field db_path? string
----Configurable level progression.
---- ---
----@field level_config LevelProgression
 local M = {}
+
+---@return nil|string|? db_path
+function M.get_db_path()
+  return db_path
+end
 
 ---@param n number
 function M.set_xp_multiplier(n)
@@ -66,7 +69,9 @@ function M.set_xp_multiplier(n)
   xp_multiplier = n
 end
 
-M.level_config = {
+---Configurable level progression.
+--- ---
+local level_config = { ---@type LevelProgression
   tier_1 = { min_level = 1, max_level = 10, xp_per_level = 500 },
   tier_2 = { min_level = 11, max_level = 20, xp_per_level = 750 },
   tier_3 = { min_level = 21, max_level = 30, xp_per_level = 1250 },
@@ -78,6 +83,18 @@ M.level_config = {
   tier_9 = { min_level = 151, max_level = 225, xp_per_level = 15000 },
   tier_10 = { min_level = 226, max_level = math.huge, xp_per_level = 25000 },
 }
+
+---@param cfg LevelProgression
+function M.set_level_config(cfg)
+  Util.validate({ cfg = { cfg, { 'table' } } })
+
+  level_config = vim.deepcopy(cfg)
+end
+
+---@return LevelProgression level_config
+function M.get_level_config()
+  return level_config
+end
 
 ---@return Stats stats
 function M.default_stats()
@@ -104,7 +121,7 @@ end
 ---Get the stats file path
 ---@return string db_path
 function M.get_stats_path()
-  return M.db_path or M.default_stats().db_path
+  return db_path or M.default_stats().db_path
 end
 
 ---@param stats Stats
@@ -267,83 +284,83 @@ function M.save(stats, path)
 end
 
 function M.calibrate_tiers()
-  if M.calibrated then
+  if calibrated then
     return
   end
-  local last_level = M.level_config.tier_1.max_level
+  local last_level = level_config.tier_1.max_level
 
-  if M.level_config.tier_2.min_level >= last_level then
-    M.level_config.tier_2.min_level = last_level + 1
+  if level_config.tier_2.min_level >= last_level then
+    level_config.tier_2.min_level = last_level + 1
   end
-  if M.level_config.tier_2.max_level == math.huge then
-    M.level_config.tier_2.max_level = M.level_config.tier_3.min_level - 1
+  if level_config.tier_2.max_level == math.huge then
+    level_config.tier_2.max_level = level_config.tier_3.min_level - 1
   end
-  last_level = M.level_config.tier_2.max_level
+  last_level = level_config.tier_2.max_level
 
-  if M.level_config.tier_3.min_level >= last_level then
-    M.level_config.tier_3.min_level = last_level + 1
+  if level_config.tier_3.min_level >= last_level then
+    level_config.tier_3.min_level = last_level + 1
   end
-  if M.level_config.tier_3.max_level == math.huge then
-    M.level_config.tier_3.max_level = M.level_config.tier_4.min_level - 1
+  if level_config.tier_3.max_level == math.huge then
+    level_config.tier_3.max_level = level_config.tier_4.min_level - 1
   end
-  last_level = M.level_config.tier_3.max_level
+  last_level = level_config.tier_3.max_level
 
-  if M.level_config.tier_4.min_level >= last_level then
-    M.level_config.tier_4.min_level = last_level + 1
+  if level_config.tier_4.min_level >= last_level then
+    level_config.tier_4.min_level = last_level + 1
   end
-  if M.level_config.tier_4.max_level == math.huge then
-    M.level_config.tier_4.max_level = M.level_config.tier_5.min_level - 1
+  if level_config.tier_4.max_level == math.huge then
+    level_config.tier_4.max_level = level_config.tier_5.min_level - 1
   end
-  last_level = M.level_config.tier_4.max_level
+  last_level = level_config.tier_4.max_level
 
-  if M.level_config.tier_5.min_level >= last_level then
-    M.level_config.tier_5.min_level = last_level + 1
+  if level_config.tier_5.min_level >= last_level then
+    level_config.tier_5.min_level = last_level + 1
   end
-  if M.level_config.tier_5.max_level == math.huge then
-    M.level_config.tier_5.max_level = M.level_config.tier_6.min_level - 1
+  if level_config.tier_5.max_level == math.huge then
+    level_config.tier_5.max_level = level_config.tier_6.min_level - 1
   end
-  last_level = M.level_config.tier_5.max_level
+  last_level = level_config.tier_5.max_level
 
-  if M.level_config.tier_6.min_level >= last_level then
-    M.level_config.tier_6.min_level = last_level + 1
+  if level_config.tier_6.min_level >= last_level then
+    level_config.tier_6.min_level = last_level + 1
   end
-  if M.level_config.tier_6.max_level == math.huge then
-    M.level_config.tier_6.max_level = M.level_config.tier_7.min_level - 1
+  if level_config.tier_6.max_level == math.huge then
+    level_config.tier_6.max_level = level_config.tier_7.min_level - 1
   end
-  last_level = M.level_config.tier_6.max_level
+  last_level = level_config.tier_6.max_level
 
-  if M.level_config.tier_7.min_level >= last_level then
-    M.level_config.tier_7.min_level = last_level + 1
+  if level_config.tier_7.min_level >= last_level then
+    level_config.tier_7.min_level = last_level + 1
   end
-  if M.level_config.tier_7.max_level == math.huge then
-    M.level_config.tier_7.max_level = M.level_config.tier_8.min_level - 1
+  if level_config.tier_7.max_level == math.huge then
+    level_config.tier_7.max_level = level_config.tier_8.min_level - 1
   end
-  last_level = M.level_config.tier_7.max_level
+  last_level = level_config.tier_7.max_level
 
-  if M.level_config.tier_8.min_level >= last_level then
-    M.level_config.tier_8.min_level = last_level + 1
+  if level_config.tier_8.min_level >= last_level then
+    level_config.tier_8.min_level = last_level + 1
   end
-  if M.level_config.tier_8.max_level == math.huge then
-    M.level_config.tier_8.max_level = M.level_config.tier_9.min_level - 1
+  if level_config.tier_8.max_level == math.huge then
+    level_config.tier_8.max_level = level_config.tier_9.min_level - 1
   end
-  last_level = M.level_config.tier_8.max_level
+  last_level = level_config.tier_8.max_level
 
-  if M.level_config.tier_9.min_level >= last_level then
-    M.level_config.tier_9.min_level = last_level + 1
+  if level_config.tier_9.min_level >= last_level then
+    level_config.tier_9.min_level = last_level + 1
   end
-  if M.level_config.tier_9.max_level == math.huge then
-    M.level_config.tier_9.max_level = M.level_config.tier_10.min_level - 1
+  if level_config.tier_9.max_level == math.huge then
+    level_config.tier_9.max_level = level_config.tier_10.min_level - 1
   end
-  last_level = M.level_config.tier_9.max_level
+  last_level = level_config.tier_9.max_level
 
-  if M.level_config.tier_10.min_level >= last_level then
-    M.level_config.tier_10.min_level = last_level + 1
+  if level_config.tier_10.min_level >= last_level then
+    level_config.tier_10.min_level = last_level + 1
   end
-  if M.level_config.tier_10.max_level ~= math.huge then
-    M.level_config.tier_10.max_level = math.huge
+  if level_config.tier_10.max_level ~= math.huge then
+    level_config.tier_10.max_level = math.huge
   end
 
-  M.calibrated = true
+  calibrated = true
 end
 
 ---Calculate level from XP.
@@ -360,94 +377,94 @@ function M.calculate_level(xp)
   local accumulated_xp = 0
 
   -- Tier 1: Levels 1-10 (300 XP each)
-  local tier_1_total = M.level_config.tier_1.max_level * M.level_config.tier_1.xp_per_level
+  local tier_1_total = level_config.tier_1.max_level * level_config.tier_1.xp_per_level
   if xp <= tier_1_total then
-    return 1 + math.floor(xp / M.level_config.tier_1.xp_per_level)
+    return 1 + math.floor(xp / level_config.tier_1.xp_per_level)
   end
   accumulated_xp = tier_1_total
-  level = M.level_config.tier_1.max_level
+  level = level_config.tier_1.max_level
 
   -- Tier 2: Levels 11-20 (500 XP each)
-  local tier_2_range = M.level_config.tier_2.max_level - M.level_config.tier_2.min_level + 1
-  local tier_2_total = tier_2_range * M.level_config.tier_2.xp_per_level
+  local tier_2_range = level_config.tier_2.max_level - level_config.tier_2.min_level + 1
+  local tier_2_total = tier_2_range * level_config.tier_2.xp_per_level
   if xp <= accumulated_xp + tier_2_total then
-    return (level + 1) + math.floor((xp - accumulated_xp) / M.level_config.tier_2.xp_per_level)
+    return (level + 1) + math.floor((xp - accumulated_xp) / level_config.tier_2.xp_per_level)
   end
   accumulated_xp = accumulated_xp + tier_2_total
-  level = M.level_config.tier_2.max_level
+  level = level_config.tier_2.max_level
 
   -- Tier 3: Levels 21-30 (1000 XP each)
-  local tier_3_range = M.level_config.tier_3.max_level - M.level_config.tier_3.min_level + 1
-  local tier_3_total = tier_3_range * M.level_config.tier_3.xp_per_level
+  local tier_3_range = level_config.tier_3.max_level - level_config.tier_3.min_level + 1
+  local tier_3_total = tier_3_range * level_config.tier_3.xp_per_level
   if xp <= accumulated_xp + tier_3_total then
-    return (level + 1) + math.floor((xp - accumulated_xp) / M.level_config.tier_3.xp_per_level)
+    return (level + 1) + math.floor((xp - accumulated_xp) / level_config.tier_3.xp_per_level)
   end
   accumulated_xp = accumulated_xp + tier_3_total
-  level = M.level_config.tier_3.max_level
+  level = level_config.tier_3.max_level
 
   -- Tier 4: Levels 31-40 (2000 XP each)
-  local tier_4_range = M.level_config.tier_4.max_level - M.level_config.tier_4.min_level + 1
-  local tier_4_total = tier_4_range * M.level_config.tier_4.xp_per_level
+  local tier_4_range = level_config.tier_4.max_level - level_config.tier_4.min_level + 1
+  local tier_4_total = tier_4_range * level_config.tier_4.xp_per_level
   if xp <= accumulated_xp + tier_4_total then
-    return (level + 1) + math.floor((xp - accumulated_xp) / M.level_config.tier_4.xp_per_level)
+    return (level + 1) + math.floor((xp - accumulated_xp) / level_config.tier_4.xp_per_level)
   end
   accumulated_xp = accumulated_xp + tier_4_total
-  level = M.level_config.tier_4.max_level
+  level = level_config.tier_4.max_level
 
   -- Tier 5: Levels 41-50 (3000 XP each)
-  local tier_5_range = M.level_config.tier_5.max_level - M.level_config.tier_5.min_level + 1
-  local tier_5_total = tier_5_range * M.level_config.tier_5.xp_per_level
+  local tier_5_range = level_config.tier_5.max_level - level_config.tier_5.min_level + 1
+  local tier_5_total = tier_5_range * level_config.tier_5.xp_per_level
   if xp <= accumulated_xp + tier_5_total then
-    return (level + 1) + math.floor((xp - accumulated_xp) / M.level_config.tier_5.xp_per_level)
+    return (level + 1) + math.floor((xp - accumulated_xp) / level_config.tier_5.xp_per_level)
   end
   accumulated_xp = accumulated_xp + tier_5_total
-  level = M.level_config.tier_5.max_level
+  level = level_config.tier_5.max_level
 
   -- Tier 6: Levels 51-75 (5000 XP each)
-  local tier_6_range = M.level_config.tier_6.max_level - M.level_config.tier_6.min_level + 1
-  local tier_6_total = tier_6_range * M.level_config.tier_6.xp_per_level
+  local tier_6_range = level_config.tier_6.max_level - level_config.tier_6.min_level + 1
+  local tier_6_total = tier_6_range * level_config.tier_6.xp_per_level
   if xp <= accumulated_xp + tier_6_total then
-    return (level + 1) + math.floor((xp - accumulated_xp) / M.level_config.tier_6.xp_per_level)
+    return (level + 1) + math.floor((xp - accumulated_xp) / level_config.tier_6.xp_per_level)
   end
   accumulated_xp = accumulated_xp + tier_6_total
-  level = M.level_config.tier_6.max_level
+  level = level_config.tier_6.max_level
 
   -- Tier 7: Levels 76-100 (7500 XP each)
-  local tier_7_range = M.level_config.tier_7.max_level - M.level_config.tier_7.min_level + 1
-  local tier_7_total = tier_7_range * M.level_config.tier_7.xp_per_level
+  local tier_7_range = level_config.tier_7.max_level - level_config.tier_7.min_level + 1
+  local tier_7_total = tier_7_range * level_config.tier_7.xp_per_level
   if xp <= accumulated_xp + tier_7_total then
-    return (level + 1) + math.floor((xp - accumulated_xp) / M.level_config.tier_7.xp_per_level)
+    return (level + 1) + math.floor((xp - accumulated_xp) / level_config.tier_7.xp_per_level)
   end
   accumulated_xp = accumulated_xp + tier_7_total
-  level = M.level_config.tier_7.max_level
+  level = level_config.tier_7.max_level
 
   -- Tier 8: Levels 101-150 (10000 XP each)
-  local tier_8_range = M.level_config.tier_8.max_level - M.level_config.tier_8.min_level + 1
-  local tier_8_total = tier_8_range * M.level_config.tier_8.xp_per_level
+  local tier_8_range = level_config.tier_8.max_level - level_config.tier_8.min_level + 1
+  local tier_8_total = tier_8_range * level_config.tier_8.xp_per_level
   if xp <= accumulated_xp + tier_8_total then
-    return (level + 1) + math.floor((xp - accumulated_xp) / M.level_config.tier_8.xp_per_level)
+    return (level + 1) + math.floor((xp - accumulated_xp) / level_config.tier_8.xp_per_level)
   end
   accumulated_xp = accumulated_xp + tier_8_total
-  level = M.level_config.tier_8.max_level
+  level = level_config.tier_8.max_level
 
   -- Tier 9: Levels 151-225 (15000 XP each)
-  local tier_9_range = M.level_config.tier_9.max_level - M.level_config.tier_9.min_level + 1
-  local tier_9_total = tier_9_range * M.level_config.tier_9.xp_per_level
+  local tier_9_range = level_config.tier_9.max_level - level_config.tier_9.min_level + 1
+  local tier_9_total = tier_9_range * level_config.tier_9.xp_per_level
   if xp <= accumulated_xp + tier_9_total then
-    return (level + 1) + math.floor((xp - accumulated_xp) / M.level_config.tier_9.xp_per_level)
+    return (level + 1) + math.floor((xp - accumulated_xp) / level_config.tier_9.xp_per_level)
   end
   accumulated_xp = accumulated_xp + tier_9_total
-  level = M.level_config.tier_9.max_level
+  level = level_config.tier_9.max_level
 
   -- Tier 10: Levels 226+ (15000 XP each)
-  return level + math.floor((xp - accumulated_xp) / M.level_config.tier_10.xp_per_level) + 1
+  return level + math.floor((xp - accumulated_xp) / level_config.tier_10.xp_per_level) + 1
 end
 
 ---Calculate XP needed for next level
 ---@param current_level integer
 ---@return integer xp_needed
 function M.xp_for_next_level(current_level)
-  return Util.get_total_xp_for_level(current_level + 1, M.level_config)
+  return Util.get_total_xp_for_level(current_level + 1, level_config)
 end
 
 function M.add_currency(stats, amount)
@@ -458,6 +475,11 @@ function M.add_currency(stats, amount)
 
   stats.currency = stats.currency + amount
   return stats.currency
+end
+
+---@param path string
+function M.set_db_path(path)
+  db_path = path
 end
 
 ---Add XP and update level
@@ -471,8 +493,8 @@ function M.add_xp(stats, amount)
   })
 
   local ft = Util.optget('filetype', 'buf', vim.api.nvim_get_current_buf())
-  local keys = vim.tbl_keys(Languages.langs) --[[@as string[]\]]
-  if vim.list_contains(Languages.ignored_langs, ft) or not vim.list_contains(keys, ft) then
+  local keys = vim.tbl_keys(Languages.get_langs()) --[[@as string[]\]]
+  if vim.list_contains(Languages.get_ignored_langs(), ft) or not vim.list_contains(keys, ft) then
     return false
   end
 
@@ -498,12 +520,14 @@ end
 
 ---End the current session
 ---@param stats Stats
+---@return Stats stats
 function M.end_session(stats)
   Util.validate({ stats = { stats, { 'table' } } })
 
   -- Time is accumulated per-keystroke in tracker.lua (activity-based),
   -- so we only need to reset the session start marker here.
   stats.last_session_start = 0
+  return stats
 end
 
 ---Get timestamp for start of day

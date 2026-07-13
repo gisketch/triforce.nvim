@@ -96,12 +96,12 @@ local items = { ---@type table<string, Triforce.Items.Spec>
       return math.floor(self.base_price * (self.times_used <= 0 and 1 or (math.log(self.times_used) + stats.level)))
     end,
     level_cap = function()
-      return require('triforce.stats').level_config.tier_10.min_level
+      return require('triforce.stats').get_level_config().tier_10.min_level
     end,
     callback = function(self, stats)
       local Stats = require('triforce.stats')
       local level_boost = nil ---@type integer|nil
-      for _, tier in pairs(Stats.level_config) do
+      for _, tier in pairs(Stats.get_level_config()) do
         ---@cast tier LevelTier
         if stats.level >= tier.min_level and stats.level <= tier.max_level then
           level_boost = tier.max_level - stats.level + 1

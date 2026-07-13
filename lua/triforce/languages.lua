@@ -4,16 +4,15 @@ local Util = require('triforce.util')
 
 ---Language configuration and icons
 ---@class Triforce.Languages
----List of ignored languages (called from `triforce.setup()`).
---- ---
----@field ignored_langs string[]
----Mappings for popular programming languages, in `{ name, icon }` tuples.
---- ---
----@field langs table<string, TriforceLanguage>
 local M = {}
 
-M.ignored_langs = {}
-M.langs = {
+---List of ignored languages (called from `triforce.setup()`).
+--- ---
+local ignored_langs = {} ---@type string[]
+
+---Mappings for popular programming languages, in `{ name, icon }` tuples.
+--- ---
+local langs = { ---@type table<string, TriforceLanguage>
   -- Web
   javascript = { name = 'JavaScript', icon = '' }, -- nf-dev-javascript
   typescript = { name = 'TypeScript', icon = '' }, -- nf-seti-typescript
@@ -113,16 +112,31 @@ M.langs = {
   dockerfile = { name = 'Dockerfile', icon = '󰡨' }, -- nf-md-docker
 }
 
+---@return table<string, TriforceLanguage> langs
+function M.get_langs()
+  return langs
+end
+
+---@param L table<string, TriforceLanguage>
+function M.set_langs(L)
+  langs = vim.deepcopy(L)
+end
+
+---@return string[] ignored_langs
+function M.get_ignored_langs()
+  return ignored_langs
+end
+
 ---@param ft string
 function M.set_mini_icon(ft)
   Util.validate({ ft = { ft, { 'string' } } })
 
   ---@module 'mini.icons'
-  if not (_G.MiniIcons and M.langs[ft]) then
+  if not (_G.MiniIcons and langs[ft]) then
     return
   end
 
-  local default_icon = M.langs[ft].icon or ''
+  local default_icon = langs[ft].icon or ''
   local no_icon = _G.MiniIcons.get('filetype', '')
   local icon = _G.MiniIcons.get('filetype', ft)
   if icon == no_icon and default_icon ~= '' then
@@ -131,7 +145,7 @@ function M.set_mini_icon(ft)
     icon = no_icon
   end
 
-  M.langs[ft].icon = icon
+  langs[ft].icon = icon
 end
 
 ---Get icon for a filetype.
@@ -141,10 +155,10 @@ end
 ---@return string|nil icon
 function M.get_icon(ft)
   Util.validate({ ft = { ft, { 'string' } } })
-  if vim.list_contains(M.ignored_langs, ft) then
+  if vim.list_contains(ignored_langs, ft) then
     return
   end
-  if not M.langs[ft] then
+  if not langs[ft] then
     return ''
   end
 
@@ -152,7 +166,7 @@ function M.get_icon(ft)
     M.set_mini_icon(ft)
   end
 
-  return M.langs[ft].icon or ''
+  return langs[ft].icon or ''
 end
 
 ---@param ft string
@@ -160,14 +174,14 @@ end
 function M.is_excluded(ft)
   Util.validate({ ft = { ft, { 'string' } } })
 
-  return vim.list_contains(M.ignored_langs, ft)
+  return vim.list_contains(ignored_langs, ft)
 end
 
----@param langs string[]
-function M.exclude_langs(langs)
-  Util.validate({ langs = { langs, { 'table' } } })
+---@param ignored string[]
+function M.exclude_langs(ignored)
+  Util.validate({ ignored = { ignored, { 'table' } } })
 
-  M.ignored_langs = vim.tbl_deep_extend('keep', langs, M.ignored_langs)
+  ignored_langs = vim.tbl_deep_extend('keep', ignored, ignored_langs)
 end
 
 ---Check if language should be tracked
@@ -181,7 +195,7 @@ function M.should_track(ft)
   end
 
   -- Track only if we have an icon for it or if user adds custom mapping
-  return not M.is_excluded(ft) and M.langs[ft] and M.langs[ft].icon ~= nil
+  return not M.is_excluded(ft) and langs[ft] and langs[ft].icon ~= nil
 end
 
 ---Get display name for language.
@@ -195,11 +209,11 @@ function M.get_display_name(ft)
   if M.is_excluded(ft) then
     return
   end
-  if not M.langs[ft] then
+  if not langs[ft] then
     return ''
   end
 
-  return M.langs[ft].name or ft
+  return langs[ft].name or ft
 end
 
 ---Get full display with icon
@@ -230,8 +244,8 @@ function M.register_custom_languages(custom_langs)
   end
 
   for ft, config in pairs(custom_langs) do
-    if not (M.is_excluded(ft) or M.langs[ft]) then
-      M.langs[ft] = { icon = config.icon or '', name = config.name or '' }
+    if not (M.is_excluded(ft) or langs[ft]) then
+      langs[ft] = { icon = config.icon or '', name = config.name or '' }
     end
   end
 end

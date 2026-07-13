@@ -27,7 +27,7 @@ describe('triforce', function()
       local ok = pcall(triforce.setup, { ignore_ft = ignore })
 
       assert.is_true(ok)
-      assert.is_same(languages.ignored_langs, ignore)
+      assert.is_same(languages.get_ignored_langs(), ignore)
     end)
   end)
 end)
