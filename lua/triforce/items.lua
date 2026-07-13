@@ -40,7 +40,7 @@ function Item:available(stats)
     vim.notify('(triforce.nvim): Level is higher than the limit!', ERROR)
     return false
   end
-  if stats.currency < self:price(stats) then
+  if stats.currency < self.price(self, stats) then
     vim.notify('(triforce.nvim): Not enough currency!', ERROR)
     return false
   end
@@ -79,7 +79,7 @@ function Item:new(T)
       return false, stats
     end
 
-    stats.currency = stats.currency - O:price(stats)
+    stats.currency = stats.currency - O.price(O, stats)
     return cb(item, stats), stats
   end
   return item
@@ -90,10 +90,10 @@ local items = { ---@type table<string, Triforce.Items.Spec>
     name = 'Single XP Boost',
     desc = 'Use this for a rapid XP boost to the next XP tier (unavailable for max tier).',
     once = false,
-    base_price = 1500,
+    base_price = 2500,
     max_uses = 0,
-    price = function(self, stats)
-      return math.floor(self.base_price * (self.times_used <= 0 and 1 or (math.log(self.times_used) + stats.level)))
+    price = function(self)
+      return math.floor(self.base_price * (self.times_used <= 0 and 1 or self.times_used))
     end,
     level_cap = function()
       return require('triforce.stats').get_level_config().tier_10.min_level
@@ -311,7 +311,9 @@ function M.read_items()
   end
   for name, item in pairs(data) do
     for k, v in pairs(item) do
-      all_items[name][k] = v
+      if all_items[name][k] == nil then
+        all_items[name][k] = v
+      end
     end
   end
 end
@@ -352,7 +354,7 @@ function M.item_price(id)
   if not (all_items[id] and all_items[id].price) then
     return
   end
-  return all_items[id]:price(require('triforce.tracker').get_stats())
+  return all_items[id].price(all_items[id], require('triforce.tracker').get_stats())
 end
 
 ---@param id string

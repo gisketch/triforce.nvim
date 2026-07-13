@@ -8,6 +8,30 @@ local current_stats ---@type Stats
 local event ---@type nil|uv.uv_fs_event_t
 local augroup ---@type integer
 
+---@generic T
+---@param old T
+---@param new T
+---@return T merged
+local function merge_stats(old, new)
+  Util.validate({
+    old = { old, { 'table' } },
+    new = { new, { 'table' } },
+  })
+  local stats = {}
+  for k, v in pairs(new) do
+    if old[k] == nil or type(v) == 'boolean' then
+      stats[k] = v
+    elseif type(v) == 'number' then
+      stats[k] = v > old[k] and v or old[k]
+    elseif type(v) == 'table' then
+      stats[k] = merge_stats(old[k], v)
+    elseif type(v) == 'string' then
+      stats[k] = old[k]
+    end
+  end
+  return stats
+end
+
 ---Track line count per buffer to detect new lines.
 --- ---
 local buffer_line_counts = {} ---@type table<integer, integer>
@@ -69,7 +93,7 @@ local function start_file_watch(path)
       if not err and events.change then
         local stats = require('triforce.stats').load(debug_enabled)
         if stats.last_session_start == 0 then
-          require('triforce.stats').save(current_stats)
+          require('triforce.stats').save(merge_stats(current_stats, stats))
         end
       end
     end)

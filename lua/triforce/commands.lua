@@ -41,8 +41,8 @@ function M.setup()
         vim.notify(tostring(triforce.tracker.get_stats().currency), vim.log.levels.INFO)
       elseif subcommand2 == 'list' then
         local msg = ''
-        for _, item in ipairs(triforce.items.get_items_by_name()) do
-          msg = (msg .. (msg == '' and '%s' or '\n%s')):format(item)
+        for name, item in pairs(triforce.items.get_items()) do
+          msg = (msg .. (msg == '' and '' or '\n') .. '%s    %d'):format(name, item:price(triforce.tracker.get_stats()))
         end
         vim.notify(msg, vim.log.levels.INFO)
       elseif subcommand2 == 'buy' then
