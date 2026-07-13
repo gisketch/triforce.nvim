@@ -617,6 +617,7 @@ end
 ---Record activity for today
 ---@param stats Stats
 ---@param lines_today integer Number of lines typed today
+---@return Stats stats
 function M.record_daily_activity(stats, lines_today)
   Util.validate({
     stats = { stats, { 'table' } },
@@ -634,6 +635,8 @@ function M.record_daily_activity(stats, lines_today)
   local current, longest = M.calculate_streaks(stats)
   stats.current_streak = current
   stats.longest_streak = longest
+
+  return stats
 end
 
 ---Export data to a new empty buffer
