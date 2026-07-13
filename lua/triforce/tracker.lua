@@ -67,7 +67,10 @@ local function start_file_watch(path)
     {},
     vim.schedule_wrap(function(err, _, events)
       if not err and events.change then
-        current_stats = require('triforce.stats').load(debug_enabled)
+        local stats = require('triforce.stats').load(debug_enabled)
+        if stats.last_session_start == 0 then
+          require('triforce.stats').save(current_stats)
+        end
       end
     end)
   )
@@ -139,8 +142,8 @@ function M.setup(debug)
   start_file_watch(stats_module.get_db_path())
 
   timer:start(
-    30000,
-    30000,
+    10000,
+    10000,
     vim.schedule_wrap(function()
       if not (current_stats and dirty) then
         return
@@ -347,7 +350,7 @@ function M.shutdown()
 
   -- Record today's lines before shutdown
   if lines_today > 0 then
-    stats_module.record_daily_activity(current_stats, lines_today)
+    current_stats = stats_module.record_daily_activity(current_stats, lines_today)
   end
 
   -- Add final active time chunk if user typed recently before closing
@@ -375,9 +378,9 @@ function M.reset_stats()
   local stats_module = require('triforce.stats')
 
   current_stats = stats_module.default_stats()
-
-  stats_module.save(current_stats)
-  vim.notify('Stats reset!', INFO)
+  if stats_module.save(current_stats) then
+    vim.notify('Stats reset!', INFO)
+  end
 end
 
 ---Debug: Print current language stats
