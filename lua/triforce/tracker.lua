@@ -131,7 +131,7 @@ function M.setup(debug)
   stats_module.start_session(current_stats)
   augroup = vim.api.nvim_create_augroup('TriforceTracker', { clear = true })
 
-  vim.api.nvim_create_autocmd({ 'InsertCharPre', 'TextChanged' }, {
+  vim.api.nvim_create_autocmd({ 'InsertCharPre', 'TextChanged', 'TextChangedI' }, {
     group = augroup,
     callback = function(ev)
       if Util.optget('modified', 'buf', ev.buf) then

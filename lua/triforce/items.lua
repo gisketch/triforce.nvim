@@ -13,7 +13,7 @@ local items_path = vim.fs.joinpath(vim.fn.stdpath('state'), 'triforce_items.json
 ---@field callback fun(self: Triforce.Items.FullSpec, stats: Stats): success: boolean, stats: Stats|?
 ---@field desc string
 ---@field filetypes? string[]
----@field level_cap? nil|fun(self: Triforce.Items.FullSpec): cap: integer
+---@field level_cap? nil|fun(self: Triforce.Items.FullSpec): cap: number
 ---@field max_uses? integer
 ---@field name string
 ---@field once? boolean
@@ -26,7 +26,7 @@ local M = {}
 ---@class Triforce.Items.FullSpec: Triforce.Items.Spec
 ---@field callback fun(self: Triforce.Items.FullSpec, stats: Stats): success: boolean, stats: Stats|?
 ---@field filetypes string[]
----@field level_cap integer
+---@field level_cap number
 ---@field max_uses integer
 ---@field once boolean
 ---@field price nil|fun(self: Triforce.Items.FullSpec, stats: Stats): price: integer
@@ -35,7 +35,7 @@ local M = {}
 local Item = {}
 
 ---@param stats Stats
-function Item:available(stats)
+function Item.available(self, stats)
   if self.level_cap > 0 and stats.level >= self.level_cap then
     vim.notify('(triforce.nvim): Level is higher than the limit!', ERROR)
     return false
@@ -48,7 +48,7 @@ function Item:available(stats)
     vim.notify('(triforce.nvim): Item cannot be used again!', ERROR)
     return false
   end
-  if not self.once and self.max_uses < self.times_used then
+  if not self.once and self.max_uses <= self.times_used then
     vim.notify('(triforce.nvim): Item cannot be used more than its maximum!', ERROR)
     return false
   end
@@ -57,7 +57,7 @@ end
 
 ---@param T Triforce.Items.Spec
 ---@return Triforce.Items.FullSpec item
-function Item:new(T)
+function Item.new(T)
   local item = setmetatable(T, { __index = Item }) ---@type Triforce.Items.FullSpec
   item.max_uses = T.max_uses or 0
   item.level_cap = T.level_cap and T.level_cap(item) or 0
@@ -66,26 +66,41 @@ function Item:new(T)
   item.used = false
 
   local cb = item.callback
-  item.callback = function(O, stats)
+  item.callback = function(self, stats)
     local filetype = Util.optget('filetype', 'buf', vim.api.nvim_get_current_buf()) --[[@as string]]
-    local is_ft = vim.tbl_isempty(O.filetypes)
-    for _, ft in ipairs(O.filetypes) do
+    local is_ft = vim.tbl_isempty(self.filetypes)
+    for _, ft in ipairs(self.filetypes) do
       if vim.list_contains({ '*', filetype }, ft) then
         is_ft = true
         break
       end
     end
-    if not (is_ft and O:available(stats)) then
+    if not (is_ft and self:available(stats)) then
       return false, stats
     end
 
-    stats.currency = stats.currency - O.price(O, stats)
+    stats.currency = stats.currency - self:price(stats)
+    self.times_used = self.times_used + 1
     return cb(item, stats), stats
   end
   return item
 end
 
 local items = { ---@type table<string, Triforce.Items.Spec>
+  level_up_1x = {
+    name = 'Level up (1x)',
+    desc = 'Use this to level up once (CAN ONLY BE USED 5 TIMES!).',
+    once = false,
+    max_uses = 5,
+    base_price = 500,
+    price = function(self, stats)
+      return math.floor(self.base_price + (self.times_used <= 0 and 0 or stats.level * self.times_used))
+    end,
+    callback = function(_, stats)
+      local Stats = require('triforce.stats')
+      return Stats.add_xp(stats, Stats.xp_for_next_level(stats.level), false)
+    end,
+  },
   xp_boost = {
     name = 'Single XP Boost',
     desc = 'Use this for a rapid XP boost to the next XP tier (unavailable for max tier).',
@@ -98,7 +113,7 @@ local items = { ---@type table<string, Triforce.Items.Spec>
     level_cap = function()
       return require('triforce.stats').get_level_config().tier_10.min_level
     end,
-    callback = function(self, stats)
+    callback = function(_, stats)
       local Stats = require('triforce.stats')
       local level_boost = nil ---@type integer|nil
       for _, tier in pairs(Stats.get_level_config()) do
@@ -113,8 +128,7 @@ local items = { ---@type table<string, Triforce.Items.Spec>
         vim.notify('(triforce.nvim) Unable to boost higher!', ERROR)
         return false
       end
-      self.times_used = self.times_used + 1
-      return Stats.add_xp(stats, Stats.xp_for_next_level(stats.level + level_boost))
+      return Stats.add_xp(stats, Stats.xp_for_next_level(stats.level + level_boost), false)
     end,
   },
   xp_timer_2x = {
@@ -311,6 +325,7 @@ function M.read_items()
   end
   for name, item in pairs(data) do
     for k, v in pairs(item) do
+      ---@cast k string
       if all_items[name][k] == nil then
         all_items[name][k] = v
       end
@@ -359,7 +374,7 @@ end
 
 ---@param id string
 ---@return boolean|nil|? capped
----@return integer|nil|? level
+---@return number|nil|? level
 function M.item_capped(id)
   if not all_items[id] then
     return
@@ -407,7 +422,7 @@ function M.setup(opts)
   Util.validate({ opts = { opts, { 'table' } } })
   if vim.g.triforce_items_loaded ~= 1 and opts.enabled then
     for id, item_spec in pairs(items) do
-      all_items[id] = Item:new(item_spec)
+      all_items[id] = Item.new(item_spec)
     end
     M.read_items()
     M.save_items()

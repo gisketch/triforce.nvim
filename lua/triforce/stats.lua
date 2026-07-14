@@ -485,12 +485,17 @@ end
 ---Add XP and update level
 ---@param stats Stats
 ---@param amount number
+---@param currency? boolean
 ---@return boolean leveled_up
-function M.add_xp(stats, amount)
+function M.add_xp(stats, amount, currency)
   Util.validate({
     stats = { stats, { 'table' } },
     amount = { amount, { 'number' } },
+    currency = { currency, { 'boolean', 'nil' }, true },
   })
+  if currency == nil then
+    currency = true
+  end
 
   local ft = Util.optget('filetype', 'buf', vim.api.nvim_get_current_buf())
   local keys = vim.tbl_keys(Languages.get_langs()) --[[@as string[]\]]
@@ -502,7 +507,7 @@ function M.add_xp(stats, amount)
   stats.xp = (stats.xp + amount) * xp_multiplier
   stats.level = M.calculate_level(stats.xp)
 
-  if require('triforce.config').get().items.enabled then
+  if currency and require('triforce.config').get().items.enabled then
     stats.currency = M.add_currency(stats, math.floor(amount / 2))
   end
 
