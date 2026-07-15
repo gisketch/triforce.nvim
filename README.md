@@ -40,26 +40,9 @@ so much smoother and helped me focus on bringing those ideas to life.
 
 ---
 
-## Features
-
-- **Active Support** - Triforce is actively maintained, and reported bugs are quickly addressed
-- **Detailed Statistics** - Track lines typed, characters, sessions, coding time, and more
-- **Gamification** - Earn XP and level up based on your coding activity
-- **Achievements** - Unlock achievements for milestones (first 1000 chars, 10 sessions, etc.)
-- **Activity Heatmap** - GitHub-style contribution graph showing your coding consistency
-- **Language Tracking** - See which programming languages you use most
-- **Beautiful UI** - Clean, themed interface powered by [nvzone/volt](https://github.com/nvzone/volt)
-- **Lualine Integration** - Optional modular statusline components
-  (see [Lualine Integration](#lualine-integration))
-- **Highly Configurable** - Customize notifications and keymaps, add custom languages, levels
-  and achievements
-- **Auto-Save** - Your progress is automatically saved every 5 minutes
-- **Documented Code** - The code is thoroughly documented and annotated with LuaLS annotations.
-
----
-
 ## Table of Contents
 
+- [Features](#features)
 - [Installation](#installation)
 - [Configuration](#configuration)
   - [Configuration Options](#configuration-options)
@@ -88,6 +71,7 @@ so much smoother and helped me focus on bringing those ideas to life.
   - [Basic Setup](#basic-setup)
   - [Quick Setup](#quick-setup)
   - [Component Configuration](#component-configuration)
+    - [Currency Component](#currency-component)
     - [Level Component](#level-component)
     - [Achievements Component](#achievements-component)
     - [Streak Component](#streak-component)
@@ -106,11 +90,31 @@ so much smoother and helped me focus on bringing those ideas to life.
 
 ---
 
+## Features
+
+- **Active Support** - Triforce is actively maintained, and reported bugs are quickly addressed
+- **Detailed Statistics** - Track lines typed, characters, sessions, coding time, and more
+- **Gamification** - Earn XP and level up based on your coding activity
+- **Achievements** - Unlock achievements for milestones (first 1000 chars, 10 sessions, etc.)
+- **Activity Heatmap** - GitHub-style contribution graph showing your coding consistency
+- **Language Tracking** - See which programming languages you use most
+- **Beautiful UI** - Clean, themed interface powered by [nvzone/volt](https://github.com/nvzone/volt)
+- **Lualine Integration** - Optional modular statusline components
+  (see [Lualine Integration](#lualine-integration))
+- **Highly Configurable** - Customize notifications and keymaps, add custom languages, levels
+  and achievements
+- **Auto-Save** - Your progress is automatically saved every 5 minutes
+- **Documented Code** - The code is thoroughly documented and annotated with LuaLS annotations
+- **(NEW!) Currency and Items** - You can gain currency alongside XP, which allows you to buy items
+  (try running `:Triforce items <TAB>`)
+
+---
+
 ## Installation
 
 **Requirements:**
 
-- [Neovim](https://github.com/neovim/neovim) >=v0.9.0
+- [Neovim](https://github.com/neovim/neovim) >=v0.10.0
 - [nvzone/volt](https://github.com/nvzone/volt) - UI framework dependency
 - A [patched font](https://www.nerdfonts.com/) - For icons
   - [mini.icons](https://github.com/nvim-mini/mini.icons) **(OPTIONAL)**
@@ -674,6 +678,7 @@ Currently, Triforce provides the following `lualine` components (**needs a patch
 
 | Component         | Default Display | Description                  |
 |-------------------|-----------------|------------------------------|
+| `currency`        | `💰 484`        | Current amount of currency   |
 | `level`           | `Lv.27 ████░░`  | Level + XP progress bar      |
 | `achievements`    | `🏆 12/18`      | Unlocked/total achievements  |
 | `streak`          | `🔥 5`          | Current coding streak (days) |
@@ -696,6 +701,13 @@ require('lualine').setup({
 ### Component Configuration
 
 Each component can be customized independently.
+
+#### Currency Component
+
+Options:
+
+- `enabled` (boolean): Activates this component (default: `true`)
+- `prefix` (string): The prefix before the amount of currency (default: `💰`)
 
 #### Level Component
 

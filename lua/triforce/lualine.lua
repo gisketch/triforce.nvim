@@ -178,7 +178,7 @@ local M = {}
 function M.get_defaults()
   return { ---@type Triforce.LualineConfigDefaults
     achievements = { enabled = false, icon = '', show_count = true },
-    currency = { enabled = true, prefix = '' },
+    currency = { enabled = true, prefix = '💰' },
     level = {
       enabled = true,
       bar = { length = 8, chars = { filled = '█', empty = '░' } },
