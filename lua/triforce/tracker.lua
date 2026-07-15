@@ -131,7 +131,7 @@ function M.setup(debug)
   stats_module.start_session(current_stats)
   augroup = vim.api.nvim_create_augroup('TriforceTracker', { clear = true })
 
-  vim.api.nvim_create_autocmd({ 'InsertCharPre', 'TextChanged', 'TextChangedI' }, {
+  vim.api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI', 'TextPutPost' }, {
     group = augroup,
     callback = function(ev)
       if Util.optget('modified', 'buf', ev.buf) then
@@ -247,8 +247,9 @@ function M.on_text_changed(bufnr)
   if current_line_count > previous_line_count then
     local new_lines = current_line_count - previous_line_count
     current_stats.lines_typed = current_stats.lines_typed + new_lines
+    current_stats.currency = stats_module.add_currency(current_stats, 1)
     lines_today = lines_today + new_lines
-    stats_module.add_xp(current_stats, Util.get_xp_rewards().line * new_lines)
+    stats_module.add_xp(current_stats, Util.get_xp_rewards().line * new_lines, true)
   end
 
   -- Update the tracked line count

@@ -467,14 +467,16 @@ function M.xp_for_next_level(current_level)
   return Util.get_total_xp_for_level(current_level + 1, level_config)
 end
 
+---@param stats Stats
+---@param amount number
+---@return integer new_currency
 function M.add_currency(stats, amount)
   Util.validate({
     stats = { stats, { 'table' } },
     amount = { amount, { 'number' } },
   })
 
-  stats.currency = stats.currency + amount
-  return stats.currency
+  return amount <= 0 and stats.currency or math.floor(stats.currency + amount)
 end
 
 ---@param path string
@@ -508,7 +510,7 @@ function M.add_xp(stats, amount, currency)
   stats.level = M.calculate_level(stats.xp)
 
   if currency and require('triforce.config').get().items.enabled then
-    stats.currency = M.add_currency(stats, math.floor(amount / 2))
+    stats.currency = M.add_currency(stats, math.floor(amount * 2 / 5))
   end
 
   return stats.level > old_level
