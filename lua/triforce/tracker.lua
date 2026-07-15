@@ -131,7 +131,11 @@ function M.setup(debug)
   stats_module.start_session(current_stats)
   augroup = vim.api.nvim_create_augroup('TriforceTracker', { clear = true })
 
-  vim.api.nvim_create_autocmd({ 'TextChanged', 'TextChangedI', 'TextPutPost' }, {
+  local events = { 'TextChanged', 'TextChangedI' } ---@type vim.api.keyset.events[]
+  if vim.fn.has('nvim-0.13') == 1 then
+    table.insert(events, 'TextPutPost')
+  end
+  vim.api.nvim_create_autocmd(events, {
     group = augroup,
     callback = function(ev)
       if Util.optget('modified', 'buf', ev.buf) then
