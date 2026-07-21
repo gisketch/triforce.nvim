@@ -49,12 +49,12 @@ local Languages = require('triforce.languages')
 local xp_multiplier = 1 ---@type number
 
 local calibrated ---@type boolean
-local db_path = nil ---@type nil|string|?
+local db_path = nil ---@type string|nil|?
 
 ---@class Triforce.Stats
 local M = {}
 
----@return nil|string|? db_path
+---@return string|nil|? db_path
 function M.get_db_path()
   return db_path
 end

@@ -7,7 +7,7 @@ local M = {}
 function M.setup()
   vim.api.nvim_create_user_command('Triforce', function(opts)
     local subcommand = opts.fargs[1]
-    local subcommand2 = opts.fargs[2] or '' ---@type string|nil
+    local subcommand2 = opts.fargs[2] or ''
     local subcommand3 = opts.fargs[3] or ''
     local subcommand4 = opts.fargs[4] or ''
     local triforce = require('triforce')

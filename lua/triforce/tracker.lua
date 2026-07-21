@@ -89,8 +89,8 @@ local function start_file_watch(path)
   event:start(
     (path and Util.is_file(path)) and path or require('triforce.stats').get_stats_path(),
     {},
-    vim.schedule_wrap(function(err, _, events)
-      if not err and events.change then
+    vim.schedule_wrap(function(err, _, ev)
+      if not err and ev.change then
         local stats = require('triforce.stats').load(debug_enabled)
         if stats.last_session_start == 0 then
           require('triforce.stats').save(merge_stats(current_stats, stats))
@@ -123,12 +123,10 @@ function M.setup(debug)
 
   debug_enabled = debug
 
-  local stats_module = require('triforce.stats')
-
-  current_stats = stats_module.load(debug_enabled)
+  current_stats = require('triforce.stats').load(debug_enabled)
   current_date = os.date('%Y-%m-%d')
   lines_today = 0
-  stats_module.start_session(current_stats)
+  require('triforce.stats').start_session(current_stats)
   augroup = vim.api.nvim_create_augroup('TriforceTracker', { clear = true })
 
   local events = { 'TextChanged', 'TextChangedI' } ---@type vim.api.keyset.events[]
@@ -167,7 +165,7 @@ function M.setup(debug)
     return
   end
 
-  start_file_watch(stats_module.get_db_path())
+  start_file_watch(require('triforce.stats').get_db_path())
 
   timer:start(
     10000,
@@ -178,9 +176,8 @@ function M.setup(debug)
       end
 
       local now = os.time()
-
-      -- Debounce: only save if at least 5 seconds since last save
-      if now - last_save_time < 5 or not stats_module.save(current_stats) then
+      if now - last_save_time < 5 or not require('triforce.stats').save(current_stats) then
+        -- Debounce: only save if at least 5 seconds since last save
         return
       end
 
@@ -204,16 +201,14 @@ end
 ---Check if date has rolled over and update daily activity
 function M.check_date_rollover()
   local today = os.date('%Y-%m-%d')
-  if today == current_date then
-    return
-  end
-
   -- Day changed - record yesterday's lines and reset
-  if lines_today > 0 and current_stats then
-    require('triforce.stats').record_daily_activity(current_stats, lines_today)
+  if today ~= current_date then
+    if lines_today > 0 and current_stats then
+      require('triforce.stats').record_daily_activity(current_stats, lines_today)
+    end
+    current_date = today
+    lines_today = 0
   end
-  current_date = today
-  lines_today = 0
 end
 
 ---Track characters typed (called on text change)
@@ -235,12 +230,9 @@ function M.on_text_changed(bufnr)
 
   -- Activity-based time tracking: only count time between actual keystrokes
   local now = os.time()
-  if last_activity_time > 0 then
-    local elapsed = now - last_activity_time
-    if elapsed <= idle_threshold then
-      current_stats.time_coding = current_stats.time_coding + elapsed
-      dirty = true
-    end
+  if last_activity_time > 0 and now - last_activity_time <= idle_threshold then
+    current_stats.time_coding = current_stats.time_coding + now - last_activity_time
+    dirty = true
   end
   last_activity_time = now
 
@@ -249,11 +241,10 @@ function M.on_text_changed(bufnr)
 
   -- Track new lines if line count increased
   if current_line_count > previous_line_count then
-    local new_lines = current_line_count - previous_line_count
-    current_stats.lines_typed = current_stats.lines_typed + new_lines
+    current_stats.lines_typed = current_stats.lines_typed + current_line_count - previous_line_count
     current_stats.currency = stats_module.add_currency(current_stats, 1)
-    lines_today = lines_today + new_lines
-    stats_module.add_xp(current_stats, Util.get_xp_rewards().line * new_lines, true)
+    lines_today = lines_today + current_line_count - previous_line_count
+    stats_module.add_xp(current_stats, Util.get_xp_rewards().line * (current_line_count - previous_line_count), true)
   end
 
   -- Update the tracked line count
@@ -284,12 +275,10 @@ end
 
 ---Track new lines (could be enhanced with more detailed tracking)
 function M.on_new_line()
-  if not current_stats then
-    return
+  if current_stats then
+    current_stats.lines_typed = current_stats.lines_typed + 1
+    require('triforce.stats').add_xp(current_stats, Util.get_xp_rewards().line)
   end
-
-  current_stats.lines_typed = current_stats.lines_typed + 1
-  require('triforce.stats').add_xp(current_stats, Util.get_xp_rewards().line)
 end
 
 ---Track file saves
@@ -319,24 +308,22 @@ end
 
 ---Notify user of level up
 function M.notify_level_up()
-  if not current_stats then
-    return
+  if current_stats then
+    local notifications = require('triforce.config').get().notifications
+    if not (notifications and notifications.enabled and notifications.level_up) then
+      return
+    end
+
+    local level = current_stats.level
+    local xp = current_stats.xp
+    local next_xp = require('triforce.stats').xp_for_next_level(level)
+
+    vim.notify(
+      ('󰓏 Level %d Achieved!\n\n%d XP earned • %d XP to next level'):format(level, xp, next_xp - xp),
+      INFO,
+      { title = ' Triforce', timeout = 3000 }
+    )
   end
-
-  local notifications = require('triforce.config').get().notifications
-  if not (notifications and notifications.enabled and notifications.level_up) then
-    return
-  end
-
-  local level = current_stats.level
-  local xp = current_stats.xp
-  local next_xp = require('triforce.stats').xp_for_next_level(level)
-
-  vim.notify(
-    ('󰓏 Level %d Achieved!\n\n%d XP earned • %d XP to next level'):format(level, xp, next_xp - xp),
-    INFO,
-    { title = ' Triforce', timeout = 3000 }
-  )
 end
 
 ---Notify user of achievement unlock
@@ -351,20 +338,18 @@ function M.notify_achievement(name, desc, icon)
   })
 
   local notifications = require('triforce.config').get().notifications
-  if not notifications or not (notifications.enabled and notifications.achievements) then
-    return
-  end
+  if notifications and notifications.enabled and notifications.achievements then
+    local message = (icon or '🏆') .. ' ' .. name
+    if desc then
+      message = message .. '\n\n' .. desc
+    end
 
-  local message = (icon or '🏆') .. ' ' .. name
-  if desc then
-    message = message .. '\n\n' .. desc
+    vim.notify(message, INFO, { title = ' Achievement Unlocked', timeout = 3500 })
   end
-
-  vim.notify(message, INFO, { title = ' Achievement Unlocked', timeout = 3500 })
 end
 
 ---Get current stats
----@return Stats|nil stats
+---@return Stats|nil|? stats
 function M.get_stats()
   return current_stats
 end
@@ -383,19 +368,17 @@ function M.shutdown()
   end
 
   -- Add final active time chunk if user typed recently before closing
-  if last_activity_time > 0 then
-    local now = os.time()
-    local elapsed = now - last_activity_time
-    if elapsed <= idle_threshold then
-      current_stats.time_coding = current_stats.time_coding + elapsed
-    end
+  local now = os.time()
+  if last_activity_time > 0 and now - last_activity_time <= idle_threshold then
+    current_stats.time_coding = current_stats.time_coding + now - last_activity_time
   end
 
   current_stats = stats_module.end_session(current_stats)
 
   -- Force save on shutdown, ignore debounce
   if not stats_module.save(current_stats) then
-    error('Failed to save stats on shutdown!', ERROR)
+    vim.notify('Triforce.nvim - Failed to save stats on shutdown!', ERROR)
+    return
   end
 
   dirty = false
@@ -404,18 +387,15 @@ end
 
 ---Reset all stats (for testing)
 function M.reset_stats()
-  local stats_module = require('triforce.stats')
-
-  current_stats = stats_module.default_stats()
-  if stats_module.save(current_stats) then
-    vim.notify('Stats reset!', INFO)
+  if require('triforce.stats').save(require('triforce.stats').default_stats()) then
+    vim.notify('Triforce.nvim - Stats reset!', INFO)
   end
 end
 
 ---Debug: Print current language stats
 function M.debug_languages()
   if not current_stats then
-    vim.notify('No stats loaded!', WARN)
+    vim.notify('Triforce.nvim - No stats loaded!', WARN)
     return
   end
 
@@ -441,7 +421,7 @@ end
 ---Debug: Show current XP progress
 function M.debug_xp()
   if not current_stats then
-    vim.notify('No stats loaded!', WARN)
+    vim.notify('Triforce.nvim - No stats loaded!', WARN)
     return
   end
 
@@ -469,7 +449,7 @@ end
 ---Debug: Show random achievement notification (for testing)
 function M.debug_achievement()
   if not current_stats then
-    vim.notify('No stats loaded!', WARN)
+    vim.notify('Triforce.nvim - No stats loaded!', WARN)
     return
   end
 
@@ -503,12 +483,10 @@ function M.debug_fix_level()
   end
 
   local stats_module = require('triforce.stats')
-  local current_xp = current_stats.xp
-  local calculated_level = stats_module.calculate_level(current_xp)
-
+  local calculated_level = stats_module.calculate_level(current_stats.xp)
   if current_stats.level == calculated_level then
     vim.notify(
-      ('✓ No mismatch detected!\n\nLevel %d matches %d XP'):format(current_stats.level, current_xp),
+      ('✓ No mismatch detected!\n\nLevel %d matches %d XP'):format(current_stats.level, current_stats.xp),
       INFO,
       { title = ' Triforce Debug' }
     )
@@ -523,7 +501,7 @@ function M.debug_fix_level()
     ('✓ Level fixed!\n\nOld: Level %d\nNew: Level %d\nXP: %d'):format(
       current_stats.level,
       calculated_level,
-      current_xp
+      current_stats.xp
     ),
     WARN,
     { title = ' Triforce Debug', timeout = 5000 }

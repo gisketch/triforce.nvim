@@ -152,7 +152,7 @@ end
 ---
 ---Returns `nil` if not a valid one.
 ---@param ft string
----@return string|nil icon
+---@return string|nil|? icon
 function M.get_icon(ft)
   Util.validate({ ft = { ft, { 'string' } } })
   if vim.list_contains(ignored_langs, ft) then
@@ -202,7 +202,7 @@ end
 ---
 ---Returns `nil` if `ft` is not valid.
 ---@param ft string
----@return string|nil name
+---@return string|nil|? name
 function M.get_display_name(ft)
   Util.validate({ ft = { ft, { 'string' } } })
 
@@ -220,18 +220,16 @@ end
 ---
 ---Returns `nil` if `ft` is not valid.
 ---@param ft string
----@return string|nil full_display
+---@return string|nil|? full_display
 function M.get_full_display(ft)
   Util.validate({ ft = { ft, { 'string' } } })
 
-  if M.is_excluded(ft) then
-    return
+  if not M.is_excluded(ft) then
+    local icon = M.get_icon(ft)
+    local name = M.get_display_name(ft)
+
+    return icon == '' and name or ('%s %s'):format(icon, name)
   end
-
-  local icon = M.get_icon(ft)
-  local name = M.get_display_name(ft)
-
-  return icon == '' and name or ('%s %s'):format(icon, name)
 end
 
 ---Register custom languages.
@@ -239,13 +237,11 @@ end
 ---@param custom_langs table<string, TriforceLanguage>
 function M.register_custom_languages(custom_langs)
   Util.validate({ custom_langs = { custom_langs, { 'table' } } })
-  if not custom_langs or vim.tbl_isempty(custom_langs) then
-    return
-  end
-
-  for ft, config in pairs(custom_langs) do
-    if not (M.is_excluded(ft) or langs[ft]) then
-      langs[ft] = { icon = config.icon or '', name = config.name or '' }
+  if custom_langs and not vim.tbl_isempty(custom_langs) then
+    for ft, config in pairs(custom_langs) do
+      if not (M.is_excluded(ft) or langs[ft]) then
+        langs[ft] = { icon = config.icon or '', name = config.name or '' }
+      end
     end
   end
 end

@@ -115,7 +115,7 @@ local items = { ---@type table<string, Triforce.Items.Spec>
     end,
     callback = function(_, stats)
       local Stats = require('triforce.stats')
-      local level_boost = nil ---@type integer|nil
+      local level_boost = nil ---@type integer|nil|?
       for _, tier in pairs(Stats.get_level_config()) do
         ---@cast tier LevelTier
         if stats.level >= tier.min_level and stats.level <= tier.max_level then
@@ -236,7 +236,7 @@ local items = { ---@type table<string, Triforce.Items.Spec>
 }
 
 local all_items = {} ---@type table<string, Triforce.Items.FullSpec>
-local event = nil ---@type uv.uv_fs_event_t|nil
+local event = nil ---@type uv.uv_fs_event_t|nil|?
 
 local function setup_watch()
   if vim.g.triforce_items_loaded == 1 and event then

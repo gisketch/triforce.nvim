@@ -220,17 +220,15 @@ function M.open_window()
   end, { buffer = bufnr })
 end
 
----@return string|nil config_str
+---@return string|nil|? config_str
 function M.get_config()
-  if not config then
-    return
+  if config then
+    local opts = {} ---@type TriforceConfig
+    for k, v in pairs(config) do
+      opts[k] = v
+    end
+    return vim.inspect(opts)
   end
-
-  local opts = {} ---@type TriforceConfig
-  for k, v in pairs(config) do
-    opts[k] = v
-  end
-  return vim.inspect(opts)
 end
 
 return M
