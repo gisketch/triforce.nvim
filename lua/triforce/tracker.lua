@@ -244,7 +244,10 @@ function M.on_text_changed(bufnr)
     current_stats.lines_typed = current_stats.lines_typed + current_line_count - previous_line_count
     current_stats.currency = stats_module.add_currency(current_stats, 1)
     lines_today = lines_today + current_line_count - previous_line_count
-    stats_module.add_xp(current_stats, Util.get_xp_rewards().line * (current_line_count - previous_line_count), true)
+    local _, new_stats =
+      stats_module.add_xp(current_stats, Util.get_xp_rewards().line * (current_line_count - previous_line_count), true)
+
+    M.update_stats(new_stats)
   end
 
   -- Update the tracked line count
@@ -264,7 +267,9 @@ function M.on_text_changed(bufnr)
     current_stats.chars_by_language[filetype] = (current_stats.chars_by_language[filetype] or 0) + 1
   end
 
-  if stats_module.add_xp(current_stats, Util.get_xp_rewards().char) then
+  local leveled_up, new_stats = stats_module.add_xp(current_stats, Util.get_xp_rewards().char)
+  M.update_stats(new_stats)
+  if leveled_up then
     M.notify_level_up()
   end
 
@@ -277,7 +282,9 @@ end
 function M.on_new_line()
   if current_stats then
     current_stats.lines_typed = current_stats.lines_typed + 1
-    require('triforce.stats').add_xp(current_stats, Util.get_xp_rewards().line)
+
+    local _, new_stats = require('triforce.stats').add_xp(current_stats, Util.get_xp_rewards().line)
+    M.update_stats(new_stats)
   end
 end
 
@@ -287,7 +294,8 @@ function M.on_save()
     return
   end
 
-  local leveled_up = require('triforce.stats').add_xp(current_stats, Util.get_xp_rewards().save)
+  local leveled_up, new_stats = require('triforce.stats').add_xp(current_stats, Util.get_xp_rewards().save)
+  M.update_stats(new_stats)
   dirty = true
 
   if leveled_up then
@@ -314,12 +322,13 @@ function M.notify_level_up()
       return
     end
 
-    local level = current_stats.level
-    local xp = current_stats.xp
-    local next_xp = require('triforce.stats').xp_for_next_level(level)
-
+    local next_xp = require('triforce.stats').xp_for_next_level(current_stats.level)
     vim.notify(
-      ('󰓏 Level %d Achieved!\n\n%d XP earned • %d XP to next level'):format(level, xp, next_xp - xp),
+      ('󰓏 Level %d Achieved!\n\n%d XP earned • %d XP to next level'):format(
+        current_stats.level,
+        current_stats.xp,
+        next_xp - current_stats.xp
+      ),
       INFO,
       { title = ' Triforce', timeout = 3000 }
     )
@@ -387,7 +396,8 @@ end
 
 ---Reset all stats (for testing)
 function M.reset_stats()
-  if require('triforce.stats').save(require('triforce.stats').default_stats()) then
+  current_stats = require('triforce.stats').default_stats()
+  if require('triforce.stats').save(current_stats) then
     vim.notify('Triforce.nvim - Stats reset!', INFO)
   end
 end

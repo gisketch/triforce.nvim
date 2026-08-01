@@ -35,21 +35,37 @@ local M = {}
 local Item = {}
 
 ---@param stats Stats
-function Item.available(self, stats)
+---@param no_notify? boolean
+function Item.available(self, stats, no_notify)
+  Util.validate({
+    stats = { stats, { 'table' } },
+    no_notify = { no_notify, { 'boolean', 'nil' }, true },
+  })
+  if no_notify == nil then
+    no_notify = false
+  end
   if self.level_cap > 0 and stats.level >= self.level_cap then
-    vim.notify('(triforce.nvim): Level is higher than the limit!', ERROR)
+    if not no_notify then
+      vim.notify('(triforce.nvim): Level is higher than the limit!', ERROR)
+    end
     return false
   end
   if stats.currency < self.price(self, stats) then
-    vim.notify('(triforce.nvim): Not enough currency!', ERROR)
+    if not no_notify then
+      vim.notify('(triforce.nvim): Not enough currency!', ERROR)
+    end
     return false
   end
   if self.once and self.times_used > 0 then
-    vim.notify('(triforce.nvim): Item cannot be used again!', ERROR)
+    if not no_notify then
+      vim.notify('(triforce.nvim): Item cannot be used again!', ERROR)
+    end
     return false
   end
-  if not self.once and self.max_uses <= self.times_used then
-    vim.notify('(triforce.nvim): Item cannot be used more than its maximum!', ERROR)
+  if not self.once and self.max_uses > 0 and self.max_uses <= self.times_used then
+    if not no_notify then
+      vim.notify('(triforce.nvim): Item cannot be used more than its maximum!', ERROR)
+    end
     return false
   end
   return true
@@ -75,7 +91,7 @@ function Item.new(T)
         break
       end
     end
-    if not (is_ft and self:available(stats)) then
+    if not (is_ft and self.available(self, stats)) then
       return false, stats
     end
 
@@ -98,7 +114,9 @@ local items = { ---@type table<string, Triforce.Items.Spec>
     end,
     callback = function(_, stats)
       local Stats = require('triforce.stats')
-      return Stats.add_xp(stats, Stats.xp_for_next_level(stats.level), false)
+      local res, new_stats = Stats.add_xp(stats, Stats.xp_for_next_level(stats.level) - stats.xp, false)
+      require('triforce.tracker').update_stats(new_stats)
+      return res
     end,
   },
   xp_boost = {
@@ -128,7 +146,9 @@ local items = { ---@type table<string, Triforce.Items.Spec>
         vim.notify('(triforce.nvim) Unable to boost higher!', ERROR)
         return false
       end
-      return Stats.add_xp(stats, Stats.xp_for_next_level(stats.level + level_boost), false)
+      local res, new_stats = Stats.add_xp(stats, Stats.xp_for_next_level(stats.level + level_boost) - stats.xp, false)
+      require('triforce.tracker').update_stats(new_stats)
+      return res
     end,
   },
   xp_timer_2x = {
@@ -274,11 +294,11 @@ local function setup_watch()
 end
 
 ---@param json? boolean
+---@return table<string, Triforce.Items.FullSpec> items
 function M.get_items(json)
   if json == nil then
     json = false
   end
-
   if not json then
     return all_items
   end
@@ -346,15 +366,13 @@ function M.save_items()
   end
 
   local fd = uv.fs_open(items_path, 'w', tonumber('644', 8))
-  if not fd then
-    return
+  if fd then
+    local json_ok, data = pcall(vim.json.encode, M.get_items(true))
+    if json_ok and data then
+      uv.fs_write(fd, data)
+    end
+    uv.fs_close(fd)
   end
-
-  local json_ok, data = pcall(vim.json.encode, M.get_items(true))
-  if json_ok and data then
-    uv.fs_write(fd, data)
-  end
-  uv.fs_close(fd)
 end
 
 ---@param id string
@@ -406,14 +424,12 @@ function M.reset_all_items()
     end
 
     local fd = uv.fs_open(items_path, 'w', tonumber('644', 8))
-    if not fd then
-      return
+    if fd then
+      uv.fs_ftruncate(fd, 0)
+      uv.fs_close(fd)
+
+      M.save_items()
     end
-
-    uv.fs_ftruncate(fd, 0)
-    uv.fs_close(fd)
-
-    M.save_items()
   end
 end
 

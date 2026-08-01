@@ -489,6 +489,7 @@ end
 ---@param amount number
 ---@param currency? boolean
 ---@return boolean leveled_up
+---@return Stats stats
 function M.add_xp(stats, amount, currency)
   Util.validate({
     stats = { stats, { 'table' } },
@@ -502,7 +503,7 @@ function M.add_xp(stats, amount, currency)
   local ft = Util.optget('filetype', 'buf', vim.api.nvim_get_current_buf())
   local keys = vim.tbl_keys(Languages.get_langs()) --[[@as string[]\]]
   if vim.list_contains(Languages.get_ignored_langs(), ft) or not vim.list_contains(keys, ft) then
-    return false
+    return false, stats
   end
 
   local old_level = stats.level
@@ -513,7 +514,7 @@ function M.add_xp(stats, amount, currency)
     stats.currency = M.add_currency(stats, math.floor(amount * 2 / 5))
   end
 
-  return stats.level > old_level
+  return stats.level > old_level, stats
 end
 
 ---Start a new session

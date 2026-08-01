@@ -9,6 +9,23 @@ local DAYS_PER_MONTH = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
 ---@class Triforce.Util
 local M = {}
 
+---@param T table<string|integer, any>
+---@return integer len
+---@nodiscard
+function M.get_dict_size(T)
+  M.validate({ T = { T, { 'table' } } })
+
+  if vim.tbl_isempty(T) then
+    return 0
+  end
+
+  local len = 0
+  for _ in pairs(T) do
+    len = len + 1
+  end
+  return len
+end
+
 ---Checks if module `mod` exists to be imported.
 --- ---
 ---@param mod string The `require()` argument to be checked
