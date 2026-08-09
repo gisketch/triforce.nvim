@@ -60,6 +60,21 @@ local tabs_map = { ---@type Triforce.Ui.Profile.TabsMap
 ---@class Triforce.Ui.Profile
 local Profile = {}
 
+---@return Triforce.Ui.Profile.TabsMap tabs_map
+function Profile.get_tabs_map()
+  return tabs_map
+end
+
+---@return Triforce.UIDimensions dimensions
+function Profile.get_dimensions()
+  return dimensions
+end
+
+---@return Triforce.Ui.Profile.TabIndeces current_tab
+function Profile.get_current_tab()
+  return current_tab
+end
+
 ---Close up profile window
 function Profile.close()
   local backdrop = require('triforce.config').get().backdrop
