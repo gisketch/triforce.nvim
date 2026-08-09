@@ -73,9 +73,10 @@ function M:init(opts)
   self.streak = { opts = self.options.streak, callback = Triforce.lualine.streak }
 
   local hl_info = vim.api.nvim_get_hl(0, { name = 'Character' })
-  local fg = hl_info.fg or nil
-  local bg = hl_info.bg or nil
-  local color = { fg = fg and ('#%02x'):format(fg) or nil, bg = bg and ('#%02x'):format(bg) or nil }
+  local color = {
+    bg = hl_info.bg and ('#%02x'):format(hl_info.bg) or nil,
+    fg = hl_info.fg and ('#%02x'):format(hl_info.fg) or nil,
+  }
   self.color_active_hl = highlight.create_component_highlight_group(color, 'triforce_active', self.options)
 end
 
@@ -90,10 +91,6 @@ function M:update_status()
     if component.opts.enabled then
       table.insert(ordered, component)
     end
-  end
-
-  if vim.tbl_isempty(ordered) then
-    return ''
   end
 
   local msg = ''
