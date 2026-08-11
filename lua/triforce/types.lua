@@ -1,8 +1,7 @@
 ---@meta
 ---@diagnostic disable:unused-local
 
----@enum (key) TriforceIconEngine
-local icon_engines = { builtin = 1, mini = 1 }
+---@alias TriforceIconEngine 'builtin'|'mini'
 
 ---@class LevelTier
 ---Ending level for this tier (use `math.huge` for infinite).
@@ -109,6 +108,8 @@ local icon_engines = { builtin = 1, mini = 1 }
 ---@field enabled boolean
 ---@field winblend integer
 
+---Setup table for triforce items.
+--- ---
 ---@class TriforceConfig.Items
 ---@field enabled? boolean
 
@@ -161,6 +162,8 @@ local icon_engines = { builtin = 1, mini = 1 }
 ---List of ignored filetypes.
 --- ---
 ---@field ignore_ft? string[]
+---Setup table for triforce items.
+--- ---
 ---@field items? TriforceConfig.Items
 ---List of custom level titles.
 --- ---
@@ -198,16 +201,12 @@ local icon_engines = { builtin = 1, mini = 1 }
 ---@field xp_rewards XPRewards
 
 ---@class Achievement
+---@field check fun(stats?: Stats): boolean
 ---@field desc? string
 ---@field icon? string
 ---@field id string
 ---@field name string
 local A = {}
-
----The condition that decides whether an achievement is unlocked
----@param stats? Stats
----@return boolean unlocked
-function A.check(stats) end
 
 ---@class TriforceLanguage
 ---@field icon string

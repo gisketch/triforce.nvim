@@ -55,11 +55,9 @@ end
 ---@param k string
 ---@param v any
 function M.set(k, v)
-  if not defaults[k] then
-    return
+  if defaults[k] then
+    config[k] = v
   end
-
-  config[k] = v
 end
 
 ---@param silent? boolean
