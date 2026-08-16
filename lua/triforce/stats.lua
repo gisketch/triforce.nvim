@@ -43,7 +43,6 @@
 
 local ERROR = vim.log.levels.ERROR
 local WARN = vim.log.levels.WARN
-local uv = vim.uv or vim.loop
 local Util = require('triforce.util')
 local Languages = require('triforce.languages')
 local xp_multiplier = 1 ---@type number
@@ -155,14 +154,14 @@ function M.load(debug)
     return M.default_stats()
   end
 
-  local stat = uv.fs_stat(path)
-  local fd = uv.fs_open(path, 'r', tonumber('644', 8))
+  local stat = vim.uv.fs_stat(path)
+  local fd = vim.uv.fs_open(path, 'r', tonumber('644', 8))
   if not (stat and fd) then
     return M.default_stats()
   end
 
-  local data = uv.fs_read(fd, stat.size)
-  uv.fs_close(fd)
+  local data = vim.uv.fs_read(fd, stat.size)
+  vim.uv.fs_close(fd)
   if not data or data == '' then
     return M.default_stats()
   end
@@ -172,13 +171,13 @@ function M.load(debug)
   if not (ok and Util.is_type('table', stats)) then
     -- Backup corrupted file
     local backup = ('%s.backup.%s'):format(path, os.time())
-    local backup_fd = uv.fs_open(backup, 'w', tonumber('644', 8))
+    local backup_fd = vim.uv.fs_open(backup, 'w', tonumber('644', 8))
     if not backup_fd then
       return M.default_stats()
     end
 
-    local bytes = uv.fs_write(backup_fd, lines)
-    uv.fs_close(backup_fd)
+    local bytes = vim.uv.fs_write(backup_fd, lines)
+    vim.uv.fs_close(backup_fd)
 
     if not bytes then
       vim.notify(('Corrupted stats could not be backed up to `%s`'):format(backup), WARN)
@@ -257,25 +256,25 @@ function M.save(stats, path)
   end
 
   local fd
-  local file_stat = uv.fs_stat(path)
+  local file_stat = vim.uv.fs_stat(path)
   if file_stat then
-    fd = uv.fs_open(path, 'r', tonumber('644', 8))
-    local bak_fd = uv.fs_open(path .. '.bak', 'w', tonumber('644', 8))
+    fd = vim.uv.fs_open(path, 'r', tonumber('644', 8))
+    local bak_fd = vim.uv.fs_open(path .. '.bak', 'w', tonumber('644', 8))
     if fd and bak_fd then
-      uv.fs_write(bak_fd, uv.fs_read(fd, file_stat.size))
-      uv.fs_close(bak_fd)
-      uv.fs_close(fd)
+      vim.uv.fs_write(bak_fd, vim.uv.fs_read(fd, file_stat.size))
+      vim.uv.fs_close(bak_fd)
+      vim.uv.fs_close(fd)
     end
   end
 
-  fd = uv.fs_open(path, 'w', tonumber('644', 8))
+  fd = vim.uv.fs_open(path, 'w', tonumber('644', 8))
   if not fd then
     vim.notify(('Failed to write stats file to: %s'):format(vim.fn.fnamemodify(path, ':~')), ERROR)
     return false
   end
 
-  local write_ok = uv.fs_write(fd, json)
-  uv.fs_close(fd)
+  local write_ok = vim.uv.fs_write(fd, json)
+  vim.uv.fs_close(fd)
   if not write_ok then
     vim.notify('Failed to write stats file to: ' .. path, ERROR)
     return false
@@ -691,7 +690,7 @@ function M.export_to_json(stats, target, indent)
   target = vim.fn.fnamemodify(target, ':p')
   indent = (indent and indent ~= '') and indent or nil
 
-  local parent_stat = uv.fs_stat(vim.fn.fnamemodify(target, ':h'))
+  local parent_stat = vim.uv.fs_stat(vim.fn.fnamemodify(target, ':h'))
   if not parent_stat or parent_stat.type ~= 'directory' then
     error(('Target not in a valid directory: `%s`'):format(target), ERROR)
   end
@@ -699,19 +698,19 @@ function M.export_to_json(stats, target, indent)
     error(('Target is a directory: `%s`'):format(target), ERROR)
   end
 
-  local fd = uv.fs_open(target, 'w', tonumber('644', 8))
+  local fd = vim.uv.fs_open(target, 'w', tonumber('644', 8))
   if not fd then
     error(('Unable to open target `%s`'):format(target), ERROR)
   end
 
   local ok, data = pcall(vim.json.encode, stats, { sort_keys = true, indent = indent })
   if not (ok and data) then
-    uv.fs_close(fd)
+    vim.uv.fs_close(fd)
     error('Unable to encode stats!', ERROR)
   end
 
-  uv.fs_write(fd, data)
-  uv.fs_close(fd)
+  vim.uv.fs_write(fd, data)
+  vim.uv.fs_close(fd)
 end
 
 ---Export data to a specified Markdown file
@@ -724,7 +723,7 @@ function M.export_to_md(stats, target)
   })
   target = vim.fn.fnamemodify(target, ':p')
 
-  local parent_stat = uv.fs_stat(vim.fn.fnamemodify(target, ':h'))
+  local parent_stat = vim.uv.fs_stat(vim.fn.fnamemodify(target, ':h'))
   if not parent_stat or parent_stat.type ~= 'directory' then
     error(('Target not in a valid directory: `%s`'):format(target), ERROR)
   end
@@ -733,7 +732,7 @@ function M.export_to_md(stats, target)
     error(('Target is a directory: `%s`'):format(target), ERROR)
   end
 
-  local fd = uv.fs_open(target, 'w', tonumber('644', 8))
+  local fd = vim.uv.fs_open(target, 'w', tonumber('644', 8))
   if not fd then
     error(('Unable to open target `%s`'):format(target), ERROR)
   end
@@ -751,8 +750,8 @@ function M.export_to_md(stats, target)
     end
   end
 
-  uv.fs_write(fd, data)
-  uv.fs_close(fd)
+  vim.uv.fs_write(fd, data)
+  vim.uv.fs_close(fd)
 end
 
 ---Get streak with proper calculation

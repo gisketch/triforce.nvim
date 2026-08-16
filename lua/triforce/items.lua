@@ -1,7 +1,6 @@
 ---@class TriforceOpts.Items
 ---@field enabled? boolean
 
-local uv = vim.uv or vim.loop
 local ERROR = vim.log.levels.ERROR
 local Util = require('triforce.util')
 local timers = {} ---@type table<string, uv.uv_timer_t>
@@ -167,7 +166,7 @@ local items = { ---@type table<string, Triforce.Items.Spec>
         timers.xp_timer_2x = nil
       end
 
-      timers.xp_timer_2x = uv.new_timer()
+      timers.xp_timer_2x = vim.uv.new_timer()
       if not timers.xp_timer_2x then
         vim.notify('(triforce.nvim): Unable to create timer!')
         return false
@@ -201,7 +200,7 @@ local items = { ---@type table<string, Triforce.Items.Spec>
         timers.xp_timer_3x = nil
       end
 
-      timers.xp_timer_3x = uv.new_timer()
+      timers.xp_timer_3x = vim.uv.new_timer()
       if not timers.xp_timer_3x then
         vim.notify('(triforce.nvim): Unable to create timer!')
         return false
@@ -235,7 +234,7 @@ local items = { ---@type table<string, Triforce.Items.Spec>
         timers.xp_timer_5x = nil
       end
 
-      timers.xp_timer_5x = uv.new_timer()
+      timers.xp_timer_5x = vim.uv.new_timer()
       if not timers.xp_timer_5x then
         vim.notify('(triforce.nvim): Unable to create timer!')
         return false
@@ -263,7 +262,7 @@ local function setup_watch()
     return
   end
 
-  event = uv.new_fs_event()
+  event = vim.uv.new_fs_event()
   if not event then
     vim.notify('(triforce.nvim): Unable to setup item file setup event!', ERROR)
     return
@@ -317,24 +316,24 @@ function M.get_items(json)
 end
 
 function M.read_items()
-  local stat = uv.fs_stat(items_path)
+  local stat = vim.uv.fs_stat(items_path)
   if not stat then
-    local fd = uv.fs_open(items_path, 'w', tonumber('644', 8))
+    local fd = vim.uv.fs_open(items_path, 'w', tonumber('644', 8))
     if not fd then
       error(('Error while opening %s'):format(items_path))
     end
-    uv.fs_write(fd, vim.json.encode(M.get_items(true)))
-    uv.fs_close(fd)
+    vim.uv.fs_write(fd, vim.json.encode(M.get_items(true)))
+    vim.uv.fs_close(fd)
     return
   end
 
-  local fd = uv.fs_open(items_path, 'r', tonumber('644', 8))
+  local fd = vim.uv.fs_open(items_path, 'r', tonumber('644', 8))
   if not fd then
     return
   end
 
-  local ok, raw_data = pcall(uv.fs_read, fd, stat.size)
-  uv.fs_close(fd)
+  local ok, raw_data = pcall(vim.uv.fs_read, fd, stat.size)
+  vim.uv.fs_close(fd)
   if not (ok and raw_data) then
     return
   end
@@ -354,24 +353,24 @@ function M.read_items()
 end
 
 function M.save_items()
-  local stat = uv.fs_stat(items_path)
+  local stat = vim.uv.fs_stat(items_path)
   if not stat or stat.size == 0 then
-    local fd = uv.fs_open(items_path, 'w', tonumber('644', 8))
+    local fd = vim.uv.fs_open(items_path, 'w', tonumber('644', 8))
     if not fd then
       error(('Error while opening %s'):format(items_path))
     end
-    uv.fs_write(fd, vim.json.encode(M.get_items(true)))
-    uv.fs_close(fd)
+    vim.uv.fs_write(fd, vim.json.encode(M.get_items(true)))
+    vim.uv.fs_close(fd)
     return
   end
 
-  local fd = uv.fs_open(items_path, 'w', tonumber('644', 8))
+  local fd = vim.uv.fs_open(items_path, 'w', tonumber('644', 8))
   if fd then
     local json_ok, data = pcall(vim.json.encode, M.get_items(true))
     if json_ok and data then
-      uv.fs_write(fd, data)
+      vim.uv.fs_write(fd, data)
     end
-    uv.fs_close(fd)
+    vim.uv.fs_close(fd)
   end
 end
 
@@ -423,10 +422,10 @@ function M.reset_all_items()
       all_items[name] = vim.deepcopy(item)
     end
 
-    local fd = uv.fs_open(items_path, 'w', tonumber('644', 8))
+    local fd = vim.uv.fs_open(items_path, 'w', tonumber('644', 8))
     if fd then
-      uv.fs_ftruncate(fd, 0)
-      uv.fs_close(fd)
+      vim.uv.fs_ftruncate(fd, 0)
+      vim.uv.fs_close(fd)
 
       M.save_items()
     end

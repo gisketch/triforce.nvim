@@ -1,7 +1,6 @@
 local INFO = vim.log.levels.INFO
 local ERROR = vim.log.levels.ERROR
 local WARN = vim.log.levels.WARN
-local uv = vim.uv or vim.loop
 local Util = require('triforce.util')
 
 local current_stats ---@type Stats
@@ -81,7 +80,7 @@ local function start_file_watch(path)
     return
   end
 
-  event = uv.new_fs_event()
+  event = vim.uv.new_fs_event()
   if not event then
     return
   end
@@ -160,7 +159,7 @@ function M.setup(debug)
     callback = M.shutdown,
   })
   -- Auto-save timer (every 30 seconds if dirty)
-  local timer = uv.new_timer()
+  local timer = vim.uv.new_timer()
   if not timer then
     return
   end
