@@ -7,7 +7,7 @@
 **Hey, listen!** Triforce adds a bit of RPG flavor to your coding — XP, levels and achievements
 while you work.
 
-![Showcase](./assets/triforce.png)
+![Showcase](https://github.com/gisketch/triforce.nvim/blob/main/assets/triforce.png)
 
 ---
 
@@ -452,7 +452,7 @@ The profile includes the following tabs:
 
 ### Stats Tab
 
-![Stats Tab](./assets/triforce_stats.png)
+![Stats Tab](https://github.com/gisketch/triforce.nvim/blob/main/assets/triforce_stats.png)
 
 - Level progress bar
 - Session/time milestone progress
@@ -462,7 +462,7 @@ The profile includes the following tabs:
 
 ### Achievements Tab
 
-![Achievements Tab](./assets/triforce_achievements.png)
+![Achievements Tab](https://github.com/gisketch/triforce.nvim/blob/main/assets/triforce_achievements.png)
 
 - View all unlocked achievements and locked achievements with unlock requirements
 - Paginate through achievements (`H` / `L` or arrow keys)
@@ -470,7 +470,7 @@ The profile includes the following tabs:
 
 ### Languages Tab
 
-![Languages Tab](./assets/triforce_languages.png)
+![Languages Tab](https://github.com/gisketch/triforce.nvim/blob/main/assets/triforce_languages.png)
 
 - Bar graph showing your most-used languages
 - See character count breakdown by language
@@ -478,7 +478,7 @@ The profile includes the following tabs:
 
 ### Levels Tab
 
-![Levels Tab](./assets/triforce_levels.png)
+![Levels Tab](https://github.com/gisketch/triforce.nvim/blob/main/assets/triforce_levels.png)
 
 - View unlocked levels first, then locked ones
 - Paginate through achievements (`H` / `L` or arrow keys)
@@ -668,21 +668,20 @@ omit a key, the default color for that level is used.
 
 ## Lualine Integration
 
-![Lualine Integration](./assets/triforce_lualine.png)
+![Lualine Integration](https://github.com/gisketch/triforce.nvim/blob/main/assets/triforce_lualine.png)
 
-Triforce provides **modular statusline components** for
-[lualine.nvim](https://github.com/nvim-lualine/lualine.nvim), letting you display your coding stats
-right in your statusline.
+Triforce provides **modular statusline components** for [lualine.nvim](https://github.com/nvim-lualine/lualine.nvim), letting you display
+your coding stats right in your statusline.
 
 Currently, Triforce provides the following `lualine` components (**needs a patched font**):
 
 | Component         | Default Display | Description                  |
 |-------------------|-----------------|------------------------------|
+| `achievements`    | `🏆 12/18`      | Unlocked/total achievements  |
 | `currency`        | `💰 484`        | Current amount of currency   |
 | `level`           | `Lv.27 ████░░`  | Level + XP progress bar      |
-| `achievements`    | `🏆 12/18`      | Unlocked/total achievements  |
-| `streak`          | `🔥 5`          | Current coding streak (days) |
 | `session_time`    | `⏰ 2h 34m`     | Current session duration     |
+| `streak`          | `🔥 5`          | Current coding streak (days) |
 
 ### Basic Setup
 
