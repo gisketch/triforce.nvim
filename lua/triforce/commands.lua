@@ -15,7 +15,7 @@ function M.setup()
     if subcommand == 'config' then
       require('triforce.config').open_window()
     elseif subcommand == 'profile' then
-      local options = vim.tbl_keys(require('triforce.ui.profile').tabs_map) --[[@as string[]\]]
+      local options = vim.tbl_keys(require('triforce.ui.profile').get_tabs_map()) --[[@as string[]\]]
       if subcommand2 == '' then
         triforce.show_profile()
       elseif vim.list_contains(options, subcommand2) then
@@ -164,10 +164,10 @@ function M.setup()
         end
         if args[2] == 'profile' then
           if args[3] == '' then
-            return vim.tbl_keys(require('triforce.ui.profile').tabs_map)
+            return vim.tbl_keys(require('triforce.ui.profile').get_tabs_map()) --[[@as string[]\]]
           end
           local res = {} ---@type string[]
-          for _, comp in ipairs(require('triforce.ui.profile').tabs_map) do
+          for _, comp in ipairs(require('triforce.ui.profile').get_tabs_map()) do
             if vim.startswith(comp, args[3]) then
               table.insert(res, comp)
             end
