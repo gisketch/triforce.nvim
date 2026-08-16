@@ -1,6 +1,7 @@
 ---Health check for triforce.nvim
 ---
 ---Run with `:checkhealth triforce`
+--- ---
 ---@class Triforce.Health
 local M = {}
 

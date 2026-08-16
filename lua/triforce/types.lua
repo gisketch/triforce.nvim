@@ -2,6 +2,7 @@
 ---@diagnostic disable:unused-local
 
 ---@alias TriforceIconEngine 'builtin'|'mini'
+---@alias TriforceLanguage { icon: string, name: string }
 
 ---@class LevelTier
 ---Ending level for this tier (use `math.huge` for infinite).
@@ -207,10 +208,6 @@
 ---@field id string
 ---@field name string
 local A = {}
-
----@class TriforceLanguage
----@field icon string
----@field name string
 
 ---@class LevelTitle
 ---@field icon string

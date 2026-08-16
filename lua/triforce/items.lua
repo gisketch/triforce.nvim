@@ -17,8 +17,8 @@ local items_path = vim.fs.joinpath(vim.fn.stdpath('state'), 'triforce_items.json
 ---@field max_uses? integer
 ---@field name string
 ---@field once? boolean
----@field times_used? integer
 ---@field price? fun(self: Triforce.Items.FullSpec, stats: Stats): price: integer
+---@field times_used? integer
 
 ---@class Triforce.Items
 local M = {}

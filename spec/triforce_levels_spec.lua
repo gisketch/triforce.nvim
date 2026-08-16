@@ -1,4 +1,4 @@
-local assert = require('luassert') ---@type Luassert
+local assert = require('luassert') --[[@as Luassert]]
 
 describe('triforce', function()
   local triforce ---@type Triforce
@@ -6,7 +6,7 @@ describe('triforce', function()
 
   before_each(function()
     -- Clear module cache to get fresh instance
-    package.loaded.triforce = nil
+    package.loaded['triforce'] = nil
     triforce = require('triforce')
     levels = require('triforce.levels')
   end)

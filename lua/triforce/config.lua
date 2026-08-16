@@ -7,7 +7,6 @@ local defaults = { ---@type TriforceConfigDefaults
   auto_save_interval = 300,
   backdrop = { enabled = true, winblend = 20 },
   custom_languages = {},
-  items = { enabled = false },
   db_path = vim.fs.joinpath(vim.fn.stdpath('data'), 'triforce_stats.json'),
   debug = false,
   enabled = true,
@@ -21,7 +20,7 @@ local defaults = { ---@type TriforceConfigDefaults
   },
   icon_engine = 'builtin',
   ignore_ft = {},
-  levels = {},
+  items = { enabled = false },
   level_progression = {
     tier_1 = { min_level = 1, max_level = 10, xp_per_level = 500 },
     tier_2 = { min_level = 11, max_level = 20, xp_per_level = 750 },
@@ -34,7 +33,8 @@ local defaults = { ---@type TriforceConfigDefaults
     tier_9 = { min_level = 151, max_level = 225, xp_per_level = 15000 },
     tier_10 = { min_level = 226, max_level = math.huge, xp_per_level = 25000 },
   },
-  notifications = { enabled = true, level_up = true, achievements = true },
+  levels = {},
+  notifications = { achievements = true, enabled = true, level_up = true },
   override_levels = false,
   xp_rewards = { char = 1, line = 1, save = 10 },
 }
@@ -48,6 +48,7 @@ local M = {}
 local config = {} ---@diagnostic disable-line:missing-fields
 
 ---@return TriforceConfigDefaults config
+---@nodiscard
 function M.get()
   return config
 end
@@ -219,6 +220,7 @@ function M.open_window()
 end
 
 ---@return string|nil|? config_str
+---@nodiscard
 function M.get_config()
   if config then
     local opts = {} ---@type TriforceConfig

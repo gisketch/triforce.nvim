@@ -2,7 +2,8 @@
 
 local Util = require('triforce.util')
 
----Language configuration and icons
+---Language configuration and icons.
+--- ---
 ---@class Triforce.Languages
 local M = {}
 
@@ -13,106 +14,82 @@ local ignored_langs = {} ---@type string[]
 ---Mappings for popular programming languages, in `{ name, icon }` tuples.
 --- ---
 local langs = { ---@type table<string, TriforceLanguage>
-  -- Web
-  javascript = { name = 'JavaScript', icon = '' }, -- nf-dev-javascript
-  typescript = { name = 'TypeScript', icon = '' }, -- nf-seti-typescript
-  typescriptreact = { name = 'TypeScript', icon = '' }, -- nf-dev-react
-  javascriptreact = { name = 'JavaScript', icon = '' }, -- nf-dev-react
-  html = { name = 'HTML', icon = '' }, -- nf-dev-html5
-  xhtml = { name = 'XHTML', icon = '' }, -- nf-dev-html5
-  css = { name = 'CSS', icon = '' }, -- nf-dev-css3
-  scss = { name = 'SCSS', icon = '' }, -- nf-dev-sass
-  sass = { name = 'Sass', icon = '' }, -- nf-dev-sass
-  less = { name = 'Less', icon = '' }, -- nf-dev-less
-  vue = { name = 'Vue', icon = '' }, -- nf-seti-vue
-  svelte = { name = 'Svelte', icon = '' }, -- nf-seti-svelte
-
-  -- Systems
-  c = { name = 'C', icon = '' }, -- nf-seti-c
-  cpp = { name = 'C++', icon = '' }, -- nf-seti-cpp
-  cuda = { name = 'Cuda', icon = '' }, -- nf-seti-cu
-  rust = { name = 'Rust', icon = '' }, -- nf-dev-rust
-  go = { name = 'Go', icon = '' }, -- nf-seti-go
-  zig = { name = 'Zig', icon = '' }, -- nf-seti-zig
+  PKGBUILD = { name = 'PKGBUILD', icon = '' }, -- nf-dev-terminal,
   arduino = { name = 'Arduino', icon = '' }, -- nf-dev-arduino
   asm = { name = 'Assembly', icon = '' }, -- nf-seti-asm
-  makefile = { name = 'Makefile', icon = '' }, -- nf-seti-makefile
-  cmake = { name = 'CMake', icon = '' }, -- nf-dev-cmake
-  fortran = { name = 'Fortran', icon = '' }, -- nf-dev-fortran
-  glsl = { name = 'GLSL', icon = '󰫴' }, -- nf-md-alpha_g
-
-  -- Scripting
-  python = { name = 'Python', icon = '' }, -- nf-dev-python
-  ruby = { name = 'Ruby', icon = '' }, -- nf-dev-ruby
-  php = { name = 'PHP', icon = '' }, -- nf-dev-php
-  perl = { name = 'Perl', icon = '' }, -- nf-dev-perl
-  lua = { name = 'Lua', icon = '' }, -- nf-seti-lua
-
-  -- JVM
-  java = { name = 'Java', icon = '' }, -- nf-dev-java
-  kotlin = { name = 'Kotlin', icon = '' }, -- nf-seti-kotlin
-  scala = { name = 'Scala', icon = '' }, -- nf-dev-scala
-
-  -- Functional
-  haskell = { name = 'Haskell', icon = '' }, -- nf-seti-haskell
-  ocaml = { name = 'OCaml', icon = '' }, -- nf-seti-ocaml
-  elixir = { name = 'Elixir', icon = '' }, -- nf-seti-elixir
-  erlang = { name = 'Erlang', icon = '' }, -- nf-dev-erlang
+  bash = { name = 'Bash', icon = '' }, -- nf-dev-terminal
+  c = { name = 'C', icon = '' }, -- nf-seti-c
   clojure = { name = 'Clojure', icon = '' }, -- nf-dev-clojure
-  lisp = { name = 'Common Lisp', icon = '' }, -- nf-custom-common_lisp
-
-  -- .NET
-  cs = { name = 'C#', icon = '󰌛' }, -- nf-md-language_csharp
-  fsharp = { name = 'F#', icon = '' }, -- nf-dev-fsharp
-
-  -- Mobile
-  swift = { name = 'Swift', icon = '' }, -- nf-dev-swift
-  dart = { name = 'Dart', icon = '' }, -- nf-dev-dart
-
-  -- Configuration
+  cmake = { name = 'CMake', icon = '' }, -- nf-dev-cmake
+  cobol = { name = 'cobol', icon = '' }, -- nf-code-array
   conf = { name = 'Conf', icon = '' }, -- nf-seti-config
   config = { name = 'Config', icon = '' }, -- nf-seti-config
-  hyprlang = { name = 'Hyprlang', icon = '' }, -- nf-linux-hyprland
-
-  -- Shell
-  sh = { name = 'Shell', icon = '' }, -- nf-dev-terminal
-  bash = { name = 'Bash', icon = '' }, -- nf-dev-terminal
-  zsh = { name = 'Zsh', icon = '' }, -- nf-dev-terminal
-  fish = { name = 'Fish', icon = '' }, -- nf-dev-terminal
-  csh = { name = 'C Shell', icon = '' }, -- nf-dev-terminal
-  powershell = { name = 'Power Shell', icon = '' }, -- nf-dev-terminal
-
-  -- Data
-  sql = { name = 'SQL', icon = '' }, -- nf-dev-database
-  json = { name = 'JSON', icon = '' }, -- nf-seti-json
-  yaml = { name = 'YAML', icon = '' }, -- nf-seti-yaml
-  toml = { name = 'TOML', icon = '' }, -- nf-seti-toml
-  xml = { name = 'XML', icon = '󰗀' }, -- nf-md-xml
-  csv = { name = 'CSV', icon = '' }, -- nf-seti-csv
-  dosini = { name = 'INI', icon = '' }, -- nf-seti-config
-
-  -- Markup/Doc
-  markdown = { name = 'Markdown', icon = '' }, -- nf-dev-markdown
-  tex = { name = 'LaTeX', icon = '' }, -- nf-seti-tex
-  org = { name = 'Org Mode', icon = '' }, -- nf-custom-orgmode
-
-  -- Tree-sitter
-  query = { name = 'Tree-sitter Query', icon = '󰘧' }, -- nf-md-lambda
-
-  -- Other
-  vim = { name = 'Vimscript', icon = '' }, -- nf-seti-vim
-  r = { name = 'R', icon = '' }, -- nf-dev-r
-  matplotlib = { name = 'matplotlib', icon = '' }, --nf-dev-matplotlib
-  julia = { name = 'Julia', icon = '' }, -- nf-seti-julia
-  nim = { name = 'Nim', icon = '' }, -- nf-seti-nim
+  cpp = { name = 'C++', icon = '' }, -- nf-seti-cpp
   crystal = { name = 'Crystal', icon = '' }, -- nf-seti-crystal
-  PKGBUILD = { name = 'PKGBUILD', icon = '' }, -- nf-dev-terminal,
-  prolog = { name = 'prolog', icon = '' }, -- nf-dev-prolog
-  cobol = { name = 'cobol', icon = '' }, -- nf-code-array
+  cs = { name = 'C#', icon = '󰌛' }, -- nf-md-language_csharp
+  csh = { name = 'C Shell', icon = '' }, -- nf-dev-terminal
+  css = { name = 'CSS', icon = '' }, -- nf-dev-css3
+  csv = { name = 'CSV', icon = '' }, -- nf-seti-csv
+  cuda = { name = 'Cuda', icon = '' }, -- nf-seti-cu
+  dart = { name = 'Dart', icon = '' }, -- nf-dev-dart
   dockerfile = { name = 'Dockerfile', icon = '󰡨' }, -- nf-md-docker
+  dosini = { name = 'INI', icon = '' }, -- nf-seti-config
+  elixir = { name = 'Elixir', icon = '' }, -- nf-seti-elixir
+  erlang = { name = 'Erlang', icon = '' }, -- nf-dev-erlang
+  fish = { name = 'Fish', icon = '' }, -- nf-dev-terminal
+  fortran = { name = 'Fortran', icon = '' }, -- nf-dev-fortran
+  fsharp = { name = 'F#', icon = '' }, -- nf-dev-fsharp
+  glsl = { name = 'GLSL', icon = '󰫴' }, -- nf-md-alpha_g
+  go = { name = 'Go', icon = '' }, -- nf-seti-go
+  haskell = { name = 'Haskell', icon = '' }, -- nf-seti-haskell
+  html = { name = 'HTML', icon = '' }, -- nf-dev-html5
+  hyprlang = { name = 'Hyprlang', icon = '' }, -- nf-linux-hyprland
+  java = { name = 'Java', icon = '' }, -- nf-dev-java
+  javascript = { name = 'JavaScript', icon = '' }, -- nf-dev-javascript
+  javascriptreact = { name = 'JavaScript', icon = '' }, -- nf-dev-react
+  json = { name = 'JSON', icon = '' }, -- nf-seti-json
+  julia = { name = 'Julia', icon = '' }, -- nf-seti-julia
+  kotlin = { name = 'Kotlin', icon = '' }, -- nf-seti-kotlin
+  less = { name = 'Less', icon = '' }, -- nf-dev-less
+  lisp = { name = 'Common Lisp', icon = '' }, -- nf-custom-common_lisp
+  lua = { name = 'Lua', icon = '' }, -- nf-seti-lua
+  makefile = { name = 'Makefile', icon = '' }, -- nf-seti-makefile
+  markdown = { name = 'Markdown', icon = '' }, -- nf-dev-markdown
+  matplotlib = { name = 'matplotlib', icon = '' }, --nf-dev-matplotlib
+  nim = { name = 'Nim', icon = '' }, -- nf-seti-nim
+  ocaml = { name = 'OCaml', icon = '' }, -- nf-seti-ocaml
+  org = { name = 'Org Mode', icon = '' }, -- nf-custom-orgmode
+  perl = { name = 'Perl', icon = '' }, -- nf-dev-perl
+  php = { name = 'PHP', icon = '' }, -- nf-dev-php
+  powershell = { name = 'Power Shell', icon = '' }, -- nf-dev-terminal
+  prolog = { name = 'prolog', icon = '' }, -- nf-dev-prolog
+  python = { name = 'Python', icon = '' }, -- nf-dev-python
+  query = { name = 'Tree-sitter Query', icon = '󰘧' }, -- nf-md-lambda
+  r = { name = 'R', icon = '' }, -- nf-dev-r
+  ruby = { name = 'Ruby', icon = '' }, -- nf-dev-ruby
+  rust = { name = 'Rust', icon = '' }, -- nf-dev-rust
+  sass = { name = 'Sass', icon = '' }, -- nf-dev-sass
+  scala = { name = 'Scala', icon = '' }, -- nf-dev-scala
+  scss = { name = 'SCSS', icon = '' }, -- nf-dev-sass
+  sh = { name = 'Shell', icon = '' }, -- nf-dev-terminal
+  sql = { name = 'SQL', icon = '' }, -- nf-dev-database
+  svelte = { name = 'Svelte', icon = '' }, -- nf-seti-svelte
+  swift = { name = 'Swift', icon = '' }, -- nf-dev-swift
+  tex = { name = 'LaTeX', icon = '' }, -- nf-seti-tex
+  toml = { name = 'TOML', icon = '' }, -- nf-seti-toml
+  typescript = { name = 'TypeScript', icon = '' }, -- nf-seti-typescript
+  typescriptreact = { name = 'TypeScript', icon = '' }, -- nf-dev-react
+  vim = { name = 'Vimscript', icon = '' }, -- nf-seti-vim
+  vue = { name = 'Vue', icon = '' }, -- nf-seti-vue
+  xhtml = { name = 'XHTML', icon = '' }, -- nf-dev-html5
+  xml = { name = 'XML', icon = '󰗀' }, -- nf-md-xml
+  yaml = { name = 'YAML', icon = '' }, -- nf-seti-yaml
+  zig = { name = 'Zig', icon = '' }, -- nf-seti-zig
+  zsh = { name = 'Zsh', icon = '' }, -- nf-dev-terminal
 }
 
 ---@return table<string, TriforceLanguage> langs
+---@nodiscard
 function M.get_langs()
   return langs
 end
@@ -123,6 +100,7 @@ function M.set_langs(L)
 end
 
 ---@return string[] ignored_langs
+---@nodiscard
 function M.get_ignored_langs()
   return ignored_langs
 end
@@ -132,20 +110,18 @@ function M.set_mini_icon(ft)
   Util.validate({ ft = { ft, { 'string' } } })
 
   ---@module 'mini.icons'
-  if not (_G.MiniIcons and langs[ft]) then
-    return
-  end
+  if _G.MiniIcons and langs[ft] then
+    local default_icon = langs[ft].icon or ''
+    local no_icon = _G.MiniIcons.get('filetype', '')
+    local icon = _G.MiniIcons.get('filetype', ft)
+    if icon == no_icon and default_icon ~= '' then
+      icon = default_icon
+    elseif icon == no_icon and default_icon == '' then
+      icon = no_icon
+    end
 
-  local default_icon = langs[ft].icon or ''
-  local no_icon = _G.MiniIcons.get('filetype', '')
-  local icon = _G.MiniIcons.get('filetype', ft)
-  if icon == no_icon and default_icon ~= '' then
-    icon = default_icon
-  elseif icon == no_icon and default_icon == '' then
-    icon = no_icon
+    langs[ft].icon = icon
   end
-
-  langs[ft].icon = icon
 end
 
 ---Get icon for a filetype.
@@ -209,16 +185,13 @@ function M.get_display_name(ft)
   if M.is_excluded(ft) then
     return
   end
-  if not langs[ft] then
-    return ''
-  end
-
-  return langs[ft].name or ft
+  return not langs[ft] and '' or (langs[ft].name or ft)
 end
 
 ---Get full display with icon
 ---
 ---Returns `nil` if `ft` is not valid.
+--- ---
 ---@param ft string
 ---@return string|nil|? full_display
 function M.get_full_display(ft)
@@ -228,7 +201,9 @@ function M.get_full_display(ft)
     local icon = M.get_icon(ft)
     local name = M.get_display_name(ft)
 
-    return icon == '' and name or ('%s %s'):format(icon, name)
+    if name then
+      return (icon and icon ~= '') and ('%s %s'):format(icon, name) or name
+    end
   end
 end
 
