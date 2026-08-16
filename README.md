@@ -934,29 +934,4 @@ Currently only these formats are supported:
 
 MIT License - see [LICENSE](https://github.com/gisketch/triforce.nvim/blob/main/LICENSE) for details.
 
----
-
-## Star History
-
-**Made with ❤️ for the [Neovim](https://neovim.io/) community**
-
-⭐ Star this repo if you find it useful!
-
-<a href="https://www.star-history.com/#gisketch/triforce.nvim&type=date&legend=top-left">
-  <picture>
-    <source
-    media="(prefers-color-scheme: dark)"
-    srcset="https://api.star-history.com/svg?repos=gisketch/triforce.nvim&type=date&theme=dark&legend=top-left"
-    />
-    <source
-    media="(prefers-color-scheme: light)"
-    srcset="https://api.star-history.com/svg?repos=gisketch/triforce.nvim&type=date&legend=top-left"
-    />
-    <img
-    alt="Star History Chart"
-    src="https://api.star-history.com/svg?repos=gisketch/triforce.nvim&type=date&legend=top-left"
-    />
-  </picture>
-</a>
-
 <!-- vim: set ts=2 sts=2 sw=2 et ai si sta: -->
