@@ -1,16 +1,9 @@
-* @gisketch
-/.github @DrKJeff16 @gisketch
-/.gitignore @DrKJeff16 @gisketch
+* @gisketch @DrKJeff16
 /.pre-commit-config.yaml @DrKJeff16
 /.stylua.toml @DrKJeff16
 /.taplo.toml @DrKJeff16
-/CONTRIBUTING.md @DrKJeff16 @gisketch
-/Makefile @DrKJeff16 @gisketch
-/lua/triforce/achievement.lua @DrKJeff16 @gisketch
-/lua/triforce/commands.lua @DrKJeff16 @gisketch
 /lua/triforce/util.lua @DrKJeff16
 /selene.toml @DrKJeff16
-/spec @DrKJeff16 @gisketch
 /stylua.toml @DrKJeff16
 /taplo.toml @DrKJeff16
 /vim.yml @DrKJeff16
