@@ -32,6 +32,12 @@ local M = {}
 
 local levels = {} ---@type LevelTitles
 
+---@return LevelTitles levels
+---@nodiscard
+function M.get()
+  return levels
+end
+
 ---@param override? boolean
 function M.setup(override)
   Util.validate({ override = { override, { 'boolean', 'nil' }, true } })
@@ -39,7 +45,7 @@ function M.setup(override)
     override = false
   end
 
-  if not override then
+  if vim.tbl_isempty(levels) or not override then
     levels = vim.tbl_deep_extend('keep', levels, get_default_titles())
   end
 end
@@ -56,17 +62,16 @@ function M.add_levels(lvls)
     for _, lvl in ipairs(lvls) do
       M.add_levels(lvl)
     end
-    return
+  else
+    ---@cast lvls LevelParams
+    Util.validate({
+      ['lvls.level'] = { lvls.level, { 'number' } },
+      ['lvls.title'] = { lvls.title, { 'string' } },
+      ['lvls.icon'] = { lvls.icon, { 'string', 'nil' }, true },
+    })
+
+    levels[lvls.level] = { title = lvls.title, icon = lvls.icon or '' }
   end
-
-  ---@cast lvls LevelParams
-  Util.validate({
-    lvls_level = { lvls.level, { 'number' } },
-    lvls_title = { lvls.title, { 'string' } },
-    lvls_icon = { lvls.icon, { 'string', 'nil' }, true },
-  })
-
-  levels[lvls.level] = { title = lvls.title, icon = lvls.icon or '' }
 end
 
 ---@param stats Stats
@@ -135,11 +140,7 @@ function M.get_level_title(level, with_icon)
   end
 
   local l = math.min(unpack(values))
-  if l then
-    return with_icon and ('%s %s'):format(levels[l].icon, levels[l].title) or levels[l].title
-  end
-
-  return ''
+  return l and (with_icon and ('%s %s'):format(levels[l].icon, levels[l].title) or levels[l].title) or ''
 end
 
 return M
