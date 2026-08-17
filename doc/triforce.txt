@@ -1,5 +1,5 @@
 *triforce.txt*
-                              For NVIM >=v0.9.0    Last change: 2026 August 16
+                              For NVIM >=v0.9.0    Last change: 2026 August 17
 
 ==============================================================================
 1. triforce.nvim                                      *triforce-triforce.nvim*
@@ -1001,6 +1001,16 @@ LICENSE                                                     *triforce-license*
 
 MIT License - see LICENSE
 <https://github.com/gisketch/triforce.nvim/blob/main/LICENSE> for details.
+
+------------------------------------------------------------------------------
+
+STAR HISTORY                                           *triforce-star-history*
+
+**Made with for the Neovim community**
+
+Star this repo if you find it useful!
+
+
 
 ==============================================================================
 2. Links                                                      *triforce-links*
