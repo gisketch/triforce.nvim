@@ -10,24 +10,21 @@ local M = {}
 function M.get_random_fact(stats)
   Util.validate({ stats = { stats, { 'table' } } })
 
-  local facts = {} ---@type string[]
+  local facts, unique_languages = {}, 0 ---@type string[], integer
+  local total_hours, total_minutes = math.floor(stats.time_coding / 3600), math.floor(stats.time_coding / 60)
+  local avg_session_time, chars_per_line =
+    stats.sessions > 0 and math.floor(stats.time_coding / stats.sessions / 60) or 0,
+    stats.lines_typed > 0 and math.floor(stats.chars_typed / stats.lines_typed) or 0
 
-  -- Calculate derived metrics
-  local total_hours = math.floor(stats.time_coding / 3600)
-  local total_minutes = math.floor(stats.time_coding / 60)
-  local avg_session_time = stats.sessions > 0 and math.floor(stats.time_coding / stats.sessions / 60) or 0
-  local chars_per_line = stats.lines_typed > 0 and math.floor(stats.chars_typed / stats.lines_typed) or 0
-  local unique_languages = 0
   for _ in pairs(stats.chars_by_language or {}) do
     unique_languages = unique_languages + 1
   end
 
   -- Get most used language
-  local top_lang, top_count = nil, 0
+  local top_lang, top_count = nil, 0 ---@type string|nil|?, integer
   for lang, count in pairs(stats.chars_by_language or {}) do
     if count > top_count then
-      top_count = count
-      top_lang = lang
+      top_count, top_lang = count, lang
     end
   end
 
@@ -156,13 +153,11 @@ function M.get_random_fact(stats)
     table.insert(facts, "You've spent a full 24 hours in your editor")
   end
 
-  -- Default fallback
-  if vim.tbl_isempty(facts) then
+  if #facts == 0 then -- Default fallback
     table.insert(facts, 'Start coding to see interesting stats')
   end
 
-  -- Return random fact
-  math.randomseed(os.time())
+  math.randomseed(os.time()) -- Return random fact
   return facts[math.random(#facts)]
 end
 
@@ -173,15 +168,13 @@ function M.format_number(num)
   Util.validate({ num = { num, { 'number' } } })
 
   local formatted = tostring(num)
-  local k
-
+  local k ---@type integer
   while true do
     formatted, k = formatted:gsub('^(-?%d+)(%d%d%d)', '%1,%2')
     if k == 0 then
       break
     end
   end
-
   return formatted
 end
 

@@ -1,4 +1,4 @@
----@module 'triforce.types'
+---@module 'triforce._meta'
 
 ---@class Triforce.Commands
 local M = {}
@@ -6,15 +6,12 @@ local M = {}
 -- Create user commands with subcommands
 function M.setup()
   vim.api.nvim_create_user_command('Triforce', function(opts)
-    local subcommand = opts.fargs[1]
-    local subcommand2 = opts.fargs[2] or ''
-    local subcommand3 = opts.fargs[3] or ''
-    local subcommand4 = opts.fargs[4] or ''
+    local subcommand2, subcommand3, subcommand4 = opts.fargs[2] or '', opts.fargs[3] or '', opts.fargs[4] or ''
     local triforce = require('triforce')
 
-    if subcommand == 'config' then
+    if opts.fargs[1] == 'config' then
       require('triforce.config').open_window()
-    elseif subcommand == 'profile' then
+    elseif opts.fargs[1] == 'profile' then
       local options = vim.tbl_keys(require('triforce.ui.profile').get_tabs_map()) --[[@as string[]\]]
       if subcommand2 == '' then
         triforce.show_profile()
@@ -27,9 +24,9 @@ function M.setup()
         end
         vim.notify(msg, vim.log.levels.INFO)
       end
-    elseif subcommand == 'reset' then
+    elseif opts.fargs[1] == 'reset' then
       triforce.reset()
-    elseif subcommand == 'items' then
+    elseif opts.fargs[1] == 'items' then
       if subcommand2 == '' then
         vim.notify(
           [[Usage: :Triforce items buy <item>
@@ -52,7 +49,7 @@ function M.setup()
           triforce.items.buy_item(subcommand3)
         end
       end
-    elseif subcommand == 'stats' then
+    elseif opts.fargs[1] == 'stats' then
       if subcommand2 == '' then
         vim.notify(vim.inspect(triforce.get_stats()), vim.log.levels.INFO)
       elseif subcommand2 == 'save' then
@@ -85,12 +82,12 @@ function M.setup()
       else
         triforce.export_stats_to_json(subcommand4)
       end
-    elseif subcommand == 'debug' then
+    elseif opts.fargs[1] == 'debug' then
       local debug_ops = {
-        xp = triforce.debug_xp,
         achievement = triforce.debug_achievement,
-        languages = triforce.debug_languages,
         fix = triforce.debug_fix_level,
+        languages = triforce.debug_languages,
+        xp = triforce.debug_xp,
       }
 
       -- Plan B: If subcommand2 value is not valid then abort and print usage

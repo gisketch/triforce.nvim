@@ -34,11 +34,12 @@ function M.setup(opts)
   require('triforce.config').setup(opts or {})
 
   -- Create <Plug> mappings for users to map to their own keys
-  vim.keymap.set('n', '<Plug>(TriforceProfile)', M.show_profile, {
-    noremap = true,
-    silent = true,
-    desc = 'Triforce: Show profile',
-  })
+  vim.keymap.set(
+    'n',
+    '<Plug>(TriforceProfile)',
+    M.show_profile,
+    { desc = 'Triforce: Show profile', noremap = true, silent = true }
+  )
 
   local config = require('triforce.config').get()
 
@@ -46,55 +47,51 @@ function M.setup(opts)
   require('triforce.commands').setup()
 
   ---@diagnostic disable:undefined-field
-  -- Set up keymap if provided
   if config.keymap and config.keymap.show_profile and config.keymap.show_profile ~= '' then
-    vim.keymap.set('n', config.keymap.show_profile, M.show_profile, { desc = 'Show Triforce Profile', noremap = true })
+    vim.keymap.set('n', config.keymap.show_profile, M.show_profile, { desc = 'Show Triforce Profile' })
   end
   ---@diagnostic enable:undefined-field
 
-  if not require('triforce.config').has_gamification(true) then
-    return
+  if require('triforce.config').has_gamification(true) then
+    require('triforce.tracker').setup()
+
+    M.new_achievements(config.achievements or {})
+
+    if config.levels and not vim.tbl_isempty(config.levels) then
+      require('triforce.levels').add_levels(config.levels)
+    end
+
+    vim.api.nvim_create_autocmd('ColorScheme', {
+      desc = 'Sync Triforce with colorscheme changes',
+      group = vim.api.nvim_create_augroup('TriforceProfile', { clear = true }),
+      callback = function()
+        vim.schedule(function()
+          require('triforce.ui').profile.setup_highlights()
+        end)
+      end,
+    })
   end
-
-  require('triforce.tracker').setup()
-
-  M.new_achievements(config.achievements or {})
-
-  if config.levels and not vim.tbl_isempty(config.levels) then
-    require('triforce.levels').add_levels(config.levels)
-  end
-
-  vim.api.nvim_create_autocmd('ColorScheme', {
-    group = vim.api.nvim_create_augroup('TriforceProfile', { clear = true }),
-    desc = 'Sync Triforce with colorscheme changes',
-    callback = function()
-      require('triforce.ui').profile.setup_highlights()
-    end,
-  })
 end
 
 ---Show profile UI
 ---@param tab? string
 function M.show_profile(tab)
   Util.validate({ tab = { tab, { 'string', 'nil' }, true } })
-  if not require('triforce.config').has_gamification() then
-    return
-  end
+  if require('triforce.config').has_gamification() then
+    if not require('triforce.tracker').get_stats() then
+      require('triforce.tracker').setup()
+    end
 
-  local stats = require('triforce.tracker').get_stats()
-  if not stats then
-    require('triforce.tracker').setup()
-  end
+    local Profile = require('triforce.ui').profile
+    local tabs_map, current_tab, dimensions =
+      Profile.get_tabs_map(), Profile.get_current_tab(), Profile.get_dimensions()
 
-  local Profile = require('triforce.ui').profile
-  local tabs_map = Profile.get_tabs_map()
-  local current_tab = Profile.get_current_tab()
-  local dimensions = Profile.get_dimensions()
-  local tab_n = (tab and tabs_map[tab]) and tabs_map[tab] or current_tab
-  if current_tab ~= tab_n and dimensions.float and dimensions.dim_float then
-    Profile.cycle_tab(nil, tab_n)
-  else
-    Profile.toggle(tab_n)
+    local tab_n = (tab and tabs_map[tab]) and tabs_map[tab] or current_tab
+    if current_tab ~= tab_n and dimensions.float and dimensions.dim_float then
+      Profile.cycle_tab(nil, tab_n)
+    else
+      Profile.toggle(tab_n)
+    end
   end
 end
 
@@ -115,22 +112,23 @@ end
 
 ---Force save stats
 function M.save_stats()
-  if not require('triforce.config').has_gamification() then
-    return
+  if require('triforce.config').has_gamification() then
+    local stats = require('triforce.tracker').get_stats()
+    if not stats then
+      vim.notify('No stats to save!', vim.log.levels.WARN)
+    elseif not require('triforce.stats').save(stats) then
+      vim.notify('Failed to save stats!', vim.log.levels.ERROR)
+    else
+      vim.notify(
+        ('Stats saved successfully in `%s`'):format(vim.fn.fnamemodify(stats.db_path, ':~')),
+        vim.log.levels.INFO
+      )
+    end
   end
-  local stats = require('triforce.tracker').get_stats()
-  if not stats then
-    vim.notify('No stats to save!', vim.log.levels.WARN)
-    return
-  end
-  if not (stats and require('triforce.stats').save(stats)) then
-    vim.notify('Failed to save stats!', vim.log.levels.ERROR)
-    return
-  end
-  vim.notify(('Stats saved successfully in `%s`'):format(vim.fn.fnamemodify(stats.db_path, ':~')), vim.log.levels.INFO)
 end
 
----Debug: Show current XP progress
+---Show current XP progress (debug).
+--- ---
 function M.debug_xp()
   if require('triforce.config').has_gamification() then
     require('triforce.tracker').debug_xp()
@@ -191,19 +189,23 @@ function M.new_achievements(achievements)
 end
 
 local Triforce = setmetatable(M, { ---@type Triforce
-  ---@param self Triforce
-  ---@param k string|integer
   __index = function(self, k)
+    local raw = rawget(self, k) or nil
+    if raw then
+      return raw
+    end
     if Util.mod_exists('triforce.' .. k) then
+      rawset(self, k, require('triforce.' .. k))
       return require('triforce.' .. k)
     end
     if k == 'get_stats' then
-      return self.tracker.get_stats
+      rawset(self, k, require('triforce.tracker').get_stats)
+      return require('triforce.tracker').get_stats
     end
     if k == 'open_config' then
-      return self.config.open_window
+      rawset(self, k, require('triforce.config').open_window)
+      return require('triforce.config').open_window
     end
-    return rawget(self, k) or nil
   end,
 })
 

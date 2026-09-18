@@ -103,37 +103,29 @@ end
 
 local items = { ---@type table<string, Triforce.Items.Spec>
   level_up_1x = {
-    name = 'Level up (1x)',
-    desc = 'Use this to level up once (CAN ONLY BE USED 5 TIMES!).',
-    once = false,
-    max_uses = 5,
     base_price = 500,
-    price = function(self, stats)
-      return math.floor(self.base_price + (self.times_used <= 0 and 0 or stats.level * self.times_used))
-    end,
     callback = function(_, stats)
-      local Stats = require('triforce.stats')
-      local res, new_stats = Stats.add_xp(stats, Stats.xp_for_next_level(stats.level) - stats.xp, false)
+      local res, new_stats = require('triforce.stats').add_xp(
+        stats,
+        require('triforce.stats').xp_for_next_level(stats.level) - stats.xp,
+        false
+      )
       require('triforce.tracker').update_stats(new_stats)
       return res
     end,
+    desc = 'Use this to level up once (CAN ONLY BE USED 5 TIMES!).',
+    max_uses = 5,
+    name = 'Level up (1x)',
+    once = false,
+    price = function(self, stats)
+      return math.floor(self.base_price + (self.times_used <= 0 and 0 or stats.level * self.times_used))
+    end,
   },
   xp_boost = {
-    name = 'Single XP Boost',
-    desc = 'Use this for a rapid XP boost to the next XP tier (unavailable for max tier).',
-    once = false,
     base_price = 2500,
-    max_uses = 0,
-    price = function(self)
-      return math.floor(self.base_price * (self.times_used <= 0 and 1 or self.times_used))
-    end,
-    level_cap = function()
-      return require('triforce.stats').get_level_config().tier_10.min_level
-    end,
     callback = function(_, stats)
-      local Stats = require('triforce.stats')
       local level_boost = nil ---@type integer|nil|?
-      for _, tier in pairs(Stats.get_level_config()) do
+      for _, tier in pairs(require('triforce.stats').get_level_config()) do
         ---@cast tier LevelTier
         if stats.level >= tier.min_level and stats.level <= tier.max_level then
           level_boost = tier.max_level - stats.level + 1
@@ -141,23 +133,33 @@ local items = { ---@type table<string, Triforce.Items.Spec>
         end
       end
 
+      local res = false
       if not level_boost then
         vim.notify('(triforce.nvim) Unable to boost higher!', ERROR)
-        return false
+      else
+        local new_stats
+        res, new_stats = require('triforce.stats').add_xp(
+          stats,
+          require('triforce.stats').xp_for_next_level(stats.level + level_boost) - stats.xp,
+          false
+        )
+        require('triforce.tracker').update_stats(new_stats)
       end
-      local res, new_stats = Stats.add_xp(stats, Stats.xp_for_next_level(stats.level + level_boost) - stats.xp, false)
-      require('triforce.tracker').update_stats(new_stats)
       return res
+    end,
+    desc = 'Use this for a rapid XP boost to the next XP tier (unavailable for max tier).',
+    level_cap = function()
+      return require('triforce.stats').get_level_config().tier_10.min_level
+    end,
+    max_uses = 0,
+    name = 'Single XP Boost',
+    once = false,
+    price = function(self)
+      return math.floor(self.base_price * (self.times_used <= 0 and 1 or self.times_used))
     end,
   },
   xp_timer_2x = {
-    name = 'XP Multiplier (2X, 30 minutes)',
-    desc = 'Duplicate your XP gain for 30 minutes. Closing Neovim will cancel this timer!',
     base_price = 500,
-    once = false,
-    price = function(self)
-      return self.base_price
-    end,
     callback = function()
       if timers.xp_timer_2x then
         if timers.xp_timer_2x:is_active() then
@@ -166,32 +168,32 @@ local items = { ---@type table<string, Triforce.Items.Spec>
         timers.xp_timer_2x = nil
       end
 
+      local res = false
       timers.xp_timer_2x = vim.uv.new_timer()
       if not timers.xp_timer_2x then
         vim.notify('(triforce.nvim): Unable to create timer!')
-        return false
+      else
+        require('triforce.stats').set_xp_multiplier(2)
+        timers.xp_timer_2x:start(
+          30 * 60 * 1000, -- minutes * seconds * milliseconds
+          0,
+          vim.schedule_wrap(function()
+            require('triforce.stats').set_xp_multiplier(1)
+          end)
+        )
+        res = true
       end
-
-      local Stats = require('triforce.stats')
-      Stats.set_xp_multiplier(2)
-      timers.xp_timer_2x:start(
-        30 * 60 * 1000, -- minutes * seconds * milliseconds
-        0,
-        vim.schedule_wrap(function()
-          Stats.set_xp_multiplier(1)
-        end)
-      )
-      return true
+      return res
     end,
-  },
-  xp_timer_3x = {
-    name = 'XP Multiplier (3X, 15 minutes)',
-    desc = 'Triplicate your XP gain for 15 minutes (cannot be stacked). Closing Neovim will cancel this timer!',
-    base_price = 1250,
+    desc = 'Duplicate your XP gain for 30 minutes. Closing Neovim will cancel this timer!',
+    name = 'XP Multiplier (2X, 30 minutes)',
     once = false,
     price = function(self)
       return self.base_price
     end,
+  },
+  xp_timer_3x = {
+    base_price = 1250,
     callback = function()
       if timers.xp_timer_3x then
         if timers.xp_timer_3x:is_active() then
@@ -200,32 +202,32 @@ local items = { ---@type table<string, Triforce.Items.Spec>
         timers.xp_timer_3x = nil
       end
 
+      local res = false
       timers.xp_timer_3x = vim.uv.new_timer()
       if not timers.xp_timer_3x then
         vim.notify('(triforce.nvim): Unable to create timer!')
-        return false
+      else
+        require('triforce.stats').set_xp_multiplier(3)
+        timers.xp_timer_3x:start(
+          15 * 60 * 1000, -- minutes * seconds * milliseconds
+          0,
+          vim.schedule_wrap(function()
+            require('triforce.stats').set_xp_multiplier(1)
+          end)
+        )
+        res = true
       end
-
-      local Stats = require('triforce.stats')
-      Stats.set_xp_multiplier(3)
-      timers.xp_timer_3x:start(
-        15 * 60 * 1000, -- minutes * seconds * milliseconds
-        0,
-        vim.schedule_wrap(function()
-          Stats.set_xp_multiplier(1)
-        end)
-      )
-      return true
+      return res
     end,
-  },
-  xp_timer_5x = {
-    name = 'XP Multiplier (5X, 5 minutes)',
-    desc = 'Multiplie your XP gain by 5, for 5 minutes (cannot be stacked). Closing Neovim will cancel this timer!',
-    base_price = 2000,
+    desc = 'Triplicate your XP gain for 15 minutes (cannot be stacked). Closing Neovim will cancel this timer!',
+    name = 'XP Multiplier (3X, 15 minutes)',
     once = false,
     price = function(self)
       return self.base_price
     end,
+  },
+  xp_timer_5x = {
+    base_price = 2000,
     callback = function()
       if timers.xp_timer_5x then
         if timers.xp_timer_5x:is_active() then
@@ -234,28 +236,33 @@ local items = { ---@type table<string, Triforce.Items.Spec>
         timers.xp_timer_5x = nil
       end
 
+      local res = false
       timers.xp_timer_5x = vim.uv.new_timer()
       if not timers.xp_timer_5x then
         vim.notify('(triforce.nvim): Unable to create timer!')
-        return false
+      else
+        require('triforce.stats').set_xp_multiplier(5)
+        timers.xp_timer_5x:start(
+          5 * 60 * 1000, -- minutes * seconds * milliseconds
+          0,
+          vim.schedule_wrap(function()
+            require('triforce.stats').set_xp_multiplier(1)
+          end)
+        )
+        res = true
       end
-
-      local Stats = require('triforce.stats')
-      Stats.set_xp_multiplier(5)
-      timers.xp_timer_5x:start(
-        5 * 60 * 1000, -- minutes * seconds * milliseconds
-        0,
-        vim.schedule_wrap(function()
-          Stats.set_xp_multiplier(1)
-        end)
-      )
-      return true
+      return res
+    end,
+    desc = 'Multiplie your XP gain by 5, for 5 minutes (cannot be stacked). Closing Neovim will cancel this timer!',
+    name = 'XP Multiplier (5X, 5 minutes)',
+    once = false,
+    price = function(self)
+      return self.base_price
     end,
   },
 }
 
-local all_items = {} ---@type table<string, Triforce.Items.FullSpec>
-local event = nil ---@type uv.uv_fs_event_t|nil|?
+local all_items, event = {}, nil ---@type table<string, Triforce.Items.FullSpec>, uv.uv_fs_event_t|nil|?
 
 local function setup_watch()
   if vim.g.triforce_items_loaded == 1 and event then
@@ -270,12 +277,10 @@ local function setup_watch()
 
   event:start(items_path, {}, function(err, filename, events)
     if err or not events.change then
-      if err then
-        vim.notify(('Error while watching events for `%s`:\n%s'):format(filename, err), ERROR)
-      end
-      return
+      vim.notify(('Error while watching events for `%s`:\n%s'):format(filename, err or ''), ERROR)
+    else
+      M.read_items()
     end
-    M.read_items()
   end)
 
   vim.api.nvim_create_autocmd('VimLeavePre', {
@@ -310,7 +315,7 @@ function M.get_items(json)
         tbl[name] = v
       end
     end
-    json_items[k] = tbl
+    json_items[k] = vim.deepcopy(tbl)
   end
   return json_items
 end
@@ -334,19 +339,16 @@ function M.read_items()
 
   local ok, raw_data = pcall(vim.uv.fs_read, fd, stat.size)
   vim.uv.fs_close(fd)
-  if not (ok and raw_data) then
-    return
-  end
-
-  local json_ok, data = pcall(vim.json.decode, raw_data) ---@type boolean, table<string, Triforce.Items.FullSpec>|nil|?
-  if not (json_ok and data) then
-    return
-  end
-  for name, item in pairs(data) do
-    for k, v in pairs(item) do
-      ---@cast k string
-      if all_items[name][k] == nil then
-        all_items[name][k] = v
+  if ok and raw_data then
+    local json_ok, data = pcall(vim.json.decode, raw_data) ---@type boolean, table<string, Triforce.Items.FullSpec>|nil|?
+    if json_ok and data then
+      for name, item in pairs(data) do
+        for k, v in pairs(item) do
+          ---@cast k string
+          if all_items[name][k] == nil then
+            all_items[name][k] = v
+          end
+        end
       end
     end
   end
@@ -383,20 +385,18 @@ end
 ---@param id string
 ---@return integer|nil|? price
 function M.item_price(id)
-  if not (all_items[id] and all_items[id].price) then
-    return
+  if all_items[id] and all_items[id].price then
+    return all_items[id].price(all_items[id], require('triforce.tracker').get_stats())
   end
-  return all_items[id].price(all_items[id], require('triforce.tracker').get_stats())
 end
 
 ---@param id string
 ---@return boolean|nil|? capped
 ---@return number|nil|? level
 function M.item_capped(id)
-  if not all_items[id] then
-    return
+  if all_items[id] then
+    return all_items[id].level_cap ~= 0, all_items[id].level_cap
   end
-  return all_items[id].level_cap ~= 0, all_items[id].level_cap
 end
 
 ---@param id string
@@ -435,6 +435,7 @@ end
 ---@param opts TriforceConfigDefaults.Items
 function M.setup(opts)
   Util.validate({ opts = { opts, { 'table' } } })
+
   if vim.g.triforce_items_loaded ~= 1 and opts.enabled then
     for id, item_spec in pairs(items) do
       all_items[id] = Item.new(item_spec)

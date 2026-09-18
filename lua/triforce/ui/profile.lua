@@ -28,34 +28,14 @@ local Util = require('triforce.util')
 
 local ns = vim.api.nvim_create_namespace('TriforceProfile')
 
-local items_per_page = 5 ---@type integer
-local achievements_per_page = 5 ---@type integer
-local achievements_page = 1 ---@type integer
+local items_per_page, achievements_per_page, achievements_page = 5, 5, 1 ---@type integer, integer, integer
 local max_language_entries = 13 ---@type integer
 local levels_per_page = 5 ---@type integer
-local items_page = 1 ---@type integer
-local levels_page = 1 ---@type integer
-local current_tab = 1 ---@type Triforce.Ui.Profile.TabIndeces
-local dimensions = { ---@type Triforce.UIDimensions
-  width = math.floor(vim.o.columns * 0.76),
-  height = math.floor(vim.o.lines * 0.9),
-  xpad = 2,
-}
+local items_page, levels_page, current_tab = 1, 1, 1 ---@type integer, integer, integer
+local dimensions = { height = math.floor(vim.o.lines * 0.9), width = math.floor(vim.o.columns * 0.76), xpad = 2 } ---@type Triforce.UIDimensions
 
-local all_tabs = { ---@type string[]
-  '1   Stats',
-  '2  󰌌 Achievements',
-  '3   Languages',
-  '4  󱡁 Levels',
-  '5  Items',
-}
-local tabs_map = { ---@type Triforce.Ui.Profile.TabsMap
-  stats = 1,
-  achievements = 2,
-  languages = 3,
-  levels = 4,
-  items = 5,
-}
+local all_tabs = { '1   Stats', '2  󰌌 Achievements', '3   Languages', '4  󱡁 Levels', '5  Items' } ---@type string[]
+local tabs_map = { achievements = 2, items = 5, languages = 3, levels = 4, stats = 1 } ---@type Triforce.Ui.Profile.TabsMap
 
 ---@class Triforce.Ui.Profile
 local Profile = {}
@@ -78,35 +58,30 @@ end
 ---Close up profile window
 function Profile.close()
   local backdrop = require('triforce.config').get().backdrop
-  if not (dimensions.float or (backdrop and backdrop.enabled and dimensions.dim_float)) then
-    return
+  if dimensions.float or (backdrop and backdrop.enabled and dimensions.dim_float) then
+    if backdrop and backdrop.enabled then
+      pcall(vim.api.nvim_buf_delete, dimensions.dim_float.buf, { force = true })
+      pcall(vim.api.nvim_win_close, dimensions.dim_float.win, true)
+      dimensions.dim_float = nil
+    end
+
+    pcall(vim.api.nvim_win_close, dimensions.float.win, true)
+    pcall(vim.api.nvim_buf_delete, dimensions.float.buf, { force = true })
+
+    dimensions.float = nil
   end
-
-  if backdrop and backdrop.enabled then
-    pcall(vim.api.nvim_buf_delete, dimensions.dim_float.buf, { force = true })
-    pcall(vim.api.nvim_win_close, dimensions.dim_float.win, true)
-    dimensions.dim_float = nil
-  end
-
-  pcall(vim.api.nvim_win_close, dimensions.float.win, true)
-  pcall(vim.api.nvim_buf_delete, dimensions.float.buf, { force = true })
-
-  dimensions.float = nil
 end
 
 ---Toggle profile window
 ---@param tab? integer
 function Profile.toggle(tab)
   Util.validate({ tab = { tab, { 'number', 'nil' }, true } })
-  tab = tab or nil
 
-  local Config = require('triforce.config')
-  if not (dimensions.float and (Config.get().backdrop.enabled and dimensions.dim_float)) then
-    Profile.open(tab)
-    return
+  if not (dimensions.float and (require('triforce.config').get().backdrop.enabled and dimensions.dim_float)) then
+    Profile.open(tab or nil)
+  else
+    Profile.close()
   end
-
-  Profile.close()
 end
 
 ---@param key PaginationKey
@@ -121,27 +96,25 @@ function Profile.pagination_fun(key)
 
     if current_tab == 2 then
       if vim.list_contains({ 'h', 'H', '<Left>' }, key) and achievements_page > 1 then
-        achievements_page = achievements_page - 1
+        achievements_page = Util.add(achievements_page, -1)
         Profile.redraw()
       elseif vim.list_contains({ 'l', 'L', '<Right>' }, key) then
         local stats = require('triforce.tracker').get_stats()
-        if stats then
-          local achievements = require('triforce.achievement').get_all_achievements(stats)
-          if achievements_page < math.ceil(#achievements / achievements_per_page) then
-            achievements_page = achievements_page + 1
-            Profile.redraw()
-          end
+        if
+          stats
+          and achievements_page
+            < math.ceil(#require('triforce.achievement').get_all_achievements(stats) / achievements_per_page)
+        then
+          achievements_page = achievements_page + 1
+          Profile.redraw()
         end
       end
-
       return
     end
 
-    if vim.list_contains({ 'h', 'H', '<Left>' }, key) then
-      if levels_page > 1 then
-        levels_page = levels_page - 1
-        Profile.redraw()
-      end
+    if vim.list_contains({ 'h', 'H', '<Left>' }, key) and levels_page > 1 then
+      levels_page = Util.add(levels_page, -1)
+      Profile.redraw()
     elseif vim.list_contains({ 'l', 'L', '<Right>' }, key) then
       local stats = require('triforce.tracker').get_stats()
       if stats and levels_page < math.ceil(#(require('triforce.levels').get_all_levels(stats)) / levels_per_page) then
@@ -159,20 +132,14 @@ function Profile.redraw()
   end
 
   vim.api.nvim_set_option_value('modifiable', true, { buf = dimensions.float.buf })
-  volt.gen_data({
-    {
-      buf = dimensions.float.buf,
-      layout = Profile.get_layout(),
-      xpad = dimensions.xpad,
-      ns = ns,
-    },
-  })
+  volt.gen_data({ { buf = dimensions.float.buf, layout = Profile.get_layout(), ns = ns, xpad = dimensions.xpad } })
 
-  local new_height = require('volt.state')[dimensions.float.buf].h
-  local current_lines = vim.api.nvim_buf_line_count(dimensions.float.buf)
+  local new_height, current_lines =
+    require('volt.state')[dimensions.float.buf].h, vim.api.nvim_buf_line_count(dimensions.float.buf)
+
   if current_lines < new_height then
     local empty_lines = {}
-    for _ = 1, (new_height - current_lines) do
+    for _ = 1, Util.add(new_height, -current_lines) do
       table.insert(empty_lines, '')
     end
     vim.api.nvim_buf_set_lines(dimensions.float.buf, current_lines, current_lines, false, empty_lines)
@@ -200,7 +167,6 @@ function Profile.get_activity_hl(lines)
   if lines <= 300 then
     return 'TriforceHeat1' -- Medium-bright
   end
-
   return 'TriforceHeat0' -- Brightest
 end
 
@@ -212,30 +178,22 @@ function Profile.build_activity_heatmap(stats)
     return { { { '  No activity data yet', 'Comment' } } }
   end
 
-  local year = os.date('%Y')
   local current_month = tonumber(os.date('%m'), 10)
   local months_to_show = 9
   local squares_len = months_to_show * 4
-  local current_year_num = tonumber(year, 10)
+  local current_year_num = tonumber(os.date('%Y'), 10)
   local month_seq = {} ---@type { month: integer, year: integer }[]
   for offset = months_to_show - 1, 0, -1 do
-    local m = current_month - offset
-    local y = current_year_num
+    local m, y = current_month - offset, current_year_num
     while m < 1 do
-      m = m + 12
-      y = y - 1
+      m, y = Util.add(m, 12), Util.add(y, -1)
     end
     table.insert(month_seq, { month = m, year = y })
   end
 
-  local lines = { ---@type string[][][]|string[][]
-    { { '   ', 'TriforceGreen' }, { '  ' } },
-    {},
-  }
-
+  local lines = { { { '   ', 'TriforceGreen' }, { '  ' } }, {} } ---@type string[][][]|string[][]
   for idx, my in ipairs(month_seq) do
-    local month_idx = my.month
-    table.insert(lines[1], { '  ' .. MONTHS[month_idx] .. '  ', 'TriforceRed' })
+    table.insert(lines[1], { '  ' .. MONTHS[my.month] .. '  ', 'TriforceRed' })
     table.insert(lines[1], { idx == #month_seq and '' or '  ' })
   end
 
@@ -243,43 +201,38 @@ function Profile.build_activity_heatmap(stats)
   table.insert(lines[2], hrline[1])
 
   for day = 1, 7 do
-    local line = { { DAYS[day], 'Comment' }, { ' │ ', 'Comment' } }
-    table.insert(lines, line)
+    table.insert(lines, { { DAYS[day], 'Comment' }, { ' │ ', 'Comment' } })
   end
 
   for idx, my in ipairs(month_seq) do
-    local month_idx = my.month
-    local month_year = tostring(my.year)
-    local start_day = Util.getday_i(1, month_idx, my.year)
-
+    local month_year, start_day = tostring(my.year), Util.getday_i(1, my.month, my.year)
     if idx == 1 and start_day ~= 1 then
       for n = 1, start_day - 1 do
         table.insert(lines[n + 2], { '  ' })
       end
     end
 
-    for day_num = 1, Util.days_in_month(month_idx, my.year) do
-      local day_of_week = Util.getday_i(day_num, month_idx, my.year)
-      local date_key = ('%s-%s-%s'):format(month_year, Util.double_digits(month_idx), Util.double_digits(day_num))
-      table.insert(lines[day_of_week + 2], { '󱓻 ', Profile.get_activity_hl(stats.daily_activity[date_key] or 0) })
+    for day_num = 1, Util.days_in_month(my.month, my.year) do
+      table.insert(lines[Util.getday_i(day_num, my.month, my.year) + 2], {
+        '󱓻 ',
+        Profile.get_activity_hl(
+          stats.daily_activity[('%s-%s-%s'):format(
+            month_year,
+            Util.double_digits(my.month),
+            Util.double_digits(day_num)
+          )] or 0
+        ),
+      })
     end
   end
 
   voltui.border(lines)
 
-  local header = { ---@type string[][][]|string[][]
-    { ' 󰃭 Activity' },
-    { '_pad_' },
-    { 'Less ' },
-    { ' More' },
-  }
-
+  local header = { { ' 󰃭 Activity' }, { '_pad_' }, { 'Less ' }, { ' More' } } ---@type string[][][]|string[][]
   for _, hl in ipairs({ 'TriforceHeat4', 'TriforceHeat3', 'TriforceHeat2', 'TriforceHeat1', 'TriforceHeat0' }) do
     table.insert(header, #header, { '󱓻 ', hl })
   end
-
   table.insert(lines, 1, voltui.hpad(header, dimensions.width - (2 * dimensions.xpad) - 4))
-
   return lines
 end
 
@@ -302,11 +255,10 @@ function Profile.build_stats_tab()
 
   local barlen = math.floor((dimensions.width - dimensions.xpad * 2) / 3) - 1
   local session_goal = math.ceil(stats.sessions / 100) * 100
-  session_goal = session_goal == stats.sessions and (session_goal + 100) or session_goal
-  local session_progress = (stats.sessions / session_goal) * 100
-
+  session_goal = Util.add(session_goal, session_goal == stats.sessions and 100 or 0)
+  local session_progress = stats.sessions * 100 / session_goal
   local current_hours = stats.time_coding / 3600
-  local time_goal_hours
+  local time_goal_hours ---@type integer
   if current_hours < 10 then
     time_goal_hours = 10
   elseif current_hours < 25 then
@@ -318,7 +270,7 @@ function Profile.build_stats_tab()
   else
     time_goal_hours = math.ceil(current_hours / 100) * 100
     if time_goal_hours == current_hours then
-      time_goal_hours = time_goal_hours + 100
+      time_goal_hours = Util.add(time_goal_hours, 100)
     end
   end
   local time_goal = time_goal_hours * 3600
@@ -928,12 +880,12 @@ function Profile.cycle_tab(back, num)
 
   if new_height ~= dimensions.height then
     vim.api.nvim_win_set_config(dimensions.float.win, {
-      row = math.floor((vim.o.lines - new_height) / 2),
+      border = 'none',
       col = math.floor((vim.o.columns - dimensions.width) / 2),
-      width = dimensions.width,
       height = new_height,
       relative = 'editor',
-      border = 'none',
+      row = math.floor((vim.o.lines - new_height) / 2),
+      width = dimensions.width,
     })
     dimensions.height = new_height
   end
@@ -963,9 +915,7 @@ function Profile.open(tab)
   local backdrop = require('triforce.config').get().backdrop
 
   current_tab = tab
-
-  dimensions.float = {}
-  dimensions.float.buf = vim.api.nvim_create_buf(false, true)
+  dimensions.float = { buf = vim.api.nvim_create_buf(false, true) }
 
   vim.api.nvim_set_option_value('filetype', 'triforce-profile', { buf = dimensions.float.buf })
 
@@ -973,37 +923,30 @@ function Profile.open(tab)
     dimensions.dim_float = {}
     dimensions.dim_float.buf = vim.api.nvim_create_buf(false, true)
     dimensions.dim_float.win = vim.api.nvim_open_win(dimensions.dim_float.buf, false, {
-      focusable = false,
-      row = 1,
+      border = 'none',
       col = 0,
-      width = vim.o.columns,
+      focusable = false,
       height = vim.o.lines - 2,
       relative = 'editor',
+      row = 1,
       style = 'minimal',
-      border = 'none',
+      width = vim.o.columns,
     })
 
     vim.api.nvim_set_option_value('winblend', backdrop.winblend or 20, { win = dimensions.dim_float.win })
   end
 
-  volt.gen_data({
-    {
-      buf = dimensions.float.buf,
-      layout = Profile.get_layout(),
-      xpad = dimensions.xpad,
-      ns = ns,
-    },
-  })
+  volt.gen_data({ { buf = dimensions.float.buf, layout = Profile.get_layout(), ns = ns, xpad = dimensions.xpad } })
 
   dimensions.height = require('volt.state')[dimensions.float.buf].h
   dimensions.float.win = vim.api.nvim_open_win(dimensions.float.buf, true, {
-    row = math.floor((vim.o.lines - dimensions.height) / 2),
+    border = 'none',
     col = math.floor((vim.o.columns - dimensions.width) / 2),
-    width = dimensions.width,
     height = dimensions.height,
     relative = 'editor',
+    row = math.floor((vim.o.lines - dimensions.height) / 2),
     style = 'minimal',
-    border = 'none',
+    width = dimensions.width,
     zindex = 50,
   })
 
@@ -1013,9 +956,9 @@ function Profile.open(tab)
 
   volt.run(dimensions.float.buf, { h = dimensions.height, w = dimensions.width - dimensions.xpad * 2 })
   volt.mappings({
+    after_close = Profile.close,
     bufs = { dimensions.float.buf, backdrop.enabled and dimensions.dim_float.buf or nil },
     winclosed_event = true,
-    after_close = Profile.close,
   })
 
   vim.keymap.set('n', '<Tab>', Profile.cycle_tab, { buffer = dimensions.float.buf })

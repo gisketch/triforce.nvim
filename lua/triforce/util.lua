@@ -1,6 +1,4 @@
----@module 'triforce.types'
-
-local ERROR = vim.log.levels.ERROR
+---@module 'triforce._meta'
 
 ---@enum DaysPerMonth
 local DAYS_PER_MONTH = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
@@ -9,19 +7,28 @@ local DAYS_PER_MONTH = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
 ---@class Triforce.Util
 local M = {}
 
+---@generic Number: number
+---@param var Number
+---@param ... Number
+---@return Number result
+function M.add(var, ...)
+  M.validate({ var = { var, { 'number' } } })
+
+  for i = 1, select('#', ...) do
+    var = var + select(i, ...)
+  end
+  return var
+end
+
 ---@param T table<string|integer, any>
 ---@return integer len
 ---@nodiscard
 function M.get_dict_size(T)
   M.validate({ T = { T, { 'table' } } })
 
-  if vim.tbl_isempty(T) then
-    return 0
-  end
-
   local len = 0
   for _ in pairs(T) do
-    len = len + 1
+    len = M.add(len, 1)
   end
   return len
 end
@@ -34,11 +41,7 @@ end
 function M.mod_exists(mod)
   M.validate({ mod = { mod, { 'string' } } })
 
-  if mod == '' then
-    return false
-  end
-  local exists = pcall(require, mod)
-  return exists
+  return (pcall(require, mod))
 end
 
 ---@overload fun(option: string, param: 'scope', param_value: 'local'|'global'): value: any
@@ -51,22 +54,22 @@ function M.optget(option, param, param_value)
     param_value = { param_value, { 'string', 'number', 'nil' }, true },
   })
   if not vim.list_contains({ 'scope', 'ft', 'buf', 'win' }, param) then
-    error(('Bad parameter: `%s`\nCan only accept `scope`, `ft`, `buf` or `win`!'):format(vim.inspect(param)), ERROR)
+    error(('Bad parameter: `%s`\nCan only accept `scope`, `ft`, `buf` or `win`!'):format(vim.inspect(param)))
   end
   if param == 'scope' then
     param_value = param_value or 'local'
     if not vim.list_contains({ 'global', 'local' }, param_value) then
-      error(('Bad param value `%s`\nCan only accept `global` or `local`!'):format(vim.inspect(param_value)), ERROR)
+      error(('Bad param value `%s`\nCan only accept `global` or `local`!'):format(vim.inspect(param_value)))
     end
   end
   if param == 'ft' and (not param_value or type(param_value) ~= 'string') then
-    error('Missing/bad value for `ft` parameter!', ERROR)
+    error('Missing/bad value for `ft` parameter!')
   end
   if
     vim.list_contains({ 'win', 'buf' }, param)
     and not (param_value and type(param_value) == 'number' and M.is_int(param_value, param_value >= 0))
   then
-    error('Missing/bad value for `win`/`buf` parameter!', ERROR)
+    error('Missing/bad value for `win`/`buf` parameter!')
   end
 
   return vim.api.nvim_get_option_value(option, { [param] = param_value })
@@ -82,25 +85,25 @@ function M.optset(option, value, param, param_value)
     param_value = { param_value, { 'string', 'number', 'nil' }, true },
   })
   if value == nil then
-    error('Empty option value is unacceptable!', ERROR)
+    error('Empty option value is unacceptable!')
   end
   if not vim.list_contains({ 'scope', 'ft', 'buf', 'win' }, param) then
-    error(('Bad parameter: `%s`\nCan only accept `scope`, `ft`, `buf` or `win`!'):format(vim.inspect(param)), ERROR)
+    error(('Bad parameter: `%s`\nCan only accept `scope`, `ft`, `buf` or `win`!'):format(vim.inspect(param)))
   end
   if param == 'scope' then
     param_value = param_value or 'local'
     if not vim.list_contains({ 'global', 'local' }, param_value) then
-      error(('Bad param value `%s`\nCan only accept `global` or `local`!'):format(vim.inspect(param_value)), ERROR)
+      error(('Bad param value `%s`\nCan only accept `global` or `local`!'):format(vim.inspect(param_value)))
     end
   end
   if param == 'ft' and (not param_value or type(param_value) ~= 'string') then
-    error('Missing/bad value for `ft` parameter!', ERROR)
+    error('Missing/bad value for `ft` parameter!')
   end
   if
     vim.list_contains({ 'win', 'buf' }, param)
     and not (param_value and type(param_value) == 'number' and M.is_int(param_value, param_value >= 0))
   then
-    error('Missing/bad value for `win`/`buf` parameter!', ERROR)
+    error('Missing/bad value for `win`/`buf` parameter!')
   end
 
   vim.api.nvim_set_option_value(option, value, { [param] = param_value })
@@ -164,13 +167,12 @@ function M.range(x, y, step)
   })
 
   if not M.is_int(x) then
-    error(('Argument `x` is not an integer: `%s`'):format(x), ERROR)
+    error(('Argument `x` is not an integer: `%s`'):format(x))
   end
 
   local range_list = {} ---@type integer[]
   if not (y or step) then
-    y = x
-    x = 1
+    y, x = x, 1
     step = x <= y and 1 or -1
 
     table.insert(range_list, x)
@@ -179,7 +181,7 @@ function M.range(x, y, step)
     end
   elseif y and not step then
     if not M.is_int(y) then
-      error(('Argument `y` is not an integer: `%s`'):format(y), ERROR)
+      error(('Argument `y` is not an integer: `%s`'):format(y))
     end
     step = x <= y and 1 or -1
 
@@ -189,18 +191,16 @@ function M.range(x, y, step)
     end
   elseif y and step then
     if not M.is_int({ y, step }) then
-      error('Arguments `y` and/or `step` are not an integer!', ERROR)
+      error('Arguments `y` and/or `step` are not an integer!')
     end
     if step == 0 then
-      error('Argument `step` cannot be `0`!', ERROR)
+      error('Argument `step` cannot be `0`!')
     end
     if x > y and step >= 1 then
-      error('Index out of bounds!', ERROR)
+      error('Index out of bounds!')
     end
     if x > y and step <= -1 then
-      local p = x
-      x = y
-      y = p
+      x, y = y, x
       step = step * -1
     end
 
@@ -209,7 +209,7 @@ function M.range(x, y, step)
       table.insert(range_list, v)
     end
   else
-    error(('Argument `y` is nil while `step` is not: `%s`'):format(step), ERROR)
+    error(('Argument `y` is nil while `step` is not: `%s`'):format(step))
   end
 
   table.sort(range_list)
@@ -221,7 +221,7 @@ end
 function M.is_leap(year)
   M.validate({ year = { year, { 'number' } } })
   if not M.is_int(year) then
-    error(('Not an integer: `%s`'):format(year), ERROR)
+    error(('Not an integer: `%s`'):format(year))
   end
 
   return (year % 4 == 0 and year % 100 ~= 0) or (year % 400 == 0)
@@ -237,7 +237,7 @@ function M.days_in_month(month, year)
   })
 
   if not (M.is_int(month) and vim.list_contains(M.range(12), month)) then
-    error('Cannot calculate days in month!', ERROR)
+    error('Cannot calculate days in month!')
   end
 
   if month ~= 2 then
@@ -275,8 +275,7 @@ function M.prepare_for_save(stats)
   return copy
 end
 
----@generic T
----@param x T[]|T
+---@param x number[]|number
 ---@param cond? boolean
 ---@return boolean int
 function M.is_int(x, cond)
@@ -288,8 +287,7 @@ function M.is_int(x, cond)
     cond = true
   end
 
-  if M.is_type('number', x) then
-    ---@cast x number
+  if type(x) == 'number' then
     return x == math.floor(x) and x == math.ceil(x) and cond
   end
 
@@ -411,7 +409,6 @@ function M.get_total_xp_for_level(level, level_config)
   if level > level_config.tier_10.min_level then
     total_xp = total_xp + ((level - level_config.tier_10.min_level) * level_config.tier_10.xp_per_level)
   end
-
   return total_xp
 end
 
@@ -448,7 +445,7 @@ function M.cycle_range(curr, first, last, back)
   end
 
   if not M.is_int({ curr, first, last }) then
-    error('Value is not an integer!', ERROR)
+    error('Value is not an integer!')
   end
 
   if last < first then
@@ -456,7 +453,7 @@ function M.cycle_range(curr, first, last, back)
   end
 
   if curr > last or curr < first then
-    error('Number to be cycled is out of range!', ERROR)
+    error('Number to be cycled is out of range!')
   end
 
   local cycled = curr + 1 > last and first or curr + 1
@@ -498,7 +495,7 @@ end
 local Util = setmetatable(M, {
   __index = M,
   __newindex = function()
-    error('`triforce.util` is read-only!', ERROR)
+    error('`triforce.util` is read-only!')
   end,
 })
 

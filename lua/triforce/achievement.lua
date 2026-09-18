@@ -1,6 +1,5 @@
----@module 'triforce.types'
+---@module 'triforce._meta'
 
-local ERROR = vim.log.levels.ERROR
 local Util = require('triforce.util')
 
 ---@class Triforce.Achievements
@@ -209,22 +208,22 @@ function M.new_achievements(achievement, stats)
 
   ---@cast achievement Achievement
   Util.validate({
-    ['achievement.id'] = { achievement.id, { 'string' } },
     ['achievement.check'] = { achievement.check, { 'function' } },
-    ['achievement.name'] = { achievement.name, { 'string' } },
     ['achievement.desc'] = { achievement.desc, { 'string', 'nil' }, true },
     ['achievement.icon'] = { achievement.icon, { 'string', 'nil' }, true },
+    ['achievement.id'] = { achievement.id, { 'string' } },
+    ['achievement.name'] = { achievement.name, { 'string' } },
   })
 
   if vim.list_contains({ achievement.id, achievement.name }, '') then
-    vim.notify('Either new achievement ID or name are empty!', ERROR)
+    vim.notify('Either new achievement ID or name are empty!', vim.log.levels.ERROR)
     return
   end
 
   achievement.desc = achievement.desc or 'No Description'
   achievement.icon = achievement.icon or ''
 
-  local new = true ---@type boolean
+  local new = true
   for i, achv in ipairs(achievements) do
     if achv.id == achievement.id then
       achievements[i] = achievement
@@ -250,11 +249,11 @@ function M.check_achievements(stats)
     if achievement.check(stats) and not stats.achievements[achievement.id] then
       stats.achievements[achievement.id] = true
       table.insert(newly_unlocked, {
-        id = achievement.id,
         check = achievement.check,
-        name = achievement.name,
         desc = achievement.desc or '',
         icon = achievement.icon or '',
+        id = achievement.id,
+        name = achievement.name,
       })
     end
   end

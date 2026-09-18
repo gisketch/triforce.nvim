@@ -1,4 +1,4 @@
----@module 'triforce.types'
+---@module 'triforce._meta'
 
 local Util = require('triforce.util')
 
@@ -91,19 +91,17 @@ function M.new_config(opts)
   config = vim.tbl_deep_extend('keep', opts or {}, defaults) --[[@as TriforceConfigDefaults]]
 
   local keys = vim.tbl_keys(M.defaults()) --[[@as string[]\]]
-  for k, _ in pairs(config) do
+  for k in pairs(config) do
     ---@cast k string
     if not vim.list_contains(keys, k) then
       config[k] = nil
     end
   end
 
-  if config.backdrop and config.backdrop.winblend then
-    if config.backdrop.winblend >= 100 then
-      config.backdrop.winblend = 100
-    elseif config.backdrop.winblend <= 0 then
-      config.backdrop.winblend = 0
-    end
+  if config.backdrop and config.backdrop.winblend and config.backdrop.winblend >= 100 then
+    config.backdrop.winblend = 100
+  elseif config.backdrop and config.backdrop.winblend and config.backdrop.winblend <= 0 then
+    config.backdrop.winblend = 0
   end
 end
 
@@ -115,18 +113,21 @@ function M.setup(opts)
   opts = opts or {}
 
   ---@diagnostic disable:undefined-field
-  if opts.keymap and opts.keymap.show_profile and opts.keymap.show_profile ~= '' then
-    if vim.g.triforce_keymap_deprecation_warning ~= 1 then
-      vim.notify(
-        [[triforce.nvim - WARNING: The `keymap` setup option has been deprecated.
+  if
+    opts.keymap
+    and opts.keymap.show_profile
+    and opts.keymap.show_profile ~= ''
+    and vim.g.triforce_keymap_deprecation_warning ~= 1
+  then
+    vim.notify(
+      [[triforce.nvim - WARNING: The `keymap` setup option has been deprecated.
 From now on you'll have to make your Triforce keymap manually. Please read the plugin's README
 for more information.
 
 Sorry for the inconvenience!]],
-        vim.log.levels.WARN
-      )
-      vim.g.triforce_keymap_deprecation_warning = 1
-    end
+      vim.log.levels.WARN
+    )
+    vim.g.triforce_keymap_deprecation_warning = 1
   end
   ---@diagnostic enable:undefined-field
 
@@ -137,21 +138,18 @@ Sorry for the inconvenience!]],
   end
 
   local stats_module = require('triforce.stats')
-  local langs_module = require('triforce.languages')
-
-  -- Apply custom level progression to stats module
-  if config.level_progression then
+  if config.level_progression then -- Apply custom level progression to stats module
     stats_module.set_level_config(config.level_progression)
     stats_module.calibrate_tiers()
   end
 
   -- Register custom languages if provided
   if config.custom_languages then
-    langs_module.register_custom_languages(config.custom_languages)
+    require('triforce.languages').register_custom_languages(config.custom_languages)
   end
 
   if config.ignore_ft then
-    langs_module.exclude_langs(config.ignore_ft)
+    require('triforce.languages').exclude_langs(config.ignore_ft)
   end
 
   config.icon_engine = (config.icon_engine and vim.list_contains({ 'builtin', 'mini' }, config.icon_engine))

@@ -41,10 +41,7 @@
 --- ---
 ---@field xp number
 
-local ERROR = vim.log.levels.ERROR
-local WARN = vim.log.levels.WARN
 local Util = require('triforce.util')
-local Languages = require('triforce.languages')
 local xp_multiplier = 1 ---@type number
 
 local calibrated ---@type boolean
@@ -61,11 +58,10 @@ end
 ---@param n number
 function M.set_xp_multiplier(n)
   Util.validate({ n = { n, { 'number' } } })
-  if n <= 0 then
-    return
-  end
 
-  xp_multiplier = n
+  if n > 0 then
+    xp_multiplier = n
+  end
 end
 
 ---Configurable level progression.
@@ -97,7 +93,7 @@ end
 
 ---@return Stats stats
 function M.default_stats()
-  local stats = { ---@type Stats
+  return { ---@type Stats
     achievements = {},
     chars_by_language = {},
     chars_typed = 0,
@@ -113,8 +109,6 @@ function M.default_stats()
     time_coding = 0,
     xp = 0,
   }
-
-  return stats
 end
 
 ---Get the stats file path
@@ -180,11 +174,11 @@ function M.load(debug)
     vim.uv.fs_close(backup_fd)
 
     if not bytes then
-      vim.notify(('Corrupted stats could not be backed up to `%s`'):format(backup), WARN)
+      vim.notify(('Corrupted stats could not be backed up to `%s`'):format(backup), vim.log.levels.WARN)
     end
 
     if debug then
-      vim.notify(('Corrupted stats backed up to `%s`'):format(backup), WARN)
+      vim.notify(('Corrupted stats backed up to `%s`'):format(backup), vim.log.levels.WARN)
     end
 
     return M.default_stats()
@@ -223,7 +217,7 @@ function M.load(debug)
           calculated_level,
           merged.xp
         ),
-        WARN,
+        vim.log.levels.WARN,
         { title = ' Triforce' }
       )
     end
@@ -243,7 +237,7 @@ function M.save(stats, path)
     path = { path, { 'string', 'nil' }, true },
   })
   if not (stats and M.validate_stats(stats)) then
-    vim.notify('Unable to save stats!', ERROR)
+    vim.notify('Unable to save stats!', vim.log.levels.ERROR)
     return false
   end
   path = (path and Util.is_file(path)) and path or M.get_stats_path()
@@ -251,7 +245,7 @@ function M.save(stats, path)
   local data_to_save = Util.prepare_for_save(stats)
   local ok, json = pcall(vim.json.encode, data_to_save)
   if not (ok and json) then
-    vim.notify('Failed to encode stats to JSON', ERROR)
+    vim.notify('Failed to encode stats to JSON', vim.log.levels.ERROR)
     return false
   end
 
@@ -269,14 +263,14 @@ function M.save(stats, path)
 
   fd = vim.uv.fs_open(path, 'w', tonumber('644', 8))
   if not fd then
-    vim.notify(('Failed to write stats file to: %s'):format(vim.fn.fnamemodify(path, ':~')), ERROR)
+    vim.notify(('Failed to write stats file to: %s'):format(vim.fn.fnamemodify(path, ':~')), vim.log.levels.ERROR)
     return false
   end
 
   local write_ok = vim.uv.fs_write(fd, json)
   vim.uv.fs_close(fd)
   if not write_ok then
-    vim.notify('Failed to write stats file to: ' .. path, ERROR)
+    vim.notify('Failed to write stats file to: ' .. path, vim.log.levels.ERROR)
     return false
   end
   return true
@@ -499,9 +493,9 @@ function M.add_xp(stats, amount, currency)
     currency = true
   end
 
+  local Languages = require('triforce.languages')
   local ft = Util.optget('filetype', 'buf', vim.api.nvim_get_current_buf())
-  local keys = vim.tbl_keys(Languages.get_langs()) --[[@as string[]\]]
-  if vim.list_contains(Languages.get_ignored_langs(), ft) or not vim.list_contains(keys, ft) then
+  if vim.list_contains(Languages.get_ignored_langs(), ft) or not Languages.get_langs()[ft] then
     return false, stats
   end
 
@@ -512,7 +506,6 @@ function M.add_xp(stats, amount, currency)
   if currency and require('triforce.config').get().items.enabled then
     stats.currency = M.add_currency(stats, math.floor(amount * 2 / 5))
   end
-
   return stats.level > old_level, stats
 end
 
@@ -521,8 +514,7 @@ end
 function M.start_session(stats)
   Util.validate({ stats = { stats, { 'table' } } })
 
-  stats.sessions = stats.sessions + 1
-  stats.last_session_start = os.time()
+  stats.sessions, stats.last_session_start = Util.add(stats.sessions, 1), os.time()
 end
 
 ---End the current session
@@ -571,40 +563,24 @@ function M.calculate_streaks(stats)
     return 0, 0
   end
 
-  local current_streak = 0
-  local longest_streak = 0
-  local streak = 0
-  local today = Util.get_date_string()
-  local yesterday = Util.get_date_string(os.time() - 86400)
-
-  -- Calculate streaks by iterating through sorted dates
-  for i = #dates, 1, -1 do
+  local current_streak, longest_streak, streak = 0, 0, 0
+  local today, yesterday = Util.get_date_string(), Util.get_date_string(os.time() - 86400)
+  for i = #dates, 1, -1 do -- Calculate streaks by iterating through sorted dates
     local date = dates[i]
 
-    if i == #dates then
-      -- Start with most recent date
-      if vim.list_contains({ today, yesterday }, date) then
-        streak = 1
-        current_streak = 1
+    if i == #dates and vim.list_contains({ today, yesterday }, date) then -- Start with most recent date
+      streak = 1
+      current_streak = 1
+    elseif i ~= #dates and math.floor((get_day_start(dates[i + 1]) - get_day_start(date)) / 86400) == 1 then
+      streak = Util.add(streak, 1) -- Consecutive day
+      if i == #dates - 1 or vim.list_contains({ today, yesterday }, date) then
+        current_streak = streak
       end
-    else
-      local current_time = get_day_start(date)
-      local next_time = get_day_start(dates[i + 1])
-      local diff_days = math.floor((next_time - current_time) / 86400)
-
-      if diff_days == 1 then
-        -- Consecutive day
-        streak = streak + 1
-        if i == #dates - 1 or vim.list_contains({ today, yesterday }, date) then
-          current_streak = streak
-        end
-      else
-        -- Streak broken
-        if streak > longest_streak then
-          longest_streak = streak
-        end
-        streak = 1
+    elseif i ~= #dates then
+      if streak > longest_streak then -- Streak broken
+        longest_streak = streak
       end
+      streak = 1
     end
   end
 
@@ -636,12 +612,8 @@ function M.record_daily_activity(stats, lines_today)
   end
 
   local today = Util.get_date_string()
-  stats.daily_activity[today] = (stats.daily_activity[today] or 0) + lines_today
-
-  -- Update streaks
-  local current, longest = M.calculate_streaks(stats)
-  stats.current_streak = current
-  stats.longest_streak = longest
+  stats.daily_activity[today] = Util.add(stats.daily_activity[today] or 0, lines_today)
+  stats.current_streak, stats.longest_streak = M.calculate_streaks(stats) -- Update streaks
 
   return stats
 end
@@ -651,15 +623,10 @@ end
 function M.export_stats(stats)
   Util.validate({ stats = { stats, { 'table' } } })
 
-  local data = vim.split(vim.inspect(stats), '\n', { plain = true, trimempty = true })
-  local bufnr = vim.api.nvim_create_buf(true, true)
+  local data, bufnr = vim.split(vim.inspect(stats), '\n', { trimempty = true }), vim.api.nvim_create_buf(true, true)
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, data)
 
-  local win = vim.api.nvim_open_win(bufnr, true, {
-    noautocmd = true,
-    split = 'below',
-    style = 'minimal',
-  })
+  local win = vim.api.nvim_open_win(bufnr, true, { noautocmd = true, split = 'below', style = 'minimal' })
 
   Util.optset('filetype', 'lua', 'buf', bufnr)
   Util.optset('modified', false, 'buf', bufnr)
@@ -687,26 +654,25 @@ function M.export_to_json(stats, target, indent)
     target = { target, { 'string' } },
     indent = { indent, { 'string', 'nil' }, true },
   })
-  target = vim.fn.fnamemodify(target, ':p')
-  indent = (indent and indent ~= '') and indent or nil
+  target, indent = vim.fn.fnamemodify(target, ':p'), (indent and indent ~= '') and indent or nil
 
   local parent_stat = vim.uv.fs_stat(vim.fn.fnamemodify(target, ':h'))
   if not parent_stat or parent_stat.type ~= 'directory' then
-    error(('Target not in a valid directory: `%s`'):format(target), ERROR)
+    error(('Target not in a valid directory: `%s`'):format(target))
   end
   if vim.fn.isdirectory(target) == 1 then
-    error(('Target is a directory: `%s`'):format(target), ERROR)
+    error(('Target is a directory: `%s`'):format(target))
   end
 
   local fd = vim.uv.fs_open(target, 'w', tonumber('644', 8))
   if not fd then
-    error(('Unable to open target `%s`'):format(target), ERROR)
+    error(('Unable to open target `%s`'):format(target))
   end
 
   local ok, data = pcall(vim.json.encode, stats, { sort_keys = true, indent = indent })
   if not (ok and data) then
     vim.uv.fs_close(fd)
-    error('Unable to encode stats!', ERROR)
+    error('Unable to encode stats!')
   end
 
   vim.uv.fs_write(fd, data)
@@ -725,16 +691,16 @@ function M.export_to_md(stats, target)
 
   local parent_stat = vim.uv.fs_stat(vim.fn.fnamemodify(target, ':h'))
   if not parent_stat or parent_stat.type ~= 'directory' then
-    error(('Target not in a valid directory: `%s`'):format(target), ERROR)
+    error(('Target not in a valid directory: `%s`'):format(target))
   end
 
   if vim.list_contains({ '/', '\\' }, target:sub(-1, -1)) or vim.fn.isdirectory(target) == 1 then
-    error(('Target is a directory: `%s`'):format(target), ERROR)
+    error(('Target is a directory: `%s`'):format(target))
   end
 
   local fd = vim.uv.fs_open(target, 'w', tonumber('644', 8))
   if not fd then
-    error(('Unable to open target `%s`'):format(target), ERROR)
+    error(('Unable to open target `%s`'):format(target))
   end
 
   local data = '# Triforce Stats\n'
@@ -758,8 +724,9 @@ end
 ---@param stats Stats
 ---@return integer current
 function M.get_current_streak(stats)
-  local current = M.calculate_streaks(stats)
-  return current
+  Util.validate({ stats = { stats, { 'table' } } })
+
+  return (M.calculate_streaks(stats))
 end
 
 return M

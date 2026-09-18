@@ -1,4 +1,4 @@
----@module 'triforce.types'
+---@module 'triforce._meta'
 
 local Util = require('triforce.util')
 

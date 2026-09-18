@@ -1,8 +1,13 @@
 ---@class Triforce.Ui
 ---@field profile Triforce.Ui.Profile
 local M = setmetatable({}, {
-  __index = function(_, k)
+  __index = function(self, k)
+    local raw = rawget(self, k) or nil
+    if raw then
+      return raw
+    end
     if require('triforce.util').mod_exists('triforce.ui.' .. k) then
+      rawset(self, k, require('triforce.ui.' .. k))
       return require('triforce.ui.' .. k)
     end
   end,

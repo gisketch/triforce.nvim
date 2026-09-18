@@ -208,11 +208,9 @@ end
 ---@return Stats|nil|? stats
 local function get_stats()
   local ok, triforce = pcall(require, 'triforce')
-  if not ok then
-    return
+  if ok and triforce then
+    return triforce.get_stats()
   end
-
-  return triforce.get_stats()
 end
 
 ---Generate progress bar
@@ -228,8 +226,7 @@ local function create_progress_bar(current, max, length, chars)
     length = { length, { 'number', 'nil' }, true },
     chars = { chars, { 'table', 'nil' }, true },
   })
-  length = (length and length > 0) and length or M.get_defaults().level.bar.length
-  length = Util.is_int(length) and length or math.floor(length)
+  length = math.floor((length and length > 0) and length or M.get_defaults().level.bar.length)
   chars = chars or M.get_defaults().level.bar.chars
 
   if max == 0 then
@@ -251,8 +248,7 @@ local function format_time(seconds, format)
   })
   format = vim.list_contains({ 'short', 'long' }, format) and format or M.get_defaults().session_time.format
 
-  local hours = math.floor(seconds / 3600)
-  local minutes = math.floor((seconds % 3600) / 60)
+  local hours, minutes = math.floor(seconds / 3600), math.floor((seconds % 3600) / 60)
   if seconds < 60 then
     return format == 'short' and ('%ds'):format(seconds) or ('%02d:%02d:%02d'):format(hours, minutes, seconds)
   end
@@ -262,7 +258,6 @@ local function format_time(seconds, format)
   if hours > 0 then
     return ('%dh %dm'):format(hours, minutes)
   end
-
   return ('%dm'):format(minutes)
 end
 
@@ -272,19 +267,19 @@ end
 function M.currency(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
-  local stats = get_stats()
   local config = vim.tbl_deep_extend('force', cfg.currency, opts or {})
-  if not (stats and config.enabled) then
-    return ''
-  end
+  local stats = get_stats()
+  local component = ''
+  if stats and config.enabled then
+    local parts = {} ---@type string[]
+    if config.prefix then
+      table.insert(parts, config.prefix)
+    end
+    table.insert(parts, tostring(stats.currency))
 
-  local parts = {} ---@type string[]
-  if config.prefix then
-    table.insert(parts, config.prefix)
+    component = table.concat(parts, ' ')
   end
-
-  table.insert(parts, tostring(stats.currency))
-  return table.concat(parts, ' ')
+  return component
 end
 
 ---Level component - Shows level and XP progress
@@ -295,43 +290,33 @@ function M.level(opts)
 
   local stats = get_stats()
   local config = vim.tbl_deep_extend('force', cfg.level, opts or {})
-  if not (stats and config.enabled) then
-    return ''
+  local component = ''
+  if stats and config.enabled then
+    local xp_for_current, xp_for_next =
+      require('triforce.stats').xp_for_next_level(stats.level - 1),
+      require('triforce.stats').xp_for_next_level(stats.level)
+
+    local xp_needed, xp_progress = Util.add(xp_for_next, -xp_for_current), Util.add(stats.xp, -xp_for_current)
+    local parts = {} ---@type string[]
+    if config.show.title then
+      table.insert(parts, require('triforce.levels').get_level_title(stats.level, config.show.icon))
+    end
+    if config.show.level then
+      table.insert(parts, not config.prefix and tostring(stats.level) or (config.prefix .. stats.level))
+    end
+    if config.show.bar then -- Progress bar
+      table.insert(parts, create_progress_bar(xp_progress, xp_needed, config.bar.length, config.bar.chars))
+    end
+    if config.show.percent then -- Percentage
+      table.insert(parts, ('%d%%'):format(math.floor((xp_progress / xp_needed) * 100)))
+    end
+    if config.show.xp then -- XP numbers
+      table.insert(parts, ('%d/%d'):format(xp_progress, xp_needed))
+    end
+
+    component = table.concat(parts, ' ')
   end
-
-  local stats_module = require('triforce.stats')
-  local xp_for_current = stats_module.xp_for_next_level(stats.level - 1)
-  local xp_for_next = stats_module.xp_for_next_level(stats.level)
-  local xp_needed = xp_for_next - xp_for_current
-  local xp_progress = stats.xp - xp_for_current
-  local parts = {} ---@type string[]
-
-  local Levels = require('triforce.levels')
-
-  if config.show.title then
-    table.insert(parts, Levels.get_level_title(stats.level, config.show.icon))
-  end
-
-  if config.show.level then
-    table.insert(parts, not config.prefix and tostring(stats.level) or (config.prefix .. stats.level))
-  end
-
-  -- Progress bar
-  if config.show.bar then
-    table.insert(parts, create_progress_bar(xp_progress, xp_needed, config.bar.length, config.bar.chars))
-  end
-
-  -- Percentage
-  if config.show.percent then
-    table.insert(parts, ('%d%%'):format(math.floor((xp_progress / xp_needed) * 100)))
-  end
-
-  -- XP numbers
-  if config.show.xp then
-    table.insert(parts, ('%d/%d'):format(xp_progress, xp_needed))
-  end
-
-  return table.concat(parts, ' ')
+  return component
 end
 
 ---Achievements component - Shows unlocked achievement count
@@ -342,30 +327,24 @@ function M.achievements(opts)
 
   local stats = get_stats()
   local config = vim.tbl_deep_extend('force', cfg.achievements, opts or {})
-  if not (stats and config.enabled) then
-    return ''
+  local component = ''
+  if stats and config.enabled then
+    local unlocked = 0
+    for _ in ipairs(stats.achievements or {}) do
+      unlocked = Util.add(unlocked, 1)
+    end
+
+    local parts = {} ---@type string[]
+    if config.icon ~= '' then
+      table.insert(parts, config.icon)
+    end
+    if config.show_count then
+      table.insert(parts, ('%d/%d'):format(unlocked, #require('triforce.achievement').get_all_achievements(stats)))
+    end
+
+    component = table.concat(parts, ' ')
   end
-
-  -- Count achievements
-  local all_achievements = require('triforce.achievement').get_all_achievements(stats)
-  local total = #all_achievements
-  local unlocked = 0
-
-  for _, _ in ipairs(stats.achievements or {}) do
-    unlocked = unlocked + 1
-  end
-
-  -- Build component
-  local parts = {} ---@type string[]
-  if config.icon ~= '' then
-    table.insert(parts, config.icon)
-  end
-
-  if config.show_count then
-    table.insert(parts, ('%d/%d'):format(unlocked, total))
-  end
-
-  return table.concat(parts, ' ')
+  return component
 end
 
 ---Streak component - Shows current coding streak
@@ -376,20 +355,19 @@ function M.streak(opts)
 
   local stats = get_stats()
   local config = vim.tbl_deep_extend('force', cfg.streak, opts or {})
-  if not (stats and config.enabled) or stats.current_streak == 0 then
-    return ''
-  end
+  local component = ''
+  if stats and config.enabled and stats.current_streak ~= 0 then
+    local parts = {} ---@type string[]
+    if config.icon ~= '' then
+      table.insert(parts, config.icon)
+    end
+    if config.show_days then
+      table.insert(parts, tostring(stats.current_streak))
+    end
 
-  -- Build component
-  local parts = {} ---@type string[]
-  if config.icon ~= '' then
-    table.insert(parts, config.icon)
+    component = table.concat(parts, ' ')
   end
-  if config.show_days then
-    table.insert(parts, tostring(stats.current_streak))
-  end
-
-  return table.concat(parts, ' ')
+  return component
 end
 
 ---Session time component - Shows current session duration
@@ -400,20 +378,19 @@ function M.session_time(opts)
 
   local stats = get_stats()
   local config = vim.tbl_deep_extend('force', cfg.session_time, opts or {})
-  if not (stats and config.enabled) or stats.last_session_start == 0 then
-    return ''
-  end
+  local component = ''
+  if stats and config.enabled and stats.last_session_start ~= 0 then
+    local parts, duration = {}, os.time() - stats.last_session_start ---@type string[], integer
+    if config.icon ~= '' then
+      table.insert(parts, config.icon)
+    end
+    if config.show_duration then
+      table.insert(parts, format_time(duration, config.format))
+    end
 
-  local parts, duration = {}, os.time() - stats.last_session_start ---@type string[], integer
-  if config.icon ~= '' then
-    table.insert(parts, config.icon)
+    component = table.concat(parts, ' ')
   end
-
-  if config.show_duration then
-    table.insert(parts, format_time(duration, config.format))
-  end
-
-  return table.concat(parts, ' ')
+  return component
 end
 
 ---Convenience function to get all components at once
