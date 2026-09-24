@@ -6,9 +6,9 @@ return {
     lua = 'nlua',
     lpath = 'lua/?.lua;lua/?/init.lua',
     verbose = true,
-    coverage = false,
+    coverage = true,
   },
   default = {
-    output = 'utfTerminal',
+    output = 'gtest',
   },
 }
