@@ -6,7 +6,7 @@ local current_stats ---@type Stats
 local event ---@type nil|uv.uv_fs_event_t
 local augroup ---@type integer
 
----@generic T
+---@generic T: table
 ---@param old T
 ---@param new T
 ---@return T merged
@@ -17,15 +17,11 @@ local function merge_stats(old, new)
   })
   local stats = {}
   for k, v in pairs(new) do
-    if old[k] == nil or type(v) == 'boolean' then
-      stats[k] = v
-    elseif type(v) == 'number' then
-      stats[k] = v > old[k] and v or old[k]
-    elseif type(v) == 'table' then
-      stats[k] = merge_stats(old[k], v)
-    elseif type(v) == 'string' then
-      stats[k] = old[k]
-    end
+    stats[k] = (old[k] == nil or type(v) == 'boolean') and v
+      or (
+        type(v) == 'number' and (v > old[k] and v or old[k])
+        or (type(v) == 'table' and merge_stats(old[k], v) or (type(v) == 'string' and old[k] or nil))
+      )
   end
   return stats
 end
@@ -69,7 +65,9 @@ local M = {}
 function M.update_stats(stats)
   Util.validate({ stats = { stats, { 'table' } } })
 
-  current_stats = vim.deepcopy(stats)
+  for k, v in pairs(stats) do
+    current_stats[k] = v
+  end
 end
 
 ---@param path string

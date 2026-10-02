@@ -213,8 +213,6 @@ local A = {}
 ---@field icon string
 ---@field title string
 
----@alias LevelTitles table<integer, LevelTitle>
-
 ---@class LevelParams
 ---@field icon? string
 ---@field level integer

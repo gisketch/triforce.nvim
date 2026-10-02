@@ -3,9 +3,9 @@
 local ERROR = vim.log.levels.ERROR
 local Util = require('triforce.util')
 
----@return LevelTitles titles
+---@return table<integer, LevelTitle> titles
 local function get_default_titles()
-  local titles = { ---@type LevelTitles
+  return { ---@type table<integer, LevelTitle>
     [10] = { title = 'Deku Scrub', icon = '🌱' },
     [20] = { title = 'Kokiri', icon = '🌳' },
     [30] = { title = 'Hylian Soldier', icon = '🗡️' },
@@ -23,16 +23,14 @@ local function get_default_titles()
     [250] = { title = 'Demise Slayer', icon = '💀' },
     [300] = { title = 'Eternal Legend', icon = '💫' },
   }
-
-  return titles
 end
 
 ---@class Triforce.Levels
 local M = {}
 
-local levels = {} ---@type LevelTitles
+local levels = {} ---@type table<integer, LevelTitle>
 
----@return LevelTitles levels
+---@return table<integer, LevelTitle> levels
 ---@nodiscard
 function M.get()
   return levels
