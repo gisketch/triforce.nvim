@@ -15,13 +15,13 @@ jobs:
     name: pandoc to vimdoc
     steps:
       - name: Checkout
-        uses: actions/checkout@v6.0.3
+        uses: actions/checkout@v7.0.1
       - name: Run panvimdoc
-        uses: kdheepak/panvimdoc@main
+        uses: kdheepak/panvimdoc@v6
         with:
           vimdoc: triforce
           pandoc: README.md
-          version: "NVIM >=v0.9.0"
+          version: "NVIM >=v0.10.0"
           toc: false
           demojify: true
           dedupsubheadings: false
@@ -30,7 +30,7 @@ jobs:
           docmapping: false
           docmappingprojectname: false
       - name: Auto Commit
-        uses: stefanzweifel/git-auto-commit-action@v7.1.0
+        uses: stefanzweifel/git-auto-commit-action@v7.2.0
         with:
           commit_message: "docs: auto generate docs"
           branch: ${{ github.head_ref }}
