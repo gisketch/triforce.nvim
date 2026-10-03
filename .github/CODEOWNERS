@@ -1,9 +1,10 @@
 * @gisketch @DrKJeff16
+/assets/ @gisketch
 /.pre-commit-config.yaml @DrKJeff16
 /.stylua.toml @DrKJeff16
 /.taplo.toml @DrKJeff16
-/lua/triforce/util.lua @DrKJeff16
 /selene.toml @DrKJeff16
 /stylua.toml @DrKJeff16
+/.stylua.toml @DrKJeff16
 /taplo.toml @DrKJeff16
 /vim.yml @DrKJeff16
