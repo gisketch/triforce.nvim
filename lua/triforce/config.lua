@@ -74,7 +74,7 @@ function M.has_gamification(silent)
   end
 
   if not silent then
-    vim.notify('Gamification is not enabled in config', vim.log.levels.WARN)
+    vim.notify('triforce.nvim - Gamification is not enabled in config', vim.log.levels.WARN)
   end
   return false
 end

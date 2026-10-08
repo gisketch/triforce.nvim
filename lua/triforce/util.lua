@@ -492,6 +492,16 @@ function M.is_file(path, writable)
   return vim.fn.filereadable(path) == 1
 end
 
+---@generic T, V
+---@param t T
+---@param k string|integer
+---@param v V
+---@return V v
+function M.rawset(t, k, v)
+  rawset(t, k, v)
+  return v
+end
+
 local Util = setmetatable(M, {
   __index = M,
   __newindex = function()

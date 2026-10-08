@@ -188,30 +188,21 @@ function M.new_achievements(achievements)
   end
 end
 
----@generic T, V
----@param t T
----@param k string|integer
----@param v V
----@return V v
-local function raw_set(t, k, v)
-  rawset(t, k, v)
-  return v
-end
-
 local Triforce = setmetatable(M, { ---@type Triforce
   __index = function(self, k)
     local raw = rawget(self, k) or nil
     if raw then
       return raw
     end
+
     if Util.mod_exists('triforce.' .. k) then
-      return raw_set(self, k, require('triforce.' .. k))
+      return Util.rawset(self, k, require('triforce.' .. k))
     end
     if k == 'get_stats' then
-      return raw_set(self, k, require('triforce.tracker').get_stats)
+      return Util.rawset(self, k, require('triforce.tracker').get_stats)
     end
     if k == 'open_config' then
-      return raw_set(self, k, require('triforce.config').open_window)
+      return Util.rawset(self, k, require('triforce.config').open_window)
     end
   end,
 })
