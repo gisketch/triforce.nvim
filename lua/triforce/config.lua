@@ -47,6 +47,11 @@ local M = {}
 ---@type TriforceConfigDefaults
 local config = {} ---@diagnostic disable-line:missing-fields
 
+---@return TriforceConfigDefaults defaults
+function M.defaults()
+  return defaults
+end
+
 ---@return TriforceConfigDefaults config
 ---@nodiscard
 function M.get()
@@ -79,12 +84,8 @@ function M.has_gamification(silent)
   return false
 end
 
----@return TriforceConfigDefaults defaults
-function M.defaults()
-  return defaults
-end
-
----@param opts? TriforceConfig
+---@param opts TriforceConfig
+---@overload fun()
 function M.new_config(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
 
@@ -92,44 +93,25 @@ function M.new_config(opts)
 
   local keys = vim.tbl_keys(M.defaults()) --[[@as string[]\]]
   for k in pairs(config) do
-    ---@cast k string
     if not vim.list_contains(keys, k) then
       config[k] = nil
     end
   end
-
-  if config.backdrop and config.backdrop.winblend and config.backdrop.winblend >= 100 then
-    config.backdrop.winblend = 100
-  elseif config.backdrop and config.backdrop.winblend and config.backdrop.winblend <= 0 then
-    config.backdrop.winblend = 0
+  if not (config.backdrop and config.backdrop.winblend) then
+    return
   end
+
+  config.backdrop.winblend = config.backdrop.winblend >= 100 and 100
+    or (config.backdrop.winblend <= 0 and 0 or config.backdrop.winblend)
 end
 
 ---Setup the plugin with user configuration
 --- ---
----@param opts? TriforceConfig User configuration options.
+---@param opts TriforceConfig User configuration options.
+---@overload fun()
 function M.setup(opts)
   Util.validate({ opts = { opts, { 'table', 'nil' }, true } })
   opts = opts or {}
-
-  ---@diagnostic disable:undefined-field
-  if
-    opts.keymap
-    and opts.keymap.show_profile
-    and opts.keymap.show_profile ~= ''
-    and vim.g.triforce_keymap_deprecation_warning ~= 1
-  then
-    vim.notify(
-      [[triforce.nvim - WARNING: The `keymap` setup option has been deprecated.
-From now on you'll have to make your Triforce keymap manually. Please read the plugin's README
-for more information.
-
-Sorry for the inconvenience!]],
-      vim.log.levels.WARN
-    )
-    vim.g.triforce_keymap_deprecation_warning = 1
-  end
-  ---@diagnostic enable:undefined-field
 
   M.new_config(opts)
 
@@ -143,8 +125,7 @@ Sorry for the inconvenience!]],
     stats_module.calibrate_tiers()
   end
 
-  -- Register custom languages if provided
-  if config.custom_languages then
+  if config.custom_languages then -- Register custom languages if provided
     require('triforce.languages').register_custom_languages(config.custom_languages)
   end
 
@@ -156,8 +137,7 @@ Sorry for the inconvenience!]],
       and config.icon_engine
     or 'builtin'
 
-  -- Setup custom path if provided
-  stats_module.set_db_path(config.db_path)
+  stats_module.set_db_path(config.db_path) -- Setup custom path if provided
 
   require('triforce.items').setup(config.items)
 end
@@ -169,16 +149,7 @@ function M.open_window()
     return
   end
 
-  vim.api.nvim_buf_set_lines(
-    bufnr,
-    0,
-    -1,
-    true,
-    vim.split(conf_data, '\n', {
-      plain = true,
-      trimempty = true,
-    })
-  )
+  vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, vim.split(conf_data, '\n', { trimempty = true }))
 
   local height = math.floor(vim.o.lines * 0.85)
   local width = math.floor(vim.o.columns * 0.85)
@@ -196,16 +167,16 @@ function M.open_window()
     zindex = 50,
   })
 
-  Util.optset('signcolumn', 'no', 'win', win)
-  Util.optset('list', false, 'win', win)
-  Util.optset('number', false, 'win', win)
-  Util.optset('wrap', false, 'win', win)
-  Util.optset('colorcolumn', '', 'win', win)
+  vim.wo[win].signcolumn = 'no'
+  vim.wo[win].list = false
+  vim.wo[win].number = false
+  vim.wo[win].wrap = false
+  vim.wo[win].colorcolumn = ''
 
-  Util.optset('filetype', '', 'buf', bufnr)
-  Util.optset('fileencoding', 'utf-8', 'buf', bufnr)
-  Util.optset('buftype', 'nowrite', 'buf', bufnr)
-  Util.optset('modifiable', false, 'buf', bufnr)
+  vim.bo[bufnr].filetype = ''
+  vim.bo[bufnr].fileencoding = 'utf-8'
+  vim.bo[bufnr].buftype = 'nowrite'
+  vim.bo[bufnr].modifiable = false
 
   vim.keymap.set('n', 'q', function()
     pcall(vim.api.nvim_win_close, win, true)
@@ -217,16 +188,14 @@ function M.open_window()
   end, { buffer = bufnr })
 end
 
----@return string|nil|? config_str
+---@return string config_str
 ---@nodiscard
 function M.get_config()
-  if config then
-    local opts = {} ---@type TriforceConfig
-    for k, v in pairs(config) do
-      opts[k] = v
-    end
-    return vim.inspect(opts)
+  local opts = {} ---@type TriforceConfig
+  for k, v in pairs(config) do
+    opts[k] = v
   end
+  return vim.inspect(opts)
 end
 
 return M
