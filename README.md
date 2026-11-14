@@ -13,7 +13,7 @@
 **Hey, listen!** Triforce adds a bit of RPG flavor to your coding — XP, levels and achievements while you work.
 
 <div align="center">
-<img alt="Showcase" src="https://github.com/DrKJeff16/triforce.nvim/blob/main/assets/triforce.png" />
+<img alt="Showcase" src="https://github.com/gisketch/triforce.nvim/blob/main/assets/triforce.png" />
 </div>
 
 ---
@@ -111,7 +111,7 @@ made the process so much smoother and helped me focus on bringing those ideas to
 
 ```lua
 {
-  'DrKJeff16/triforce.nvim',
+  'gisketch/triforce.nvim',
   dependencies = { 'nvzone/volt' },
   keys = {
     {
@@ -132,7 +132,7 @@ made the process so much smoother and helped me focus on bringing those ideas to
 ```lua
 vim.pack.add({
   { src = 'https://github.com/nvzone/volt' },
-  { src = 'https://github.com/DrKJeff16/triforce.nvim' },
+  { src = 'https://github.com/gisketch/triforce.nvim' },
 })
 ```
 
@@ -143,7 +143,7 @@ vim.pack.add({
 ```lua
 require('pckr').add({
   {
-    'DrKJeff16/triforce.nvim',
+    'gisketch/triforce.nvim',
     requires = { 'nvzone/volt' },
     config = function()
       require('triforce').setup()
@@ -159,7 +159,7 @@ require('pckr').add({
 ```lua
 require('paq')({
   'nvzone/volt',
-  'DrKJeff16/triforce.nvim',
+  'gisketch/triforce.nvim',
 })
 
 require('triforce').setup()
@@ -170,7 +170,7 @@ require('triforce').setup()
 <summary>vim-plug</summary>
 
 ```vim
-Plug 'DrKJeff16/triforce.nvim' | Plug 'nvzone/volt'
+Plug 'gisketch/triforce.nvim' | Plug 'nvzone/volt'
 
 lua << EOF
 require('triforce').setup()
@@ -210,7 +210,7 @@ require('triforce').setup()
 <details>
 <summary><b><ins>Defaults</ins></b></summary>
 
-You can find the defaults in [`lua/triforce/config.lua`](https://github.com/DrKJeff16/triforce.nvim/blob/main/lua/triforce/config.lua):
+You can find the defaults in [`lua/triforce/config.lua`](https://github.com/gisketch/triforce.nvim/blob/main/lua/triforce/config.lua):
 
 ```lua
 require('triforce').setup({
@@ -476,7 +476,7 @@ The following keybindings can be used in the profile UI:
 ### Achievements Tab
 
 <div align="center">
-<img alt="Achievements Tab" src="https://github.com/DrKJeff16/triforce.nvim/blob/main/assets/triforce_achievements.png" />
+<img alt="Achievements Tab" src="https://github.com/gisketch/triforce.nvim/blob/main/assets/triforce_achievements.png" />
 </div>
 
 - View all unlocked achievements and locked achievements with unlock requirements
@@ -486,7 +486,7 @@ The following keybindings can be used in the profile UI:
 ### Languages Tab
 
 <div align="center">
-<img alt="Languages Tab" src="https://github.com/DrKJeff16/triforce.nvim/blob/main/assets/triforce_languages.png" />
+<img alt="Languages Tab" src="https://github.com/gisketch/triforce.nvim/blob/main/assets/triforce_languages.png" />
 </div>
 
 - Bar graph showing your most-used languages
@@ -496,7 +496,7 @@ The following keybindings can be used in the profile UI:
 ### Levels Tab
 
 <div align="center">
-<img alt="Levels Tab" src="https://github.com/DrKJeff16/triforce.nvim/blob/main/assets/triforce_levels.png" />
+<img alt="Levels Tab" src="https://github.com/gisketch/triforce.nvim/blob/main/assets/triforce_levels.png" />
 </div>
 
 - View unlocked levels first, then locked ones
@@ -506,7 +506,7 @@ The following keybindings can be used in the profile UI:
 ### Stats Tab
 
 <div align="center">
-<img alt="Stats Tab" src="https://github.com/DrKJeff16/triforce.nvim/blob/main/assets/triforce_stats.png" />
+<img alt="Stats Tab" src="https://github.com/gisketch/triforce.nvim/blob/main/assets/triforce_stats.png" />
 </div>
 
 - Level progress bar
@@ -699,7 +699,7 @@ set to `nil` then it will revert back to its default value.
 ## Lualine Integration
 
 <div align="center">
-<img alt="Lualine Integration" src="https://github.com/DrKJeff16/triforce.nvim/blob/main/assets/triforce_lualine.png" />
+<img alt="Lualine Integration" src="https://github.com/gisketch/triforce.nvim/blob/main/assets/triforce_lualine.png" />
 </div>
 
 Triforce comes with **modular statusline components** for [lualine.nvim](https://github.com/nvim-lualine/lualine.nvim), letting you display your
@@ -1013,5 +1013,5 @@ The following user command operations are available:
 
 ## License
 
-[MIT](https://github.com/DrKJeff16/triforce.nvim/blob/main/LICENSE)
+[MIT](https://github.com/gisketch/triforce.nvim/blob/main/LICENSE)
 <!-- vim: set ts=2 sts=2 sw=2 et ai si sta: -->
