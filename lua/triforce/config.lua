@@ -66,8 +66,9 @@ function M.set(k, v)
   end
 end
 
----@param silent? boolean
+---@param silent boolean
 ---@return boolean gamified
+---@overload fun(): gamified: boolean
 function M.has_gamification(silent)
   Util.validate({ silent = { silent, { 'boolean', 'nil' }, true } })
   if silent == nil then

@@ -82,7 +82,8 @@ setmetatable(M, {
   end,
 })
 
----@param opts? TriforceConfig
+---@param opts TriforceConfig
+---@overload fun()
 function M.setup(opts)
   -- Check Neovim version compatibility
   if not Util.vim_has('nvim-0.9') then
@@ -131,7 +132,8 @@ function M.setup(opts)
 end
 
 ---Show profile UI
----@param tab? string
+---@param tab string
+---@overload fun()
 function M.show_profile(tab)
   Util.validate({ tab = { tab, { 'string', 'nil' }, true } })
 
@@ -140,15 +142,12 @@ function M.show_profile(tab)
       M.tracker.setup()
     end
 
-    local Profile = M.ui.profile
-    local tabs_map, current_tab, dimensions =
-      Profile.get_tabs_map(), Profile.get_current_tab(), Profile.get_dimensions()
-
-    local tab_n = tab and (tabs_map[tab] or current_tab) or current_tab
+    local current_tab, dimensions = M.ui.profile.get_current_tab(), M.ui.profile.get_dimensions()
+    local tab_n = tab and (M.ui.profile.get_tabs_map()[tab] or current_tab) or current_tab
     if current_tab ~= tab_n and dimensions.float and dimensions.dim_float then
-      Profile.cycle_tab(nil, tab_n)
+      M.ui.profile.cycle_tab(nil, tab_n)
     else
-      Profile.toggle(tab_n)
+      M.ui.profile.toggle(tab_n)
     end
   end
 end
@@ -171,17 +170,12 @@ end
 ---Force save stats
 function M.save_stats()
   if M.has_gamification() then
-    local stats = M.get_stats()
-    if not stats then
-      vim.notify('No stats to save!', vim.log.levels.WARN)
-    elseif not M.stats.save(stats) then
-      vim.notify('Failed to save stats!', vim.log.levels.ERROR)
-    else
-      vim.notify(
-        ('Stats saved successfully in `%s`'):format(vim.fn.fnamemodify(stats.db_path, ':~')),
-        vim.log.levels.INFO
-      )
-    end
+    local stats = assert(M.get_stats(), 'No stats to save')
+    assert(M.stats.save(stats), 'Failed to save stats')
+    vim.notify(
+      ('Stats saved successfully in `%s`'):format(vim.fn.fnamemodify(stats.db_path, ':~')),
+      vim.log.levels.INFO
+    )
   end
 end
 
@@ -207,7 +201,8 @@ function M.debug_fix_level()
   end
 end
 
----@param format? 'json'|'markdown'|'lua'
+---@param format 'json'|'markdown'|'lua'
+---@overload fun()
 function M.export_stats(format)
   Util.validate({ format = { format, { 'string', 'nil' }, true } })
   format = format or 'lua'
@@ -219,8 +214,10 @@ function M.export_stats(format)
 end
 
 ---Export stats to JSON
+---
 ---@param file string
----@param indent? string
+---@param indent string
+---@overload fun(file: string)
 function M.export_stats_to_json(file, indent)
   Util.validate({
     file = { file, { 'string' } },
@@ -243,6 +240,7 @@ function M.export_stats_to_md(file)
   end
 end
 
+---@param file string
 function M.export_stats_to_lua(file)
   Util.validate({ file = { file, { 'string' } } })
 
