@@ -1,5 +1,5 @@
 *triforce.txt*
-                                                  Last change: 2026 October 19
+                                                 Last change: 2026 November 14
 
 ==============================================================================
 1. triforce.nvim                                      *triforce-triforce.nvim*
@@ -115,7 +115,7 @@ lazy.nvim ~
 
 >lua
     {
-      'DrKJeff16/triforce.nvim',
+      'gisketch/triforce.nvim',
       dependencies = { 'nvzone/volt' },
       keys = {
         {
@@ -134,7 +134,7 @@ vim.pack ~
 >lua
     vim.pack.add({
       { src = 'https://github.com/nvzone/volt' },
-      { src = 'https://github.com/DrKJeff16/triforce.nvim' },
+      { src = 'https://github.com/gisketch/triforce.nvim' },
     })
 <
 
@@ -143,7 +143,7 @@ pckr.nvim ~
 >lua
     require('pckr').add({
       {
-        'DrKJeff16/triforce.nvim',
+        'gisketch/triforce.nvim',
         requires = { 'nvzone/volt' },
         config = function()
           require('triforce').setup()
@@ -157,7 +157,7 @@ paq-nvim ~
 >lua
     require('paq')({
       'nvzone/volt',
-      'DrKJeff16/triforce.nvim',
+      'gisketch/triforce.nvim',
     })
 
     require('triforce').setup()
@@ -166,7 +166,7 @@ paq-nvim ~
 vim-plug ~
 
 >vim
-    Plug 'DrKJeff16/triforce.nvim' | Plug 'nvzone/volt'
+    Plug 'gisketch/triforce.nvim' | Plug 'nvzone/volt'
 
     lua << EOF
     require('triforce').setup()
@@ -233,7 +233,7 @@ You can simply call `setup()` and the defaults will be loaded:
 Defaults ~
 
 You can find the defaults in `lua/triforce/config.lua`
-<https://github.com/DrKJeff16/triforce.nvim/blob/main/lua/triforce/config.lua>:
+<https://github.com/gisketch/triforce.nvim/blob/main/lua/triforce/config.lua>:
 
 >lua
     require('triforce').setup({
@@ -1078,7 +1078,7 @@ ACKNOWLEDGMENTS                                     *triforce-acknowledgments*
 
 LICENSE                                                     *triforce-license*
 
-MIT <https://github.com/DrKJeff16/triforce.nvim/blob/main/LICENSE>
+MIT <https://github.com/gisketch/triforce.nvim/blob/main/LICENSE>
 
 ==============================================================================
 2. Links                                                      *triforce-links*
